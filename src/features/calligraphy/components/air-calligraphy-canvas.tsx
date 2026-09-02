@@ -189,7 +189,7 @@ export function AirCalligraphyCanvas({
 
   return (
     <div className="relative h-full min-h-[520px] overflow-hidden bg-[#f8f4ed] lg:min-h-[660px]">
-      <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center overflow-hidden">
+      <div className="pointer-events-none absolute inset-[8%] z-10 grid place-items-center overflow-hidden">
         {referenceImageUrl && failedReferenceUrl !== referenceImageUrl ? (
           // The source can be a page-local blob URL created from WebMCP data.
           // eslint-disable-next-line @next/next/no-img-element
@@ -197,14 +197,14 @@ export function AirCalligraphyCanvas({
             key={referenceImageId ?? referenceImageUrl}
             src={referenceImageUrl}
             alt={referenceImageAlt ?? `${character} 서예 글자본`}
-            className="h-[72%] w-[88%] translate-y-[1%] select-none object-contain opacity-[0.16] grayscale contrast-125 mix-blend-multiply"
+            className="h-full w-full select-none object-contain opacity-[0.32] grayscale contrast-150 mix-blend-multiply"
             draggable={false}
             onError={() => setFailedReferenceUrl(referenceImageUrl)}
           />
         ) : character ? (
           <span
             aria-hidden="true"
-            className={`max-w-[92vw] translate-y-[2%] select-none whitespace-nowrap leading-none font-semibold tracking-[-0.08em] text-[#7d4638]/[0.055] ${referenceTextSize(character.length)}`}
+            className={`max-w-full select-none whitespace-nowrap text-center leading-none font-semibold tracking-[-0.08em] text-[#261d19]/[0.32] ${referenceTextSize(character.length)}`}
             style={{
               fontFamily:
                 "STKaiti, KaiTi, Kaiti SC, Noto Serif CJK KR, Noto Serif KR, serif",

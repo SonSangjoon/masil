@@ -49,6 +49,7 @@ interface Renderer {
   readonly ready: Promise<void>;
   setSphereMix(value: number): void;
   setVitality(value: number): void;
+  setTransition(value: number): void;
   dispose(): void;
 }
 
@@ -107,7 +108,7 @@ function createMaterialDebugGui(
     coloredAxes: boolean;
     cameraTarget: boolean;
   },
-  requestDraw: () => void
+  requestDraw: () => void,
 ): GUI {
   const gui = new GuiConstructor({
     title: "Glass fractal material",
@@ -186,7 +187,7 @@ function createMaterialDebugGui(
     "rotation",
     -180,
     180,
-    0.1
+    0.1,
   );
   environmentFolder
     .add(glass, "environmentExposure", 0.1, 8, 0.01)
@@ -203,7 +204,7 @@ function addVector3Controllers(
   label: string,
   min: number,
   max: number,
-  step = 0.01
+  step = 0.01,
 ): void {
   folder.add(vector, "0", min, max, step).name(`${label} x`);
   folder.add(vector, "1", min, max, step).name(`${label} y`);
@@ -213,7 +214,7 @@ function addVector3Controllers(
 function addNumberControllers(
   folder: GUI,
   target: object,
-  controls: readonly (readonly [string, string, number, number, number])[]
+  controls: readonly (readonly [string, string, number, number, number])[],
 ): void {
   for (const [property, label, min, max, step] of controls) {
     folder
@@ -224,7 +225,7 @@ function addNumberControllers(
 
 function addMaterialControllers(
   folder: GUI,
-  material: MutableHeroFractalMaterial
+  material: MutableHeroFractalMaterial,
 ): void {
   folder.addColor(material, "baseColor", 1).name("base color");
   addNumberControllers(folder, material, [
@@ -236,7 +237,7 @@ function addMaterialControllers(
 }
 
 function copyMaterial(
-  material: Readonly<HeroFractalMaterial>
+  material: Readonly<HeroFractalMaterial>,
 ): MutableHeroFractalMaterial {
   return {
     baseColor: [...material.baseColor],
@@ -272,6 +273,8 @@ export function createRenderer(options: RendererOptions): Renderer {
   let orbTime = 0;
   let vitalityCurrent = 0.42;
   let vitalityTarget = 0.42;
+  let transitionCurrent = 0;
+  let transitionTarget = 0;
   let isCanvasVisible = true;
   let visibilityObserver: IntersectionObserver | undefined;
   let pointerTargetX = 0;
@@ -288,7 +291,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     environmentRotation: [...HERO_FRACTAL_GLASS.environmentRotation] as [
       number,
       number,
-      number
+      number,
     ],
   };
   const cameraControls = createCameraControls(HERO_FRACTAL_CAMERA);
@@ -317,6 +320,7 @@ export function createRenderer(options: RendererOptions): Renderer {
         glass,
         time: orbTime,
         vitality: vitalityCurrent,
+        transition: transitionCurrent,
         view: {
           ...cameraControls,
           pointer: [pointerCurrentX, pointerCurrentY],
@@ -325,7 +329,7 @@ export function createRenderer(options: RendererOptions): Renderer {
         floorGrid: debug.floorGrid,
         morphDirection,
         reflectionDebug: debug.view === "reflection",
-      }
+      },
     );
     const environmentCamera = perspectiveCamera({
       fov: 45,
@@ -394,7 +398,7 @@ export function createRenderer(options: RendererOptions): Renderer {
             target: currentSurface,
             clear: HERO_LIGHT_CLEAR,
           },
-          (pass) => pass.draw(currentDraws.environmentSphere)
+          (pass) => pass.draw(currentDraws.environmentSphere),
         );
       });
       return;
@@ -403,7 +407,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     if (debug.wireframe) {
       finalDebugDraws.push(
         currentDraws.glassWireframe,
-        currentDraws.fractalWireframe
+        currentDraws.fractalWireframe,
       );
     }
     if (debug.coloredAxes) finalDebugDraws.push(currentDraws.worldAxes);
@@ -450,8 +454,12 @@ export function createRenderer(options: RendererOptions): Renderer {
       return;
     orbTime = (time - orbEpoch) * 0.001;
     vitalityCurrent += (vitalityTarget - vitalityCurrent) * 0.035;
+    transitionCurrent += (transitionTarget - transitionCurrent) * 0.065;
     if (Math.abs(vitalityTarget - vitalityCurrent) < 0.0005) {
       vitalityCurrent = vitalityTarget;
+    }
+    if (Math.abs(transitionTarget - transitionCurrent) < 0.0005) {
+      transitionCurrent = transitionTarget;
     }
     renderHero();
     orbFrame = requestAnimationFrame(animateOrb);
@@ -474,7 +482,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     if (disposed) return;
     const progress = Math.min(
       1,
-      Math.max(0, (time - morphStartTime) / SPHERE_MORPH_DURATION_MS)
+      Math.max(0, (time - morphStartTime) / SPHERE_MORPH_DURATION_MS),
     );
     const easedProgress = 1 - (1 - progress) ** 4;
     glass.sphereMix =
@@ -519,6 +527,16 @@ export function createRenderer(options: RendererOptions): Renderer {
     requestOrbAnimation();
   };
 
+  const setTransition = (value: number) => {
+    transitionTarget = Math.min(1, Math.max(0, value));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      transitionCurrent = transitionTarget;
+      requestMaterialDraw();
+      return;
+    }
+    requestOrbAnimation();
+  };
+
   const animateCamera = () => {
     cameraFrame = 0;
     if (disposed) return;
@@ -543,11 +561,11 @@ export function createRenderer(options: RendererOptions): Renderer {
     if (event.pointerType && event.pointerType !== "mouse") return;
     pointerTargetX = Math.min(
       1,
-      Math.max(-1, (event.clientX / Math.max(window.innerWidth, 1)) * 2 - 1)
+      Math.max(-1, (event.clientX / Math.max(window.innerWidth, 1)) * 2 - 1),
     );
     pointerTargetY = Math.min(
       1,
-      Math.max(-1, (event.clientY / Math.max(window.innerHeight, 1)) * 2 - 1)
+      Math.max(-1, (event.clientY / Math.max(window.innerHeight, 1)) * 2 - 1),
     );
     requestCameraDraw();
   };
@@ -571,12 +589,16 @@ export function createRenderer(options: RendererOptions): Renderer {
     resizeFrame = 0;
     if (disposed || !canvasSurface) return;
     try {
-      const rect = options.canvas.getBoundingClientRect();
-      if (rect.width <= 0 || rect.height <= 0) return;
+      // clientWidth/clientHeight stay in layout pixels while the hero Orb is
+      // scaled during a connected activity transition. Using the transformed
+      // bounding rect here would resize the GPU surface as the Orb expands.
+      const width = options.canvas.clientWidth || options.canvas.offsetWidth;
+      const height = options.canvas.clientHeight || options.canvas.offsetHeight;
+      if (width <= 0 || height <= 0) return;
       const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
       canvasSurface.resize([
-        Math.max(1, Math.round(rect.width * dpr)),
-        Math.max(1, Math.round(rect.height * dpr)),
+        Math.max(1, Math.round(width * dpr)),
+        Math.max(1, Math.round(height * dpr)),
       ]);
       if (coreScene) resizeHeroFractalScene(coreScene, canvasSurface.size);
       drawHero();
@@ -612,7 +634,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     window.removeEventListener("blur", resetPointer);
     document.removeEventListener(
       "visibilitychange",
-      onDocumentVisibilityChange
+      onDocumentVisibilityChange,
     );
     debugGui?.destroy();
     gpu?.dispose();
@@ -644,9 +666,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     gpu = nextGpu;
     canvasSurface = surface(gpu, options.canvas, {
       alphaMode: options.transparent ? "premultiplied" : "opaque",
-      clearColor: options.transparent
-        ? [0, 0, 0, 0]
-        : HERO_LIGHT_CLEAR,
+      clearColor: options.transparent ? [0, 0, 0, 0] : HERO_LIGHT_CLEAR,
       dpr: [1, 2],
     });
     const loadedAssets = await loadHeroGlassAssets(gpu, abort.signal);
@@ -658,14 +678,14 @@ export function createRenderer(options: RendererOptions): Renderer {
         radius: 0.82,
         widthSegments: 48,
         heightSegments: 24,
-      })
+      }),
     );
     const debugAxesGeometry = createDebugAxesGeometry(gpu);
     const loadedScene = await createHeroFractalScene(
       gpu,
       canvasSurface,
       assets,
-      "homepage-light"
+      "homepage-light",
     );
     if (disposed) return;
     coreScene = loadedScene;
@@ -746,7 +766,7 @@ export function createRenderer(options: RendererOptions): Renderer {
         glass,
         floorAo,
         debug,
-        requestMaterialDraw
+        requestMaterialDraw,
       );
     }
   };
@@ -757,7 +777,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     fail(error);
   });
 
-  return { ready, setSphereMix, setVitality, dispose };
+  return { ready, setSphereMix, setVitality, setTransition, dispose };
 }
 
 function createDebugAxesGeometry(gpu: Gpu): Geometry {

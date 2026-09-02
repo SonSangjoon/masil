@@ -20,6 +20,7 @@ struct OrbParams {
   cameraPosition: vec3f,
   time: f32,
   vitality: f32,
+  transition: f32,
   material: OrbMaterial,
   environmentRotation: mat4x4f,
   environmentExposure: f32,
@@ -46,7 +47,7 @@ fn orbWave(direction: vec3f, time: f32, vitality: f32) -> f32 {
   ) * amplitude;
 }
 
-fn deformOrb(position: vec3f, time: f32, vitality: f32) -> vec3f {
+fn deformOrb(position: vec3f, time: f32, vitality: f32, transition: f32) -> vec3f {
   let direction = normalize(position);
   let lifeTime = time * mix(0.72, 1.05, vitality);
   let breathing = (
@@ -95,9 +96,18 @@ fn deformOrb(position: vec3f, time: f32, vitality: f32) -> vec3f {
   let movingValley = pow(max(dot(direction, valleyDirection), 0.0), 3.6) *
     mix(0.034, 0.086, vitality);
 
+  let transitionLift = smoothstep(0.0, 0.7, transition) *
+    (1.0 - smoothstep(0.72, 1.0, transition) * 0.34);
+  let spillDirection = normalize(vec3f(0.22, -0.78, 0.5));
+  let spill = pow(max(dot(direction, spillDirection), 0.0), 2.35) *
+    transitionLift * 0.22;
+  let fold = sin(
+    dot(direction, vec3f(0.54, 0.22, 0.81)) * 4.5 + lifeTime * 1.25
+  ) * transitionLift * 0.045;
+
   let lifeScale = 1.0 + breathing + heartbeat +
     orbWave(direction, lifeTime, vitality) + primaryLobe + secondaryLobe +
-    tertiaryLobe - movingValley;
+    tertiaryLobe - movingValley + spill + fold;
   let swirlAxis = normalize(vec3f(
     0.31 + sin(lifeTime * 0.19) * 0.22,
     0.78,
@@ -114,7 +124,12 @@ fn deformOrb(position: vec3f, time: f32, vitality: f32) -> vec3f {
   return position * softBody * lifeScale + surfaceDrift + centerDrift;
 }
 
-fn deformOrbNormal(position: vec3f, time: f32, vitality: f32) -> vec3f {
+fn deformOrbNormal(
+  position: vec3f,
+  time: f32,
+  vitality: f32,
+  transition: f32,
+) -> vec3f {
   let radius = max(length(position), 0.0001);
   let direction = position / radius;
   var reference = vec3f(0.0, 1.0, 0.0);
@@ -126,9 +141,9 @@ fn deformOrbNormal(position: vec3f, time: f32, vitality: f32) -> vec3f {
   let epsilon = 0.006;
   let tangentPosition = normalize(direction + tangent * epsilon) * radius;
   let bitangentPosition = normalize(direction + bitangent * epsilon) * radius;
-  let center = deformOrb(position, time, vitality);
-  let tangentSample = deformOrb(tangentPosition, time, vitality);
-  let bitangentSample = deformOrb(bitangentPosition, time, vitality);
+  let center = deformOrb(position, time, vitality, transition);
+  let tangentSample = deformOrb(tangentPosition, time, vitality, transition);
+  let bitangentSample = deformOrb(bitangentPosition, time, vitality, transition);
   return normalize(cross(tangentSample - center, bitangentSample - center));
 }
 
@@ -137,8 +152,18 @@ fn deformOrbNormal(position: vec3f, time: f32, vitality: f32) -> vec3f {
   @location(1) normal: vec3f,
   @location(2) uv: vec2f,
 ) -> VertexOut {
-  let deformedPosition = deformOrb(position, params.time, params.vitality);
-  let deformedNormal = deformOrbNormal(position, params.time, params.vitality);
+  let deformedPosition = deformOrb(
+    position,
+    params.time,
+    params.vitality,
+    params.transition,
+  );
+  let deformedNormal = deformOrbNormal(
+    position,
+    params.time,
+    params.vitality,
+    params.transition,
+  );
   let world = params.model * vec4f(deformedPosition, 1.0);
   var out: VertexOut;
   out.position = params.viewProjection * world;
@@ -214,7 +239,9 @@ fn microGrain(position: vec3f) -> f32 {
   let fresnel = fresnelSchlick(facing);
   let maxEnvironmentLevel = f32(textureNumLevels(environmentTexture) - 1u);
 
-  let lifeTime = params.time * mix(0.74, 1.08, params.vitality);
+  let transitionFlow = smoothstep(0.0, 0.68, params.transition);
+  let lifeTime = params.time * mix(0.74, 1.08, params.vitality) *
+    (1.0 + transitionFlow * 0.42);
   let flowPosition = objectDirection * 1.72 + vec3f(
     lifeTime * 0.062,
     -lifeTime * 0.046,

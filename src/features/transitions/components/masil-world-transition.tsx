@@ -6,122 +6,117 @@ import {
   useEffect,
   useImperativeHandle,
   useRef,
-  useState,
 } from "react";
 
-import type {
-  TransitionActivity,
-  WorldTransitionRenderer,
-} from "@/features/transitions/runtime/renderer";
+type TransitionActivity = "calligraphy" | "janggi";
+
+const WORLD_TRANSITION_DURATION_MS = 1840;
+const WORLD_TRANSITION_SWAP_PROGRESS = 0.59;
 
 export interface MasilWorldTransitionHandle {
   play(activity: TransitionActivity, onCovered: () => void): Promise<void>;
   cancel(): void;
 }
 
+type MasilWorldTransitionProps = {
+  readonly onProgress?: (progress: number) => void;
+};
+
+/**
+ * Coordinates the shared Orb hand-off without adding a second visual layer.
+ *
+ * The Orb remains the only transition surface. The activity swaps once it has
+ * travelled far enough toward its destination, while the current page stays
+ * visible underneath. This also keeps the disconnected demo path honest:
+ * connection state changes the Orb's appearance, not the transition model.
+ */
 export const MasilWorldTransition = forwardRef<
   MasilWorldTransitionHandle,
-  { readonly inert?: never }
->(function MasilWorldTransition(_props, forwardedRef) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rendererRef = useRef<WorldTransitionRenderer | null>(null);
-  const [active, setActive] = useState(false);
-  const [activity, setActivity] = useState<TransitionActivity>("calligraphy");
+  MasilWorldTransitionProps
+>(function MasilWorldTransition({ onProgress }, forwardedRef) {
+  const onProgressRef = useRef(onProgress);
+  const frameRef = useRef(0);
+  const resolveRef = useRef<(() => void) | null>(null);
+  const onSwapRef = useRef<(() => void) | null>(null);
+  const swappedRef = useRef(false);
 
   useEffect(() => {
-    let cancelled = false;
-    let renderer: WorldTransitionRenderer | null = null;
+    onProgressRef.current = onProgress;
+  }, [onProgress]);
 
-    const start = async () => {
-      try {
-        const canvas = canvasRef.current;
-        if (!canvas || !navigator.gpu) return;
-        const { createWorldTransitionRenderer } = await import(
-          "@/features/transitions/runtime/renderer"
-        );
-        if (cancelled) return;
-        renderer = createWorldTransitionRenderer(canvas);
-        rendererRef.current = renderer;
-        await renderer.ready;
-        if (process.env.NODE_ENV !== "production") {
-          const query = new URLSearchParams(window.location.search);
-          const previewActivity = query.get("transition-preview");
-          const previewProgress = Number(query.get("transition-progress"));
-          if (
-            (previewActivity === "calligraphy" ||
-              previewActivity === "janggi") &&
-            Number.isFinite(previewProgress)
-          ) {
-            setActivity(previewActivity);
-            setActive(true);
-            await renderer.preview(previewActivity, previewProgress);
-          }
-        }
-      } catch (error) {
-        console.error("MASIL world transition could not start", error);
-      }
-    };
+  const cancelAnimation = useCallback(() => {
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+    }
 
-    void start();
-    return () => {
-      cancelled = true;
-      rendererRef.current = null;
-      renderer?.dispose();
-    };
+    if (onSwapRef.current && !swappedRef.current) {
+      swappedRef.current = true;
+      onSwapRef.current();
+    }
+
+    const resolve = resolveRef.current;
+    resolveRef.current = null;
+    onSwapRef.current = null;
+    swappedRef.current = false;
+    onProgressRef.current?.(0);
+    resolve?.();
   }, []);
 
   const play = useCallback(
-    async (nextActivity: TransitionActivity, onCovered: () => void) => {
-      setActivity(nextActivity);
-      setActive(true);
-      const renderer = rendererRef.current;
-      if (!renderer) {
-        onCovered();
-        setActive(false);
-        return;
-      }
-      try {
-        await renderer.play(nextActivity, onCovered);
-      } finally {
-        setActive(false);
-      }
+    async (_activity: TransitionActivity, onSwap: () => void) => {
+      cancelAnimation();
+      onProgressRef.current?.(0);
+      onSwapRef.current = onSwap;
+      swappedRef.current = false;
+      const startedAt = performance.now();
+
+      await new Promise<void>((resolve) => {
+        resolveRef.current = resolve;
+
+        const animate = (time: number) => {
+          frameRef.current = 0;
+          const reducedMotion = window.matchMedia(
+            "(prefers-reduced-motion: reduce)",
+          ).matches;
+          const duration = reducedMotion ? 260 : WORLD_TRANSITION_DURATION_MS;
+          const progress = Math.min(
+            1,
+            Math.max(0, (time - startedAt) / duration),
+          );
+
+          if (
+            !swappedRef.current &&
+            progress >= WORLD_TRANSITION_SWAP_PROGRESS
+          ) {
+            swappedRef.current = true;
+            onSwapRef.current?.();
+          }
+
+          onProgressRef.current?.(progress);
+          if (progress < 1) {
+            frameRef.current = requestAnimationFrame(animate);
+            return;
+          }
+
+          onSwapRef.current = null;
+          resolveRef.current = null;
+          swappedRef.current = false;
+          onProgressRef.current?.(1);
+          resolve();
+        };
+
+        frameRef.current = requestAnimationFrame(animate);
+      });
     },
-    [],
+    [cancelAnimation],
   );
 
   const cancel = useCallback(() => {
-    rendererRef.current?.cancel();
-    setActive(false);
-  }, []);
+    cancelAnimation();
+  }, [cancelAnimation]);
 
   useImperativeHandle(forwardedRef, () => ({ play, cancel }), [cancel, play]);
 
-  return (
-    <div
-      className={`pointer-events-none fixed inset-0 z-[90] transition-opacity duration-75 ${
-        active ? "opacity-100" : "opacity-0"
-      }`}
-      data-active={active}
-      data-activity={activity}
-      data-testid="masil-world-transition"
-      aria-hidden={!active}
-    >
-      <canvas
-        ref={canvasRef}
-        className="block h-full w-full"
-        aria-label={
-          activity === "calligraphy"
-            ? "Orb가 서예 공간으로 펼쳐지는 중"
-            : "Orb가 장기 공간으로 펼쳐지는 중"
-        }
-      />
-      {active ? (
-        <span className="sr-only" role="status">
-          {activity === "calligraphy"
-            ? "서예 공간을 만들고 있어요"
-            : "장기 공간을 만들고 있어요"}
-        </span>
-      ) : null}
-    </div>
-  );
+  return null;
 });

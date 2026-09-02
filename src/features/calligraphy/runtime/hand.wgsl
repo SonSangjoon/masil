@@ -23,6 +23,7 @@ struct BrushState {
   invalid: f32,
   has_prev: f32,
   stroke: f32,
+  radius: f32,
 };
 
 struct Roi {
@@ -42,6 +43,12 @@ const TAU: f32 = 6.283185307179586;
 /// Wrist and middle-finger MCP: the landmark model's own hand axis.
 const AXIS_START: u32 = 0u;
 const AXIS_END: u32 = 9u;
+const THUMB_TIP: u32 = 4u;
+const INDEX_MCP: u32 = 5u;
+const INDEX_TIP: u32 = 8u;
+const PINKY_MCP: u32 = 17u;
+const MIN_BRUSH_RADIUS: f32 = 9.0;
+const MAX_BRUSH_RADIUS: f32 = 34.0;
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> lm0: array<f32>;
@@ -105,11 +112,31 @@ fn mcp_centroid(slot: u32) -> vec2f {
   return sum * 0.25;
 }
 
-fn update_brush(state_in: BrushState, measured: vec2f, score: f32, valid_in: bool) -> BrushState {
+// Thumb-to-index distance produces an intentional, scale-independent brush
+// gesture: pinch for a fine point, open the fingers for a broader brush.
+fn brush_radius(slot: u32) -> f32 {
+  let thumb_tip = crop_to_source(landmark_xy(slot, THUMB_TIP), rois[slot]);
+  let index_tip = crop_to_source(landmark_xy(slot, INDEX_TIP), rois[slot]);
+  let index_mcp = crop_to_source(landmark_xy(slot, INDEX_MCP), rois[slot]);
+  let pinky_mcp = crop_to_source(landmark_xy(slot, PINKY_MCP), rois[slot]);
+  let palm_span = max(distance(index_mcp, pinky_mcp), 1.0);
+  let pinch_ratio = distance(thumb_tip, index_tip) / palm_span;
+  let openness = smoothstep(0.18, 1.15, pinch_ratio);
+  return mix(MIN_BRUSH_RADIUS, MAX_BRUSH_RADIUS, openness);
+}
+
+fn update_brush(
+  state_in: BrushState,
+  measured: vec2f,
+  measured_radius: f32,
+  score: f32,
+  valid_in: bool
+) -> BrushState {
   var state = state_in;
 
   if (uniforms.reset > 0.5) {
     state.has_prev = 0.0;
+    state.radius = 0.0;
   }
   state.stroke = 0.0;
 
@@ -133,6 +160,12 @@ fn update_brush(state_in: BrushState, measured: vec2f, score: f32, valid_in: boo
 
   // Time-aware smoothing stays stable across inference rates.
   let alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / max(uniforms.ema_tau, 1e-4));
+  let radius_alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / 0.14);
+  state.radius = select(
+    mix(state.radius, measured_radius, radius_alpha),
+    measured_radius,
+    state.radius <= 0.0
+  );
   var smoothed = measured;
   if (state.tracking > 0.5) {
     smoothed = mix(state.current, measured, alpha);
@@ -172,9 +205,11 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
   let presence = select(uniforms.presence.x, uniforms.presence.y, slot == 1u);
 
   var measured = vec2f(0.0);
+  var measured_radius = 20.0;
   var valid = false;
   if (ran) {
     let centroid_px = mcp_centroid(slot);
+    measured_radius = brush_radius(slot);
     let source_norm = centroid_px / max(uniforms.source, vec2f(1.0));
     // Mirror the raw camera coordinates into brush space.
     measured = vec2f(1.0 - source_norm.x, source_norm.y);
@@ -191,5 +226,11 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
     }
   }
 
-  brushes[slot] = update_brush(brushes[slot], measured, presence, valid);
+  brushes[slot] = update_brush(
+    brushes[slot],
+    measured,
+    measured_radius,
+    presence,
+    valid
+  );
 }

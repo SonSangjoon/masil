@@ -45,6 +45,7 @@ export interface HandResultInput {
 interface VisualFrameOptions {
   readonly dpr?: number;
   readonly showCursor?: boolean;
+  readonly showCamera?: boolean;
 }
 
 export interface PaintPoint {
@@ -300,7 +301,7 @@ export function createVisualPipeline(
             0,
             1,
             stroke ? 1 : 0,
-            0,
+            16,
           ],
           0
         );
@@ -317,11 +318,14 @@ export function createVisualPipeline(
             resolution: output.size,
             mask_size: [MASK_WIDTH, MASK_HEIGHT],
             show_cursor: options.showCursor === false ? 0 : 1,
+            show_camera: options.showCamera === true ? 1 : 0,
             cursor_radius: 23,
             grain_cell: 4 * dpr,
           },
           mask,
           brushes,
+          frameTexture,
+          frameSampler: linearSampler,
         });
         frame(gpu, (currentFrame) => {
           currentFrame.pass({ target: output }, (pass) => pass.draw(composite));

@@ -17,6 +17,7 @@ struct BrushState {
   invalid: f32,
   has_prev: f32,
   stroke: f32,
+  radius: f32,
 };
 
 // Binding array lengths must be literals for vgpu reflection.
@@ -32,7 +33,8 @@ fn capsule_coverage(texel: vec2f, brush: BrushState) -> f32 {
   let ab = b - a;
   let t = clamp(dot(texel - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
   let d = distance(texel, a + ab * t);
-  return clamp((uniforms.radius - d) / max(uniforms.feather, 1e-3) + 0.5, 0.0, 1.0);
+  let radius = select(uniforms.radius, brush.radius, brush.radius > 0.0);
+  return clamp((radius - d) / max(uniforms.feather, 1e-3) + 0.5, 0.0, 1.0);
 }
 
 @compute @workgroup_size(64)

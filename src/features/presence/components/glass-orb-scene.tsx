@@ -6,6 +6,7 @@ type GlassRenderer = {
   ready: Promise<void>;
   setSphereMix: (value: number) => void;
   setVitality: (value: number) => void;
+  setTransition: (value: number) => void;
   dispose: () => void;
 };
 
@@ -52,19 +53,32 @@ export function GlassOrbScene({
   mood,
   presence,
   mode = "hero",
+  transitionProgress = 0,
 }: {
   connected: boolean;
   mood: OrbMood;
   presence: OrbPresence;
   mode?: "hero" | "prompt";
+  transitionProgress?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<GlassRenderer | null>(null);
   const presenceRef = useRef(presence);
   const connectedRef = useRef(connected);
+  const transitionRef = useRef(transitionProgress);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
+  const [viewport, setViewport] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateViewport();
+    window.addEventListener("resize", updateViewport, { passive: true });
+    return () => window.removeEventListener("resize", updateViewport);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,9 +93,8 @@ export function GlassOrbScene({
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const { createRenderer } = await import(
-          "@/features/presence/runtime/renderer"
-        );
+        const { createRenderer } =
+          await import("@/features/presence/runtime/renderer");
         if (cancelled) return;
 
         renderer = createRenderer({
@@ -91,10 +104,9 @@ export function GlassOrbScene({
         rendererRef.current = renderer;
         renderer.setSphereMix(1);
         renderer.setVitality(
-          connectedRef.current
-            ? PRESENCE_VITALITY[presenceRef.current]
-            : 0.28,
+          connectedRef.current ? PRESENCE_VITALITY[presenceRef.current] : 0.28,
         );
+        renderer.setTransition(transitionRef.current);
         await renderer.ready;
 
         if (!cancelled) setStatus("ready");
@@ -117,21 +129,53 @@ export function GlassOrbScene({
   useEffect(() => {
     connectedRef.current = connected;
     presenceRef.current = presence;
+    transitionRef.current = transitionProgress;
     rendererRef.current?.setVitality(
       connected ? PRESENCE_VITALITY[presence] : 0.28,
     );
-  }, [connected, presence]);
+    rendererRef.current?.setTransition(
+      Math.min(1, Math.max(0, transitionProgress)),
+    );
+  }, [connected, presence, transitionProgress]);
 
   const visualFilter = connected
     ? MOOD_FILTERS[mood]
     : "grayscale saturate-[0.08] brightness-[1.03] contrast-[0.9]";
+  const isFluidTransition = mode === "hero" && transitionProgress > 0;
+  const transitionAmount = Math.min(1, Math.max(0, transitionProgress));
+  const movementProgress =
+    transitionAmount * transitionAmount * (3 - 2 * transitionAmount);
+  const heroSize = Math.min(
+    368,
+    Math.max(288, (viewport.width || 1280) * 0.25),
+  );
+  const activitySize = (viewport.width || 1280) >= 640 ? 100 : 88;
+  // Keep the hero Orb clearly above the copy. The canvas itself is centered by
+  // the single Tailwind translate below; the inline transform only owns the
+  // vertical hand-off movement.
+  const heroTop = (viewport.height || 800) * 0.5 - 244;
+  const activityTop = (viewport.width || 1280) >= 640 ? 84 : 80;
+  const heroCenter = heroTop + heroSize * 0.5;
+  const activityCenter = activityTop + activitySize * 0.5;
+  const movementY = (activityCenter - heroCenter) * movementProgress;
+  const fluidScale = isFluidTransition
+    ? 1 + (activitySize / heroSize - 1) * movementProgress
+    : 1;
 
   return (
     <div
       className={
         mode === "hero"
-          ? "masil-orb-stage pointer-events-none absolute left-1/2 top-[calc(50%_-_13.5rem)] h-[clamp(18rem,25vw,23rem)] w-[clamp(18rem,25vw,23rem)] -translate-x-1/2"
+          ? `masil-orb-stage pointer-events-none absolute left-1/2 top-[calc(50%_-_15.25rem)] h-[clamp(18rem,25vw,23rem)] w-[clamp(18rem,25vw,23rem)] -translate-x-1/2 ${isFluidTransition ? "z-[100]" : "z-20"}`
           : "masil-orb-stage pointer-events-none absolute left-1/2 top-[5rem] z-20 size-[5.5rem] -translate-x-1/2 opacity-95 sm:top-[5.25rem] sm:size-[6.25rem]"
+      }
+      style={
+        mode === "hero"
+          ? {
+              transform: `translateY(${movementY}px) scale(${fluidScale})`,
+              transformOrigin: "50% 50%",
+            }
+          : undefined
       }
       data-testid="glass-orb-scene"
       data-presence={presence}

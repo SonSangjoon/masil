@@ -12,9 +12,11 @@ Upstream revision used for this PoC:
 The upstream code is distributed under the MIT License preserved in
 `LICENSE.vgpu`.
 
-MASIL changes the visual compositor from a frosted camera reveal to a private
-calligraphy surface. Camera frames remain local and are used only as input to
-the hand landmark pipeline; MASIL does not render, upload, or persist them.
+MASIL keeps the frosted camera reveal as a private local visual layer and adds
+a crisp-edged translucent calligraphy reference plus the persistent ink mask
+above it. The local hand landmarks also vary brush radius from a thumb-to-index
+gesture. Camera frames remain local; they are rendered only inside the user's
+WebGPU canvas and are never uploaded or persisted.
 
 The converted MediaPipe models and their separate Apache-2.0 notices are stored
 under `public/models/mediapipe-hands/`.
