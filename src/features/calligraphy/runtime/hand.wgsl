@@ -47,6 +47,8 @@ const THUMB_TIP: u32 = 4u;
 const INDEX_MCP: u32 = 5u;
 const INDEX_TIP: u32 = 8u;
 const PINKY_MCP: u32 = 17u;
+const FIST_CLOSE_THRESHOLD: f32 = 0.28;
+const HAND_REOPEN_THRESHOLD: f32 = 0.55;
 const MIN_BRUSH_RADIUS: f32 = 9.0;
 const MAX_BRUSH_RADIUS: f32 = 34.0;
 
@@ -125,14 +127,36 @@ fn brush_radius(slot: u32) -> f32 {
   return mix(MIN_BRUSH_RADIUS, MAX_BRUSH_RADIUS, openness);
 }
 
+// A fingertip moves back toward the wrist when that finger curls into a fist.
+// Comparing it with the finger's PIP joint makes the score independent of the
+// hand's distance from the camera. The thumb stays available for brush-width
+// control and is intentionally excluded from the pen-up gesture.
+fn finger_openness(slot: u32, pip: u32, tip: u32) -> f32 {
+  let wrist = landmark_xy(slot, AXIS_START);
+  let pip_distance = max(distance(landmark_xy(slot, pip), wrist), 1.0);
+  let tip_distance = distance(landmark_xy(slot, tip), wrist);
+  return smoothstep(1.02, 1.22, tip_distance / pip_distance);
+}
+
+fn hand_openness(slot: u32) -> f32 {
+  return (
+    finger_openness(slot, 6u, 8u) +
+    finger_openness(slot, 10u, 12u) +
+    finger_openness(slot, 14u, 16u) +
+    finger_openness(slot, 18u, 20u)
+  ) * 0.25;
+}
+
 fn update_brush(
   state_in: BrushState,
   measured: vec2f,
   measured_radius: f32,
+  openness: f32,
   score: f32,
   valid_in: bool
 ) -> BrushState {
   var state = state_in;
+  let was_painting = state.stroke > 0.5;
 
   if (uniforms.reset > 0.5) {
     state.has_prev = 0.0;
@@ -171,6 +195,22 @@ fn update_brush(
     smoothed = mix(state.current, measured, alpha);
   }
 
+  // Closing the hand lifts the brush immediately. A higher reopening
+  // threshold prevents a nearly closed hand from rapidly toggling the stroke.
+  let gesture_threshold = select(
+    HAND_REOPEN_THRESHOLD,
+    FIST_CLOSE_THRESHOLD,
+    was_painting
+  );
+  if (openness < gesture_threshold) {
+    state.prev = smoothed;
+    state.current = smoothed;
+    state.tracking = 1.0;
+    state.has_prev = 0.0;
+    state.stroke = 0.0;
+    return state;
+  }
+
   if (state.tracking > 0.5 && distance(smoothed, state.current) > uniforms.max_jump) {
     // Keep the track after an implausible jump, but break the painted line.
     state.prev = measured;
@@ -206,10 +246,12 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
 
   var measured = vec2f(0.0);
   var measured_radius = 20.0;
+  var openness = 0.0;
   var valid = false;
   if (ran) {
     let centroid_px = mcp_centroid(slot);
     measured_radius = brush_radius(slot);
+    openness = hand_openness(slot);
     let source_norm = centroid_px / max(uniforms.source, vec2f(1.0));
     // Mirror the raw camera coordinates into brush space.
     measured = vec2f(1.0 - source_norm.x, source_norm.y);
@@ -230,6 +272,7 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
     brushes[slot],
     measured,
     measured_radius,
+    openness,
     presence,
     valid
   );
