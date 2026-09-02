@@ -263,14 +263,14 @@ export function AirCalligraphyCanvas({
               : mode === "requesting"
               ? "카메라를 여는 중"
               : mode === "hand"
-                ? "공중에서 쓰는 중"
+                ? "주먹을 쥐면 붓 들기"
                 : "화면에 직접 쓰는 중"
             : mode === "idle"
               ? "Ready for air writing"
               : mode === "requesting"
               ? "Opening camera"
               : mode === "hand"
-                ? "Writing in the air"
+                ? "Fist to lift the brush"
                 : "Drawing on screen"}
         </div>
 

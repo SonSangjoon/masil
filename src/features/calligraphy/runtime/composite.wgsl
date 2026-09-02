@@ -125,7 +125,9 @@ fn fs_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
   if (uniforms.show_cursor > 0.5) {
     for (var i = 0u; i < BRUSH_COUNT; i = i + 1u) {
       let brush = brushes[i];
-      if (brush.tracking < 0.5) {
+      // has_prev is cleared while the hand is closed, so the cursor disappears
+      // with the lifted brush instead of implying that ink is still active.
+      if (brush.tracking < 0.5 || brush.has_prev < 0.5) {
         continue;
       }
       let radius = select(uniforms.cursor_radius, brush.radius, brush.radius > 0.0);
