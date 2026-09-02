@@ -147,6 +147,28 @@ The complete consent, safety, and service boundary is documented in
 - [Long-term vision](docs/VISION.md) — how MASIL could extend this new
   accessibility layer without becoming surveillance
 
+## Development
+
+MASIL uses Node.js 24, npm, Next.js App Router, TypeScript, and ESLint.
+
+```bash
+npm install
+npm run dev
+```
+
+Before opening a pull request, run the same checks used by CI:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Deployment uses Vercel's Git integration. Import this repository from the
+Vercel dashboard to create Preview deployments for pull requests and Production
+deployments from `main`; no Vercel deployment token is stored in this
+repository.
+
 ## License
 
 MASIL is licensed under the [MIT License](LICENSE). Third-party software,
