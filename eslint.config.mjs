@@ -10,5 +10,7 @@ export default defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored ONNX Runtime browser loader; audited by its upstream package.
+    "public/ort/**",
   ]),
 ]);
