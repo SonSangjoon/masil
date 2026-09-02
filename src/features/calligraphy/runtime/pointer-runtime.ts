@@ -47,6 +47,7 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
     pipeline.renderVisualFrame(output, {
       dpr: Math.min(2, Math.max(1, window.devicePixelRatio || 1)),
       showCursor: true,
+      showCamera: false,
     });
     animationFrame = requestAnimationFrame(draw);
   };

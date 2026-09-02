@@ -1,12 +1,5 @@
 import type { Draw, Effect, Geometry, Gpu, Surface, Target } from "vgpu";
-import {
-  draw,
-  effect,
-  frame,
-  geometry,
-  sampler,
-  target,
-} from "vgpu";
+import { draw, effect, frame, geometry, sampler, target } from "vgpu";
 import { icosphere, perspectiveCamera } from "vgpu/scene";
 
 import type { HeroGlassAssets } from "./hero-glass-assets-core";
@@ -57,6 +50,7 @@ export interface HeroFractalSceneSettings {
   readonly glass: Readonly<HeroFractalGlass>;
   readonly time?: number;
   readonly vitality?: number;
+  readonly transition?: number;
   readonly view?: {
     readonly position: readonly [number, number, number];
     readonly target: readonly [number, number, number];
@@ -83,7 +77,7 @@ export function createCameraControls(camera: Readonly<HeroFractalCamera>) {
   return {
     position: add3(
       camera.cameraTarget,
-      rotateCamera(camera.cameraDistance, camera.cameraRotation)
+      rotateCamera(camera.cameraDistance, camera.cameraRotation),
     ),
     target: [...camera.cameraTarget] as [number, number, number],
     up: rotateCamera([0, 1, 0], camera.cameraRotation),
@@ -98,11 +92,11 @@ export async function createHeroFractalScene(
   gpu: Gpu,
   output: SceneOutput,
   assets: HeroGlassAssets,
-  label = "homepage-light"
+  label = "homepage-light",
 ): Promise<HeroFractalScene> {
   const orbGeometry = geometry(
     gpu,
-    icosphere({ radius: 1, subdivisions: 5, shading: "smooth" })
+    icosphere({ radius: 1, subdivisions: 5, shading: "smooth" }),
   );
   const scene = {
     present: effect(gpu, heroFractalPresentWgsl, {
@@ -161,7 +155,7 @@ export function setHeroFractalSceneSettings(
   scene: HeroFractalScene,
   assets: HeroGlassAssets,
   resolution: readonly [number, number],
-  settings: HeroFractalSceneSettings
+  settings: HeroFractalSceneSettings,
 ): HeroFractalFrameState {
   const { camera, orbMaterial, glass } = settings;
   const target = settings.view?.target ?? camera.cameraTarget;
@@ -176,7 +170,7 @@ export function setHeroFractalSceneSettings(
         target,
         up,
         settings.view.pointer,
-        settings.view.maxMouseRotation
+        settings.view.maxMouseRotation,
       )
     : basePosition;
   const fov = settings.view?.fov ?? camera.fov;
@@ -193,7 +187,7 @@ export function setHeroFractalSceneSettings(
   const innerScale =
     glass.fractalScale * (1 - materialMix) + glass.orbScale * materialMix;
   const environmentRotation = environmentRotationMatrix(
-    glass.environmentRotation
+    glass.environmentRotation,
   );
   const fractalModel = modelMatrix(innerScale, [
     0,
@@ -202,6 +196,7 @@ export function setHeroFractalSceneSettings(
   ]);
   const time = settings.time ?? 0;
   const vitality = clamp01(settings.vitality ?? 0.42);
+  const transition = clamp01(settings.transition ?? 0);
 
   scene.background.set({
     params: {
@@ -224,6 +219,7 @@ export function setHeroFractalSceneSettings(
       cameraPosition: position,
       time,
       vitality,
+      transition,
       material: orbMaterial,
       environmentRotation,
       environmentExposure: glass.environmentExposure,
@@ -260,7 +256,7 @@ export function renderHeroFractalScene(
       (pass) => {
         if (!transparent) pass.draw(scene.background);
         pass.draw(scene.orb);
-      }
+      },
     );
     currentFrame.pass(
       {
@@ -270,14 +266,14 @@ export function renderHeroFractalScene(
       (pass) => {
         pass.draw(scene.present);
         for (const debugDraw of finalDebugDraws) pass.draw(debugDraw);
-      }
+      },
     );
   });
 }
 
 export function resizeHeroFractalScene(
   scene: HeroFractalScene,
-  size: readonly [number, number]
+  size: readonly [number, number],
 ): void {
   scene.interior.resize(size);
 }
@@ -293,7 +289,7 @@ function clamp01(value: number): number {
 
 function rotateCamera(
   vector: readonly [number, number, number],
-  rotation: readonly [number, number, number]
+  rotation: readonly [number, number, number],
 ): [number, number, number] {
   const cz = Math.cos(rotation[2]);
   const sz = Math.sin(rotation[2]);
@@ -320,14 +316,14 @@ function rotateCamera(
 
 function add3(
   a: readonly [number, number, number],
-  b: readonly [number, number, number]
+  b: readonly [number, number, number],
 ): [number, number, number] {
   return [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 }
 
 export function modelMatrix(
   scale: number,
-  translation: readonly [number, number, number]
+  translation: readonly [number, number, number],
 ): Float32Array {
   return new Float32Array([
     scale,
@@ -354,7 +350,7 @@ function orbitCameraPosition(
   target: readonly [number, number, number],
   up: readonly [number, number, number],
   pointer: readonly [number, number],
-  maxRotationDegrees: number
+  maxRotationDegrees: number,
 ): readonly [number, number, number] {
   if (maxRotationDegrees === 0 || (pointer[0] === 0 && pointer[1] === 0)) {
     return position;
@@ -365,22 +361,22 @@ function orbitCameraPosition(
   const yawedOffset = rotateAroundAxis(
     offset,
     upAxis,
-    -pointer[0] * maxRotation
+    -pointer[0] * maxRotation,
   );
   const rightAxis = normalize3(
     cross3(scale3(yawedOffset, -1), upAxis),
-    [0, 0, 1]
+    [0, 0, 1],
   );
   return add3(
     target,
-    rotateAroundAxis(yawedOffset, rightAxis, pointer[1] * maxRotation)
+    rotateAroundAxis(yawedOffset, rightAxis, pointer[1] * maxRotation),
   );
 }
 
 function rotateAroundAxis(
   vector: readonly [number, number, number],
   axis: readonly [number, number, number],
-  angle: number
+  angle: number,
 ): [number, number, number] {
   const cosine = Math.cos(angle);
   const sine = Math.sin(angle);
@@ -395,7 +391,7 @@ function rotateAroundAxis(
 
 function normalize3(
   vector: readonly [number, number, number],
-  fallback: readonly [number, number, number]
+  fallback: readonly [number, number, number],
 ): [number, number, number] {
   const length = Math.hypot(vector[0], vector[1], vector[2]);
   return length < 0.000001
@@ -405,21 +401,21 @@ function normalize3(
 
 function subtract3(
   a: readonly [number, number, number],
-  b: readonly [number, number, number]
+  b: readonly [number, number, number],
 ): [number, number, number] {
   return [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
 }
 
 function scale3(
   vector: readonly [number, number, number],
-  scale: number
+  scale: number,
 ): [number, number, number] {
   return [vector[0] * scale, vector[1] * scale, vector[2] * scale];
 }
 
 function cross3(
   a: readonly [number, number, number],
-  b: readonly [number, number, number]
+  b: readonly [number, number, number],
 ): [number, number, number] {
   return [
     a[1] * b[2] - a[2] * b[1],
@@ -430,13 +426,13 @@ function cross3(
 
 function dot3(
   a: readonly [number, number, number],
-  b: readonly [number, number, number]
+  b: readonly [number, number, number],
 ): number {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
 function environmentRotationMatrix(
-  rotationDegrees: readonly [number, number, number]
+  rotationDegrees: readonly [number, number, number],
 ): Float32Array {
   const toRadians = -Math.PI / 180;
   const rotation = rotationDegrees.map((value) => value * toRadians);

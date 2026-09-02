@@ -27,10 +27,7 @@ import {
 } from "@/features/transitions/components/masil-world-transition";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Item,
   ItemActions,
@@ -48,17 +45,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@/components/ui/toggle-group";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   createPendingCameraRequest,
   type PendingCameraRequest,
@@ -262,7 +251,8 @@ const TOOL_COPY_EN: Record<ToolName, string> = {
   masil_wait_for_person_janggi_move: "Wait for the person to make one move",
   masil_move_janggi_piece: "Validate and animate a Janggi move",
   masil_open_support_note: "Open a private note after an explicit request",
-  masil_prepare_support_review: "Prepare the minimum support details for review",
+  masil_prepare_support_review:
+    "Prepare the minimum support details for review",
   masil_create_local_handoff: "Create a confirmed local demo handoff",
   masil_get_handoff_status: "Read the owner, status, and next step",
   masil_return_to_activity: "Return to the preserved creative activity",
@@ -401,8 +391,8 @@ export function MasilExperience() {
   const [language, setLanguage] = useState<Language>("ko");
   const [session, setSession] = useState<DemoSession>(INITIAL_SESSION);
   const [presence, setPresence] = useState<Presence>("ready");
-  const [webMcpStatus, setWebMcpStatus] =
-    useState<WebMcpStatus>("checking");
+  const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>("checking");
+  const [transitionProgress, setTransitionProgress] = useState(0);
   const [events, setEvents] = useState<DemoEvent[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
   const [characterRequest, setCharacterRequest] =
@@ -417,9 +407,7 @@ export function MasilExperience() {
     resolve: (resolution: CharacterChoiceResolution) => void;
     reject: (reason: Error) => void;
   } | null>(null);
-  const pendingJanggiAnimationRef = useRef<PendingJanggiAnimation | null>(
-    null,
-  );
+  const pendingJanggiAnimationRef = useRef<PendingJanggiAnimation | null>(null);
   const pendingPersonJanggiMoveRef = useRef<PendingPersonJanggiMove | null>(
     null,
   );
@@ -611,10 +599,7 @@ export function MasilExperience() {
   }, [addEvent]);
 
   const handleCameraStateChange = useCallback(
-    (
-      state: "requesting" | "hand" | "fallback",
-      reason?: string,
-    ) => {
+    (state: "requesting" | "hand" | "fallback", reason?: string) => {
       if (state === "requesting") {
         cameraEventRef.current = addEvent(
           "사람의 선택으로 카메라 권한 요청",
@@ -709,8 +694,7 @@ export function MasilExperience() {
             scenarios: {
               calligraphy: {
                 discoverAndAsk: "masil_open_activity",
-                generateAndPlaceReference:
-                  "masil_set_calligraphy_reference",
+                generateAndPlaceReference: "masil_set_calligraphy_reference",
                 referenceAssetContract: {
                   textLength: "1-4 characters",
                   format: "PNG, JPEG, or WebP URL readable by the page",
@@ -727,8 +711,7 @@ export function MasilExperience() {
               janggi: {
                 open: "masil_open_activity",
                 readBoardAndLegalMoves: "masil_get_janggi_state",
-                waitForPersonBoardGesture:
-                  "masil_wait_for_person_janggi_move",
+                waitForPersonBoardGesture: "masil_wait_for_person_janggi_move",
                 previewOrExecuteMove: "masil_move_janggi_piece",
                 turnContract: {
                   personSide: PERSON_JANGGI_SIDE,
@@ -822,11 +805,7 @@ export function MasilExperience() {
           }
           const caption =
             activity === "calligraphy"
-              ? textInput(
-                  input,
-                  "question",
-                  "어떤 글자를 써볼까요?",
-                )
+              ? textInput(input, "question", "어떤 글자를 써볼까요?")
               : textInput(input, "caption", "좋아요. 장기판을 같이 볼게요.");
           let next: DemoSession | null = null;
           const revealActivity = () => {
@@ -923,7 +902,11 @@ export function MasilExperience() {
             setPresence("creating");
             await sleep(180);
             setPresence("ready");
-            finishEvent(eventId, "done", `${choice.character} 공중 서예를 열었어요`);
+            finishEvent(
+              eventId,
+              "done",
+              `${choice.character} 공중 서예를 열었어요`,
+            );
             return toolResult(
               "Opened air calligraphy after the person's visible choice.",
               {
@@ -987,16 +970,8 @@ export function MasilExperience() {
             ),
             calligraphy: {
               character,
-              reading: textInput(
-                input,
-                "reading",
-                state.calligraphy.reading,
-              ),
-              meaning: textInput(
-                input,
-                "meaning",
-                state.calligraphy.meaning,
-              ),
+              reading: textInput(input, "reading", state.calligraphy.reading),
+              meaning: textInput(input, "meaning", state.calligraphy.meaning),
               referenceImageUrl: suppliedUrl || null,
               referenceImageAlt: textInput(
                 input,
@@ -1195,12 +1170,7 @@ export function MasilExperience() {
           }
           const nextGame =
             action === "move"
-              ? applyJanggiMove(
-                  janggiGame,
-                  pieceId,
-                  destination,
-                  spokenMove,
-                )
+              ? applyJanggiMove(janggiGame, pieceId, destination, spokenMove)
               : janggiGame;
           const movedPiece = nextGame.pieces.find(
             (piece) => piece.id === pieceId,
@@ -1300,11 +1270,7 @@ export function MasilExperience() {
             caption:
               "말씀하신 내용을 먼저 어르신에게만 보이는 메모로 정리했어요.",
             support: {
-              summary: textInput(
-                input,
-                "summary",
-                SUPPORT_EXAMPLE.summary,
-              ),
+              summary: textInput(input, "summary", SUPPORT_EXAMPLE.summary),
               desiredOutcome: textInput(
                 input,
                 "desiredOutcome",
@@ -1377,7 +1343,8 @@ export function MasilExperience() {
             status: "waiting",
             owner: "김하늘 생활지원 매니저 · 데모",
             callbackAt: "오늘 오후 4시 30분",
-            firstStep: "상황을 다시 처음부터 묻지 않고, 중단된 반찬 배달부터 확인",
+            firstStep:
+              "상황을 다시 처음부터 묻지 않고, 중단된 반찬 배달부터 확인",
           };
           const next = updateSession((state) => ({
             ...state,
@@ -1622,11 +1589,7 @@ export function MasilExperience() {
             summary: { type: "string" },
             desiredOutcome: { type: "string" },
           },
-          required: [
-            "personExplicitlyAsked",
-            "summary",
-            "desiredOutcome",
-          ],
+          required: ["personExplicitlyAsked", "summary", "desiredOutcome"],
           additionalProperties: false,
         },
       ),
@@ -1702,8 +1665,7 @@ export function MasilExperience() {
           }
           const webMcpTool: WebMcpTool = {
             ...descriptor,
-            execute: (input) =>
-              executeTool(descriptor.name, input, "webmcp"),
+            execute: (input) => executeTool(descriptor.name, input, "webmcp"),
           };
           await Promise.resolve(modelContext.registerTool(webMcpTool));
           registered.push(descriptor.name);
@@ -1756,7 +1718,10 @@ export function MasilExperience() {
         ? { ...current.support, actionConfirmed: true }
         : null,
     }));
-    addEvent(`사람이 작업 카드 생성도 확인 · revision ${next.revision}`, "human");
+    addEvent(
+      `사람이 작업 카드 생성도 확인 · revision ${next.revision}`,
+      "human",
+    );
   };
 
   const updateDisclosure = (minimumDisclosure: string) => {
@@ -1842,9 +1807,19 @@ export function MasilExperience() {
     [executeTool],
   );
 
+  const handleTransitionProgress = useCallback((progress: number) => {
+    if (progress >= 1) {
+      setTransitionProgress(0);
+      return;
+    }
+    setTransitionProgress(Math.min(1, Math.max(0, progress)));
+  }, []);
+
   const isHome = session.stage === "home";
-  const keepsAgentSeed = session.stage === "activity";
   const isWebMcpConnected = webMcpStatus === "connected";
+  const isFluidTransition = transitionProgress > 0;
+  const keepsAgentSeed = session.stage === "activity" && !isFluidTransition;
+  const showHeroOrb = isHome || isFluidTransition;
   return (
     <main
       className="masil-shell relative min-h-[100svh] overflow-hidden bg-[#f7f4ed] text-[#171513]"
@@ -1852,13 +1827,17 @@ export function MasilExperience() {
       data-stage={session.stage}
       data-activity={session.activity ?? "none"}
     >
-      <MasilWorldTransition ref={worldTransitionRef} />
-      {isHome ? (
+      <MasilWorldTransition
+        ref={worldTransitionRef}
+        onProgress={handleTransitionProgress}
+      />
+      {showHeroOrb ? (
         <GlassOrbScene
           connected={isWebMcpConnected}
           mood="idle"
           presence={presence}
           mode="hero"
+          transitionProgress={isFluidTransition ? transitionProgress : 0}
         />
       ) : null}
       {keepsAgentSeed ? (
@@ -1992,7 +1971,6 @@ export function MasilExperience() {
               onReturn={() => void returnToActivity()}
             />
           ) : null}
-
         </section>
       )}
 
@@ -2021,10 +1999,12 @@ export function MasilExperience() {
         status={webMcpStatus}
         toolCount={toolDescriptors.length}
       />
-
     </main>
   );
 }
+
+const MASIL_PRIMARY_PROMPT_CLASS =
+  "text-[clamp(1.5rem,2.35vw,2.25rem)] leading-none font-medium tracking-[-0.055em]";
 
 function HomeScreen({
   language,
@@ -2053,7 +2033,9 @@ function HomeScreen({
   return (
     <section className="relative z-10 min-h-[100svh] px-5 pt-[76px] text-center sm:px-8">
       <div className="masil-copy-enter absolute inset-x-5 top-[60%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
-        <h1 className="max-w-none text-[min(2.25rem,2.35vw)] leading-none font-medium tracking-[-0.055em] whitespace-nowrap text-[#4f4944]">
+        <h1
+          className={MASIL_PRIMARY_PROMPT_CLASS + " max-w-none whitespace-nowrap text-[#4f4944]"}
+        >
           {headline}
         </h1>
         {connected ? (
@@ -2149,8 +2131,10 @@ function CalligraphyCharacterPrompt({
 }) {
   return (
     <div className="relative grid h-full min-h-[calc(100svh-76px)] place-items-center overflow-hidden bg-transparent px-5 pb-10 text-center sm:px-8">
-      <div className="masil-copy-enter relative z-10 mt-[5.5rem] flex w-full max-w-5xl flex-col items-center sm:mt-[6.5rem]">
-        <h2 className="masil-balance max-w-[14ch] text-[clamp(2.75rem,5.5vw,5.35rem)] leading-[1.04] font-medium tracking-[-0.07em] text-[#191715]">
+      <div className="masil-copy-enter relative z-10 mt-[4.5rem] flex w-full max-w-5xl flex-col items-center sm:mt-[5.25rem]">
+        <h2
+          className={MASIL_PRIMARY_PROMPT_CLASS + " masil-balance max-w-none whitespace-nowrap text-[#191715]"}
+        >
           {request.question}
         </h2>
 
@@ -2219,18 +2203,15 @@ function AgentProjection({
     if (caption || readyCopy || presence !== "ready") return;
 
     const timer = window.setInterval(() => {
-      setPromptIndex((current) =>
-        (current + 1) % AGENT_PROMPTS[language].length,
+      setPromptIndex(
+        (current) => (current + 1) % AGENT_PROMPTS[language].length,
       );
     }, AGENT_PROMPT_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
   }, [caption, language, presence, readyCopy]);
 
-  const copy =
-    caption ||
-    readyCopy ||
-    AGENT_PROMPTS[language][promptIndex];
+  const copy = caption || readyCopy || AGENT_PROMPTS[language][promptIndex];
   const isRotatingPrompt = !caption && !readyCopy && presence === "ready";
 
   return (
@@ -2429,7 +2410,8 @@ function EventLogDrawer({
                       <ItemContent>
                         <ItemTitle>{event.label}</ItemTitle>
                         <ItemDescription className="text-xs uppercase">
-                          {event.source === "webmcp" ? "WEBMCP" : "PERSON"} · {event.status}
+                          {event.source === "webmcp" ? "WEBMCP" : "PERSON"} ·{" "}
+                          {event.status}
                         </ItemDescription>
                       </ItemContent>
                     </Item>
@@ -2557,7 +2539,9 @@ function SupportOverlay({
                 onClick={onPrepare}
                 data-testid="prepare-review"
               >
-                {language === "ko" ? "사람 도움을 알아봐줘" : "Show me human help"}
+                {language === "ko"
+                  ? "사람 도움을 알아봐줘"
+                  : "Show me human help"}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
             </div>
@@ -2592,7 +2576,10 @@ function SupportOverlay({
                     : "4:30 PM today · support manager calls first"}
                 </p>
                 <p className="mt-5 flex items-start gap-2 border-t border-white/10 pt-4 text-xs leading-5 text-white/52">
-                  <Workflow aria-hidden="true" className="mt-0.5 size-3.5 shrink-0" />
+                  <Workflow
+                    aria-hidden="true"
+                    className="mt-0.5 size-3.5 shrink-0"
+                  />
                   {language === "ko"
                     ? "MASIL 제공자가 Agent에게 실제 가능한 창구·시간·입력 형식을 구조적으로 알려줍니다."
                     : "MASIL declares the available route, time, and input shape directly to the Agent."}
@@ -2608,7 +2595,9 @@ function SupportOverlay({
                   value={support.minimumDisclosure}
                   onChange={(event) => onUpdateDisclosure(event.target.value)}
                   aria-label={
-                    language === "ko" ? "공개할 문장 수정" : "Edit shared sentence"
+                    language === "ko"
+                      ? "공개할 문장 수정"
+                      : "Edit shared sentence"
                   }
                 />
                 <span className="mt-2 block text-xs leading-5 text-[#7b736d]">
@@ -2629,7 +2618,9 @@ function SupportOverlay({
                     ? "이 문장만 보여줘도 괜찮아요"
                     : "You may share only this sentence"
                 }
-                description={language === "ko" ? "공개 내용 확인" : "Confirm words"}
+                description={
+                  language === "ko" ? "공개 내용 확인" : "Confirm words"
+                }
               />
               <ConfirmationRow
                 checked={support.actionConfirmed}
@@ -2665,7 +2656,9 @@ function SupportOverlay({
                 onClick={onCreateHandoff}
                 data-testid="create-handoff"
               >
-                {language === "ko" ? "확인한 내용으로 연결" : "Connect with confirmed details"}
+                {language === "ko"
+                  ? "확인한 내용으로 연결"
+                  : "Connect with confirmed details"}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
             </div>
@@ -2752,7 +2745,9 @@ function SupportOverlay({
             <div className="bg-[#f0ebe3] p-5 sm:p-8">
               <PanelEyebrow
                 icon={UserRoundCheck}
-                label={language === "ko" ? "담당자 화면 · 데모" : "Staff view · demo"}
+                label={
+                  language === "ko" ? "담당자 화면 · 데모" : "Staff view · demo"
+                }
               />
               <div className="mt-5 flex items-start justify-between gap-5">
                 <div>
@@ -2774,7 +2769,9 @@ function SupportOverlay({
 
               <div className="mt-5 rounded-2xl bg-[#fbf9f4] p-5 shadow-[0_12px_40px_rgba(52,36,27,0.06)]">
                 <WorkItem
-                  label={language === "ko" ? "당사자가 확인한 말" : "Confirmed words"}
+                  label={
+                    language === "ko" ? "당사자가 확인한 말" : "Confirmed words"
+                  }
                   value={support.minimumDisclosure}
                 />
                 <WorkItem
@@ -2782,7 +2779,9 @@ function SupportOverlay({
                   value={support.desiredOutcome}
                 />
                 <WorkItem
-                  label={language === "ko" ? "선호 연락 방식" : "Contact preference"}
+                  label={
+                    language === "ko" ? "선호 연락 방식" : "Contact preference"
+                  }
                   value={
                     language === "ko"
                       ? "방문 전, 오늘 오후 전화"
@@ -2871,7 +2870,10 @@ function PanelEyebrow({
 
 function SummaryBlock({ label, value }: { label: string; value: string }) {
   return (
-    <Card size="sm" className="rounded-xl border-black/[0.065] bg-white/55 shadow-none">
+    <Card
+      size="sm"
+      className="rounded-xl border-black/[0.065] bg-white/55 shadow-none"
+    >
       <CardContent className="p-4">
         <p className="text-[0.65rem] font-semibold tracking-[0.12em] text-[#8b827b] uppercase">
           {label}
