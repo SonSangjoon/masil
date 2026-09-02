@@ -1,5 +1,7 @@
 # MASIL
 
+[**Open MASIL →**](https://masil-webmcp.vercel.app)
+
 > **When the community center is out of reach and the web is impossible to
 > navigate, where does creative life go?**
 
@@ -146,6 +148,28 @@ The complete consent, safety, and service boundary is documented in
   calligraphy asset contract, Janggi turns, confirmations, and recovery
 - [Long-term vision](docs/VISION.md) — how MASIL could extend this new
   accessibility layer without becoming surveillance
+
+## Development
+
+MASIL uses Node.js 24, npm, Next.js App Router, TypeScript, and ESLint.
+
+```bash
+npm install
+npm run dev
+```
+
+Before opening a pull request, run the same checks used by CI:
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+Deployment uses Vercel's Git integration. Pull requests create Preview
+deployments, and `main` deploys to
+[masil-webmcp.vercel.app](https://masil-webmcp.vercel.app). No Vercel
+deployment token is stored in this repository.
 
 ## License
 
