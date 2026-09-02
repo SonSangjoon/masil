@@ -22,6 +22,7 @@ import {
   type JanggiMoveState,
   type JanggiPieceKind,
 } from "@/features/janggi/model/game";
+import { Button } from "@/components/ui/button";
 
 type Language = "ko" | "en";
 
@@ -478,10 +479,12 @@ function VgpuJanggiBoard({
               const hitSize = pieceHitSize(piece.kind, size.width);
               const isSelected = piece.id === selectedPieceId;
               return (
-                <button
+                <Button
                   key={`hit-${piece.id}`}
                   type="button"
-                  className={`absolute z-30 touch-none rounded-full border transition-[border-color,background-color,box-shadow] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#d78a62]/70 focus-visible:ring-offset-2 ${
+                  variant="ghost"
+                  size="icon"
+                  className={`absolute z-30 touch-none rounded-full border p-0 transition-[border-color,background-color,box-shadow] duration-200 hover:bg-transparent focus-visible:ring-[#d78a62]/70 focus-visible:ring-offset-2 ${
                     isSelected
                       ? "border-[#d8a56e]/85 bg-[#f3c5a2]/16 shadow-[0_0_0_7px_rgba(216,165,110,0.12),0_10px_28px_rgba(78,45,28,0.16)]"
                       : "border-transparent bg-transparent hover:border-[#d8a56e]/40"
@@ -525,10 +528,12 @@ function VgpuJanggiBoard({
               BOARD_SURFACE_OFFSET,
             );
             return (
-              <button
+              <Button
                 key={`destination-${destination.row}-${destination.col}`}
                 type="button"
-                className="group/destination absolute z-40 grid size-[clamp(2.7rem,4.7vw,4rem)] place-items-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#bd684d]/65 focus-visible:ring-offset-2"
+                variant="ghost"
+                size="icon"
+                className="group/destination absolute z-40 grid size-[clamp(2.7rem,4.7vw,4rem)] place-items-center rounded-full p-0 hover:bg-transparent focus-visible:ring-[#bd684d]/65 focus-visible:ring-offset-2"
                 style={{
                   left: `${point.left}%`,
                   top: `${point.top}%`,
@@ -546,7 +551,7 @@ function VgpuJanggiBoard({
                 }}
               >
                 <span className="size-[clamp(0.72rem,1.4vw,1rem)] rounded-full border border-[#bc765b]/65 bg-[#f8dcc5]/55 shadow-[0_0_0_7px_rgba(188,118,91,0.11),0_4px_14px_rgba(98,52,31,0.18)] transition-transform duration-200 group-hover/destination:scale-125" />
-              </button>
+              </Button>
             );
           })
         : null}

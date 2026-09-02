@@ -37,52 +37,81 @@ struct VertexOut {
 }
 
 fn orbWave(direction: vec3f, time: f32, vitality: f32) -> f32 {
-  let amplitude = mix(0.56, 1.08, vitality);
+  let amplitude = mix(0.68, 1.0, vitality);
   return (
-    sin(dot(direction, vec3f(0.811, 0.324, 0.486)) * 3.2 + time * 0.43) * 0.022 +
-    sin(dot(direction, vec3f(-0.365, 0.913, 0.183)) * 5.1 - time * 0.31) * 0.012 +
-    sin(dot(direction, vec3f(0.214, -0.456, 0.864)) * 8.3 + time * 0.23) * 0.006 +
-    sin(dot(direction, vec3f(-0.704, -0.112, 0.701)) * 11.7 - time * 0.17) * 0.0025
+    sin(dot(direction, vec3f(0.811, 0.324, 0.486)) * 2.05 + time * 0.54) * 0.078 +
+    sin(dot(direction, vec3f(-0.365, 0.913, 0.183)) * 2.75 - time * 0.39) * 0.052 +
+    sin(dot(direction, vec3f(0.214, -0.456, 0.864)) * 4.4 + time * 0.31) * 0.021 +
+    sin(dot(direction, vec3f(-0.704, -0.112, 0.701)) * 7.2 - time * 0.22) * 0.008
   ) * amplitude;
 }
 
 fn deformOrb(position: vec3f, time: f32, vitality: f32) -> vec3f {
   let direction = normalize(position);
-  let lifeTime = time * mix(0.82, 1.34, vitality);
-  let breathing = sin(lifeTime * 0.52) * mix(0.014, 0.025, vitality);
-  let firstBeat = pow(max(sin(lifeTime * 1.17), 0.0), 14.0);
-  let secondBeat = pow(max(sin(lifeTime * 1.17 - 0.68), 0.0), 18.0);
-  let heartbeat = (firstBeat + secondBeat * 0.42) * mix(0.003, 0.012, vitality);
-  let drift = vec3f(
-    1.0 + sin(lifeTime * 0.23) * mix(0.014, 0.027, vitality),
-    1.0 + sin(lifeTime * 0.19 + 2.1) * mix(0.017, 0.032, vitality),
-    1.0 + sin(lifeTime * 0.21 + 4.2) * mix(0.012, 0.024, vitality),
+  let lifeTime = time * mix(0.72, 1.05, vitality);
+  let breathing = (
+    sin(lifeTime * 0.72) * 0.72 +
+    sin(lifeTime * 0.31 + 1.8) * 0.28
+  ) * mix(0.028, 0.058, vitality);
+  let firstBeat = pow(max(sin(lifeTime * 1.08), 0.0), 16.0);
+  let secondBeat = pow(max(sin(lifeTime * 1.08 - 0.65), 0.0), 20.0);
+  let heartbeat = (firstBeat + secondBeat * 0.38) * mix(0.004, 0.016, vitality);
+
+  let softBody = vec3f(
+    1.0 + sin(lifeTime * 0.34 + 0.2) * mix(0.045, 0.09, vitality),
+    1.0 + sin(lifeTime * 0.27 + 2.2) * mix(0.052, 0.115, vitality),
+    1.0 + sin(lifeTime * 0.3 + 4.1) * mix(0.038, 0.078, vitality),
   );
-  let pulseDirection = normalize(vec3f(
-    sin(lifeTime * 0.29),
-    cos(lifeTime * 0.23 + 0.8),
-    0.55 + sin(lifeTime * 0.17 + 2.2) * 0.45,
+
+  let primaryLobeDirection = normalize(vec3f(
+    sin(lifeTime * 0.42) + 0.22,
+    cos(lifeTime * 0.31 + 0.8),
+    0.62 + sin(lifeTime * 0.24 + 2.2) * 0.58,
   ));
-  let movingBulge = pow(max(dot(direction, pulseDirection), 0.0), 7.0) *
-    mix(0.012, 0.032, vitality);
-  let counterDirection = normalize(vec3f(
-    cos(lifeTime * 0.21 + 2.4),
-    sin(lifeTime * 0.27 + 4.1),
-    -0.42 + cos(lifeTime * 0.16) * 0.38,
+  let primaryLobe = pow(max(dot(direction, primaryLobeDirection), 0.0), 3.2) *
+    mix(0.072, 0.17, vitality);
+
+  let secondaryLobeDirection = normalize(vec3f(
+    cos(lifeTime * 0.29 + 2.5),
+    sin(lifeTime * 0.37 + 4.0),
+    -0.46 + cos(lifeTime * 0.21) * 0.54,
   ));
-  let counterLobe = pow(max(dot(direction, counterDirection), 0.0), 5.0) *
-    mix(0.008, 0.022, vitality);
+  let secondaryLobe = pow(max(dot(direction, secondaryLobeDirection), 0.0), 3.8) *
+    mix(0.052, 0.13, vitality);
+
+  let tertiaryLobeDirection = normalize(vec3f(
+    sin(lifeTime * 0.25 + 4.8),
+    0.38 + cos(lifeTime * 0.33 + 1.7) * 0.72,
+    cos(lifeTime * 0.27 + 0.4),
+  ));
+  let tertiaryLobe = pow(max(dot(direction, tertiaryLobeDirection), 0.0), 4.4) *
+    mix(0.035, 0.092, vitality);
+
+  let valleyDirection = normalize(vec3f(
+    cos(lifeTime * 0.32 + 1.1),
+    sin(lifeTime * 0.28 + 2.9),
+    cos(lifeTime * 0.19 + 4.7),
+  ));
+  let movingValley = pow(max(dot(direction, valleyDirection), 0.0), 3.6) *
+    mix(0.034, 0.086, vitality);
+
   let lifeScale = 1.0 + breathing + heartbeat +
-    orbWave(direction, lifeTime, vitality) + movingBulge + counterLobe;
+    orbWave(direction, lifeTime, vitality) + primaryLobe + secondaryLobe +
+    tertiaryLobe - movingValley;
   let swirlAxis = normalize(vec3f(
-    0.31 + sin(lifeTime * 0.14) * 0.18,
+    0.31 + sin(lifeTime * 0.19) * 0.22,
     0.78,
-    0.43 + cos(lifeTime * 0.11) * 0.16,
+    0.43 + cos(lifeTime * 0.16) * 0.2,
   ));
   let surfaceDrift = cross(direction, swirlAxis) *
-    sin(dot(direction, swirlAxis) * 5.6 + lifeTime * 0.28) *
-    mix(0.003, 0.009, vitality);
-  return position * drift * lifeScale + surfaceDrift;
+    sin(dot(direction, swirlAxis) * 4.2 + lifeTime * 0.46) *
+    mix(0.012, 0.036, vitality);
+  let centerDrift = vec3f(
+    sin(lifeTime * 0.23 + 0.4),
+    sin(lifeTime * 0.19 + 2.3),
+    cos(lifeTime * 0.21 + 1.1),
+  ) * mix(0.014, 0.034, vitality);
+  return position * softBody * lifeScale + surfaceDrift + centerDrift;
 }
 
 fn deformOrbNormal(position: vec3f, time: f32, vitality: f32) -> vec3f {
@@ -185,16 +214,16 @@ fn microGrain(position: vec3f) -> f32 {
   let fresnel = fresnelSchlick(facing);
   let maxEnvironmentLevel = f32(textureNumLevels(environmentTexture) - 1u);
 
-  let lifeTime = params.time * mix(0.8, 1.35, params.vitality);
+  let lifeTime = params.time * mix(0.74, 1.08, params.vitality);
   let flowPosition = objectDirection * 1.72 + vec3f(
-    lifeTime * 0.028,
-    -lifeTime * 0.019,
-    lifeTime * 0.014,
+    lifeTime * 0.062,
+    -lifeTime * 0.046,
+    lifeTime * 0.036,
   );
   let cloud = clayNoise(flowPosition);
   let secondary = clayNoise(
     flowPosition * 0.58 + vec3f(3.7, -2.1, 1.8) +
-    vec3f(-lifeTime * 0.012, lifeTime * 0.018, 0.0)
+    vec3f(-lifeTime * 0.034, lifeTime * 0.042, lifeTime * 0.018)
   );
   let tide = 0.5 + 0.5 * sin(
     objectDirection.y * 3.25 +
@@ -272,17 +301,34 @@ fn microGrain(position: vec3f) -> f32 {
     currentNoise * 0.72 +
     (0.5 + 0.5 * sin(objectDirection.y * 2.8 - lifeTime * 0.17)) * 0.28,
   );
-  let pulse = 0.72 + 0.28 * sin(lifeTime * 0.78);
-  let innerLightDirection = normalize(vec3f(0.78, 0.55, 0.18));
+  let pulse = 0.68 + 0.32 * sin(lifeTime * 0.92);
+  let innerLightDirection = normalize(vec3f(
+    sin(lifeTime * 0.44) * 0.86,
+    0.28 + cos(lifeTime * 0.37 + 0.8) * 0.68,
+    cos(lifeTime * 0.41 + 1.7) * 0.82,
+  ));
   let innerFacing = pow(
     clamp(dot(objectDirection, innerLightDirection), 0.0, 1.0),
-    2.7,
+    2.15,
   );
   let innerAura = vec3f(1.0, 0.43, 0.27) * innerFacing *
-    (0.06 + 0.045 * pulse) * (0.65 + warmPocket * 0.35);
+    (0.11 + 0.12 * pulse) * (0.62 + warmPocket * 0.38);
+  let counterLightDirection = normalize(vec3f(
+    cos(lifeTime * 0.31 + 2.4),
+    sin(lifeTime * 0.35 + 3.6) * 0.82,
+    -0.55 + sin(lifeTime * 0.23) * 0.42,
+  ));
+  let counterFacing = pow(
+    clamp(dot(objectDirection, counterLightDirection), 0.0, 1.0),
+    3.1,
+  );
+  let counterAura = vec3f(0.72, 0.12, 0.055) * counterFacing *
+    (0.08 + 0.095 * (1.0 - pulse));
   let livingCurrent = vec3f(1.0, 0.42, 0.24) * currentBand *
-    mix(0.026, 0.12, params.vitality) * pulse *
+    mix(0.075, 0.24, params.vitality) * pulse *
     (0.34 + 0.66 * (1.0 - facing));
+  let wetRim = vec3f(1.0, 0.78, 0.68) *
+    pow(1.0 - facing, 2.3) * (0.1 + 0.085 * pulse);
   let ceramic = (
     diffuse * (vec3f(1.0) - fresnel) +
     specular +
@@ -292,7 +338,9 @@ fn microGrain(position: vec3f) -> f32 {
     warmRim +
     subsurface +
     innerAura +
-    livingCurrent
+    counterAura +
+    livingCurrent +
+    wetRim
   ) * (1.0 + grain);
 
   return presentCeramic(ceramic);

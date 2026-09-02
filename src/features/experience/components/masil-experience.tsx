@@ -2,15 +2,15 @@
 
 import {
   Activity as ActivityIcon,
-  AudioWaveform,
   ArrowLeft,
   ArrowRight,
+  Brush,
   Check,
   CheckCircle2,
   LockKeyhole,
   MessageCircle,
-  PanelRightClose,
-  PanelRightOpen,
+  Mic,
+  Grid3X3,
   PhoneCall,
   ShieldCheck,
   UserRoundCheck,
@@ -26,6 +26,39 @@ import {
   type MasilWorldTransitionHandle,
 } from "@/features/transitions/components/masil-world-transition";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+} from "@/components/ui/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/ui/item";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ToggleGroup,
+  ToggleGroupItem,
+} from "@/components/ui/toggle-group";
 import {
   createPendingCameraRequest,
   type PendingCameraRequest,
@@ -134,6 +167,27 @@ type CharacterChoiceResolution = {
   source: "person-gesture" | "agent-reference";
 };
 
+const AGENT_PROMPTS: Record<Language, readonly string[]> = {
+  ko: [
+    "에이전트에게 “서예 해보고 싶어요”라고 요청해보세요",
+    "에이전트에게 “장기 한 판 두고 싶어요”라고 요청해보세요",
+    "에이전트에게 “추석을 한자로 만들어줘”라고 요청해보세요",
+    "에이전트에게 “왼쪽 차를 위로 움직여줘”라고 요청해보세요",
+    "에이전트에게 “새해 복 많이 받으세요를 써보고 싶어”라고 요청해보세요",
+    "에이전트에게 “반찬 배달이 멈췄어. 도움을 알아봐줘”라고 말해보세요",
+  ],
+  en: [
+    "Ask your Agent: “I’d like to practice calligraphy.”",
+    "Ask your Agent: “I’d like to play a game of Janggi.”",
+    "Ask your Agent: “Create Chuseok in Hanja for me.”",
+    "Ask your Agent: “Move the left chariot forward.”",
+    "Ask your Agent: “I want to write a New Year greeting.”",
+    "Ask your Agent: “My meal delivery stopped. Help me find support.”",
+  ],
+};
+
+const AGENT_PROMPT_INTERVAL_MS = 3200;
+
 type PendingJanggiAnimation = {
   moveId: string;
   timeoutId: number;
@@ -160,7 +214,7 @@ const INITIAL_SESSION: DemoSession = {
   stage: "home",
   activity: null,
   revision: 0,
-  caption: "오늘은 무엇을\n같이 해볼까요?",
+  caption: "오늘은 무엇을 같이 해볼까요?",
   calligraphy: {
     character: "",
     reading: "",
@@ -196,6 +250,22 @@ const TOOL_COPY: Record<ToolName, string> = {
   masil_create_local_handoff: "두 번 확인한 로컬 데모 작업 카드 만들기",
   masil_get_handoff_status: "담당자·상태·다음 단계 다시 읽기",
   masil_return_to_activity: "작업 결과를 남기고 원래 활동으로 복귀",
+};
+
+const TOOL_COPY_EN: Record<ToolName, string> = {
+  masil_get_capabilities: "Read what MASIL offers the Agent",
+  masil_get_session_state: "Read the current screen and valid next actions",
+  masil_project_agent_presence: "Project the Agent state into the Orb and page",
+  masil_open_activity: "Open an activity and wait for the person",
+  masil_set_calligraphy_reference: "Place a generated calligraphy reference",
+  masil_get_janggi_state: "Read the board and every legal move",
+  masil_wait_for_person_janggi_move: "Wait for the person to make one move",
+  masil_move_janggi_piece: "Validate and animate a Janggi move",
+  masil_open_support_note: "Open a private note after an explicit request",
+  masil_prepare_support_review: "Prepare the minimum support details for review",
+  masil_create_local_handoff: "Create a confirmed local demo handoff",
+  masil_get_handoff_status: "Read the owner, status, and next step",
+  masil_return_to_activity: "Return to the preserved creative activity",
 };
 
 const SINGLE_AGENT_BOUNDARY = {
@@ -1597,20 +1667,39 @@ export function MasilExperience() {
   }, []);
 
   useEffect(() => {
-    const modelContext = document.modelContext;
-    if (!modelContext?.registerTool) {
-      const timer = window.setTimeout(() => setWebMcpStatus("demo"), 0);
-      return () => window.clearTimeout(timer);
-    }
-
     let active = true;
+    let retryTimer = 0;
+    let registeredContext: NonNullable<Document["modelContext"]> | null = null;
     const registered: ToolName[] = [];
 
-    const start = async () => {
+    const start = async (attempt = 0) => {
       await Promise.resolve();
       if (!active) return;
+
+      const modelContext = document.modelContext;
+      if (!modelContext?.registerTool) {
+        if (attempt < 24) {
+          retryTimer = window.setTimeout(() => {
+            void start(attempt + 1);
+          }, 250);
+          return;
+        }
+        setWebMcpStatus("demo");
+        return;
+      }
+
+      registeredContext = modelContext;
       try {
         for (const descriptor of toolDescriptors) {
+          if (modelContext.unregisterTool) {
+            try {
+              await Promise.resolve(
+                modelContext.unregisterTool(descriptor.name),
+              );
+            } catch {
+              // A fresh page has nothing to unregister.
+            }
+          }
           const webMcpTool: WebMcpTool = {
             ...descriptor,
             execute: (input) =>
@@ -1629,9 +1718,10 @@ export function MasilExperience() {
     void start();
     return () => {
       active = false;
+      window.clearTimeout(retryTimer);
       for (const name of registered) {
-        if (modelContext.unregisterTool) {
-          void Promise.resolve(modelContext.unregisterTool(name));
+        if (registeredContext?.unregisterTool) {
+          void Promise.resolve(registeredContext.unregisterTool(name));
         }
       }
     };
@@ -1754,6 +1844,7 @@ export function MasilExperience() {
 
   const isHome = session.stage === "home";
   const keepsAgentSeed = session.stage === "activity";
+  const isWebMcpConnected = webMcpStatus === "connected";
   return (
     <main
       className="masil-shell relative min-h-[100svh] overflow-hidden bg-[#f7f4ed] text-[#171513]"
@@ -1763,54 +1854,94 @@ export function MasilExperience() {
     >
       <MasilWorldTransition ref={worldTransitionRef} />
       {isHome ? (
-        <GlassOrbScene mood="idle" presence={presence} mode="hero" />
+        <GlassOrbScene
+          connected={isWebMcpConnected}
+          mood="idle"
+          presence={presence}
+          mode="hero"
+        />
       ) : null}
       {keepsAgentSeed ? (
         <GlassOrbScene
+          connected={isWebMcpConnected}
           mood={session.activity === "janggi" ? "janggi" : "ink"}
           presence={presence}
           mode="prompt"
         />
       ) : null}
 
-      <header className="absolute inset-x-0 top-0 z-[70] flex h-[76px] items-center justify-between px-6 sm:px-10 lg:px-12">
+      <header
+        className="pointer-events-none absolute inset-x-0 top-0 z-[110] flex h-[76px] items-center justify-between px-6 sm:px-10 lg:px-12"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
         <button
           type="button"
-          className="text-[0.8rem] font-semibold tracking-[0.42em] text-[#b85f47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25 focus-visible:ring-offset-4"
+          className="pointer-events-auto text-[0.8rem] font-semibold tracking-[0.42em] text-[#b85f47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25 focus-visible:ring-offset-4"
           onClick={reset}
           aria-label={language === "ko" ? "MASIL 처음 화면" : "MASIL home"}
         >
           MASIL
         </button>
 
-        <div className="flex items-center gap-4 sm:gap-6">
-          <div className="flex items-center gap-4 text-[0.78rem]">
-            {(["ko", "en"] as const).map((item) => (
-              <button
-                key={item}
-                type="button"
-                className={`transition-colors ${
-                  language === item
-                    ? "font-semibold text-[#211e1b]"
-                    : "text-[#8a837c] hover:text-[#4f4944]"
-                }`}
-                onClick={() => setLanguage(item)}
-                aria-pressed={language === item}
-              >
-                {item === "ko" ? "한국어" : "English"}
-              </button>
-            ))}
-          </div>
+        <div className="pointer-events-auto flex items-center gap-3 sm:gap-4">
+          <ToggleGroup
+            value={[language]}
+            onValueChange={(value) => {
+              const nextLanguage = value[0];
+              if (nextLanguage === "ko" || nextLanguage === "en") {
+                setLanguage(nextLanguage);
+              }
+            }}
+            variant="outline"
+            size="sm"
+            spacing={0}
+            aria-label={language === "ko" ? "언어 선택" : "Choose language"}
+            className="h-9 border border-black/[0.045] bg-white/24 p-0.5 text-[0.7rem] backdrop-blur-sm"
+          >
+            <ToggleGroupItem
+              value="ko"
+              aria-label="한국어"
+              className="h-8 min-w-0 rounded-md border-0 px-3 text-[0.7rem] text-[#8a837c] data-[state=on]:bg-[#fffdfa]/88 data-[state=on]:font-semibold data-[state=on]:text-[#211e1b] data-[state=on]:shadow-[0_1px_5px_rgba(64,43,32,0.08)]"
+            >
+              한국어
+            </ToggleGroupItem>
+            <ToggleGroupItem
+              value="en"
+              aria-label="English"
+              className="h-8 min-w-0 rounded-md border-0 px-3 text-[0.7rem] text-[#8a837c] data-[state=on]:bg-[#fffdfa]/88 data-[state=on]:font-semibold data-[state=on]:text-[#211e1b] data-[state=on]:shadow-[0_1px_5px_rgba(64,43,32,0.08)]"
+            >
+              English
+            </ToggleGroupItem>
+          </ToggleGroup>
 
-          <button
+          <Button
             type="button"
-            className="grid size-9 place-items-center text-[#756d67] transition-colors hover:text-[#211e1b] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25"
-            onClick={() => setLogsOpen(true)}
-            aria-label={language === "ko" ? "WebMCP 실행 로그 열기" : "Open WebMCP activity log"}
+            variant="outline"
+            size="sm"
+            className="h-9 gap-2 border-black/[0.045] bg-white/24 px-3 text-[0.7rem] font-medium tracking-[0.02em] text-[#5f5852] backdrop-blur-sm hover:border-black/[0.08] hover:bg-white/42 hover:text-[#211e1b]"
+            onClick={() => setLogsOpen((current) => !current)}
+            aria-expanded={logsOpen}
+            aria-controls="webmcp-panel"
+            aria-label={
+              language === "ko"
+                ? `WebMCP ${webMcpStatus === "connected" ? "연결됨" : "연결되지 않음"}. 패널 ${logsOpen ? "닫기" : "열기"}`
+                : `WebMCP ${webMcpStatus === "connected" ? "connected" : "not connected"}. ${logsOpen ? "Close" : "Open"} panel`
+            }
             data-testid="open-event-log"
           >
-            <PanelRightOpen aria-hidden="true" className="size-[1rem]" />
-          </button>
+            <span>WebMCP</span>
+            <span
+              aria-hidden="true"
+              className={`size-1.5 rounded-full ${
+                webMcpStatus === "connected"
+                  ? "bg-[#3b8a62] shadow-[0_0_0_3px_rgba(59,138,98,0.12)]"
+                  : "bg-[#c34f45] shadow-[0_0_0_3px_rgba(195,79,69,0.1)]"
+              }`}
+            />
+            <span className="text-[0.62rem] font-semibold tracking-[0.08em] text-[#716963] uppercase">
+              {webMcpStatus === "connected" ? "CONNECTED" : "UNCONNECTED"}
+            </span>
+          </Button>
         </div>
       </header>
 
@@ -1818,6 +1949,7 @@ export function MasilExperience() {
         <HomeScreen
           language={language}
           caption={session.caption}
+          connected={isWebMcpConnected}
           presence={presence}
         />
       ) : (
@@ -1868,6 +2000,23 @@ export function MasilExperience() {
         events={events}
         language={language}
         onClose={() => setLogsOpen(false)}
+        onOpenActivity={(activity) => {
+          setLogsOpen(false);
+          void executeTool(
+            "masil_open_activity",
+            activity === "calligraphy"
+              ? {
+                  activity,
+                  question: "어떤 글자를 써볼까요?",
+                  choices: [],
+                }
+              : {
+                  activity,
+                  caption: "좋아요. 장기판을 같이 볼게요.",
+                },
+            "person",
+          );
+        }}
         open={logsOpen}
         status={webMcpStatus}
         toolCount={toolDescriptors.length}
@@ -1880,26 +2029,36 @@ export function MasilExperience() {
 function HomeScreen({
   language,
   caption,
+  connected,
   presence,
 }: {
   language: Language;
   caption: string;
+  connected: boolean;
   presence: Presence;
 }) {
-  const headline =
-    caption === INITIAL_SESSION.caption
+  const isDefaultHeadline =
+    caption === INITIAL_SESSION.caption ||
+    caption === "오늘은 무엇을\n같이 해볼까요?";
+  const headline = !connected
+    ? language === "ko"
+      ? "에이전트 연결이 필요합니다"
+      : "Agent connection required"
+    : isDefaultHeadline
       ? language === "ko"
         ? INITIAL_SESSION.caption
-        : "What would you like\nto do together?"
+        : "What would you like to do together?"
       : caption;
 
   return (
     <section className="relative z-10 min-h-[100svh] px-5 pt-[76px] text-center sm:px-8">
-      <div className="masil-copy-enter absolute inset-x-5 top-[54%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8 sm:top-[55%]">
-        <h1 className="masil-balance max-w-[15ch] whitespace-pre-line text-[clamp(2.85rem,4.8vw,4.75rem)] leading-[1.04] font-medium tracking-[-0.07em] text-[#191715]">
+      <div className="masil-copy-enter absolute inset-x-5 top-[60%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
+        <h1 className="max-w-none text-[min(2.25rem,2.35vw)] leading-none font-medium tracking-[-0.055em] whitespace-nowrap text-[#4f4944]">
           {headline}
         </h1>
-        <AgentProjection language={language} presence={presence} />
+        {connected ? (
+          <AgentProjection hero language={language} presence={presence} />
+        ) : null}
       </div>
     </section>
   );
@@ -1997,10 +2156,11 @@ function CalligraphyCharacterPrompt({
 
         <div className="mt-12 flex w-full items-start justify-center gap-10 sm:mt-16 sm:gap-20">
           {request.choices.map((choice) => (
-            <button
+            <Button
               key={`${choice.character}-${choice.label}`}
               type="button"
-              className="group flex min-w-[4.75rem] flex-col items-center text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25 focus-visible:ring-offset-8"
+              variant="ghost"
+              className="group h-auto min-w-[4.75rem] flex-col items-center rounded-lg p-1.5 text-center text-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-[#b65f49]/25"
               onClick={() => onChoose(choice)}
               data-testid={`choose-character-${choice.character}`}
               aria-label={`${choice.character} ${choice.label}${choice.meaning ? `, ${choice.meaning}` : ""}`}
@@ -2019,7 +2179,7 @@ function CalligraphyCharacterPrompt({
                   {choice.label}
                 </span>
               </span>
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -2040,37 +2200,65 @@ function CalligraphyCharacterPrompt({
 function AgentProjection({
   caption,
   compact = false,
+  hero = false,
   language,
   presence,
   readyCopy,
 }: {
   caption?: string;
   compact?: boolean;
+  hero?: boolean;
   language: Language;
   presence: Presence;
   readyCopy?: string;
 }) {
   const active = presence !== "ready" && presence !== "connected";
+  const [promptIndex, setPromptIndex] = useState(0);
+
+  useEffect(() => {
+    if (caption || readyCopy || presence !== "ready") return;
+
+    const timer = window.setInterval(() => {
+      setPromptIndex((current) =>
+        (current + 1) % AGENT_PROMPTS[language].length,
+      );
+    }, AGENT_PROMPT_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [caption, language, presence, readyCopy]);
+
   const copy =
     caption ||
-    (readyCopy ??
-        (language === "ko"
-          ? "에이전트에게 평소처럼 말씀하세요"
-          : "Speak naturally to your Agent"));
+    readyCopy ||
+    AGENT_PROMPTS[language][promptIndex];
+  const isRotatingPrompt = !caption && !readyCopy && presence === "ready";
 
   return (
     <div
-      className={`${compact ? "mt-0" : "mt-10 sm:mt-12"} inline-flex max-w-[36rem] items-center justify-center gap-3 text-[#756d67]`}
+      className={`${compact ? "mt-0" : hero ? "mt-3 sm:mt-3.5" : "mt-10 sm:mt-12"} inline-flex items-center justify-center text-[#756d67] ${hero ? "max-w-[calc(100vw-3rem)] gap-3.5" : "max-w-[36rem] gap-3"}`}
       role="status"
-      aria-live="polite"
+      aria-live={isRotatingPrompt ? "off" : "polite"}
     >
-      <AudioWaveform
-        aria-hidden="true"
-        className={`size-[1.05rem] shrink-0 text-[#b65f49] ${active ? "animate-pulse" : "opacity-75"}`}
-        strokeWidth={1.6}
-      />
-      <span className="masil-balance text-[0.9rem] leading-6 tracking-[-0.015em] sm:text-[0.96rem]">
-        {copy}
+      <span
+        className={`relative block max-w-[calc(100vw-4rem)] overflow-hidden ${
+          hero
+            ? "h-[1.42em] text-[min(3rem,2.55vw)] leading-[1.28] font-medium tracking-[-0.045em] text-[#211e1b]"
+            : "h-[1.52em] text-[clamp(0.76rem,1.7vw,0.96rem)] leading-[1.38] tracking-[-0.015em]"
+        }`}
+      >
+        <span
+          key={`${language}-${copy}`}
+          className="masil-prompt-cycle flex max-w-full items-center justify-center gap-3 overflow-hidden pt-[0.04em] pb-[0.14em]"
+        >
+          <Mic
+            aria-hidden="true"
+            className={`${hero ? "size-[1.2rem]" : "size-[1.05rem]"} shrink-0 text-[#b65f49] ${active ? "animate-pulse" : "opacity-75"}`}
+            strokeWidth={1.65}
+          />
+          <span className="masil-balance min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+            {copy}
+          </span>
+        </span>
       </span>
     </div>
   );
@@ -2103,6 +2291,7 @@ function EventLogDrawer({
   events,
   language,
   onClose,
+  onOpenActivity,
   open,
   status,
   toolCount,
@@ -2110,99 +2299,182 @@ function EventLogDrawer({
   events: DemoEvent[];
   language: Language;
   onClose: () => void;
+  onOpenActivity: (activity: Activity) => void;
   open: boolean;
   status: WebMcpStatus;
   toolCount: number;
 }) {
   return (
-    <div
-      className={`fixed inset-0 z-[100] transition ${open ? "pointer-events-auto" : "pointer-events-none"}`}
-      aria-hidden={!open}
+    <Sheet
+      modal={false}
+      disablePointerDismissal
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!nextOpen) onClose();
+      }}
     >
-      <button
-        type="button"
-        className={`absolute inset-0 bg-black/10 backdrop-blur-[2px] transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0"}`}
-        onClick={onClose}
-        aria-label={language === "ko" ? "로그 닫기" : "Close log"}
-        tabIndex={open ? 0 : -1}
-      />
-      <aside
-        className={`absolute inset-y-0 right-0 w-[min(92vw,25rem)] border-l border-black/[0.055] bg-[#faf7f1]/96 p-6 shadow-[-24px_0_70px_rgba(44,31,24,0.1)] backdrop-blur-2xl transition-transform duration-500 ease-[cubic-bezier(.16,1,.3,1)] ${open ? "translate-x-0" : "translate-x-full"}`}
-        aria-label={language === "ko" ? "WebMCP 실행 로그" : "WebMCP activity log"}
+      <SheetContent
+        id="webmcp-panel"
+        side="right"
+        showCloseButton={false}
+        style={{
+          top: 0,
+          right: 0,
+          bottom: 0,
+          height: "100%",
+        }}
+        className="w-[min(94vw,28rem)] border-black/[0.05] pt-[76px] sm:max-w-md"
+        onOverlayClick={onClose}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-[0.68rem] font-semibold tracking-[0.14em] text-[#a55340] uppercase">
-              WebMCP
-            </p>
-            <h2 className="mt-1 text-xl font-medium tracking-[-0.04em]">
-              {language === "ko" ? "실행 기록" : "Activity log"}
-            </h2>
-          </div>
-          <button
-            type="button"
-            className="grid size-10 place-items-center rounded-full text-[#6f6761] hover:bg-black/[0.04]"
-            onClick={onClose}
-            aria-label={language === "ko" ? "로그 닫기" : "Close log"}
-          >
-            <PanelRightClose aria-hidden="true" className="size-[1.05rem]" />
-          </button>
-        </div>
+        <SheetHeader className="shrink-0">
+          <SheetTitle>WebMCP</SheetTitle>
+          <SheetDescription>
+            {language === "ko"
+              ? "연결 상태와 웹 도구를 확인합니다."
+              : "Inspect the connection and web tools."}
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="mt-7 flex items-center justify-between border-y border-black/[0.055] py-4 text-xs text-[#746c66]">
-          <span className="inline-flex items-center gap-2">
-            <span
-              className={`size-2 rounded-full ${
-                status === "connected"
-                  ? "bg-emerald-600"
-                  : status === "error"
-                    ? "bg-red-600"
-                    : "bg-[#b65f49]"
-              }`}
-            />
-            {status === "connected" ? "LIVE" : "LOCAL DEMO"}
-          </span>
-          <span>1 USER AGENT · {toolCount} tools</span>
-        </div>
+        <Tabs defaultValue="history" className="min-h-0 flex-1 px-4 pb-4">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="history">
+              {status === "connected"
+                ? language === "ko"
+                  ? "실행 기록"
+                  : "History"
+                : language === "ko"
+                  ? "화면 둘러보기"
+                  : "Explore"}
+            </TabsTrigger>
+            <TabsTrigger value="tools">
+              {language === "ko" ? "등록 도구" : "Tools"} {toolCount}
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="mt-6 space-y-1">
-          {events.length ? (
-            events.map((event) => (
-              <div
-                key={event.id}
-                data-event-source={event.source}
-                className="flex items-start gap-3 rounded-xl px-2 py-3"
-              >
-                <ActivityIcon
-                  aria-hidden="true"
-                  className={`mt-0.5 size-4 shrink-0 ${
-                    event.status === "failed"
-                      ? "text-red-600"
-                      : event.status === "human"
-                        ? "text-[#a55340]"
-                        : event.status === "done"
-                          ? "text-emerald-600"
-                          : "animate-pulse text-[#a55340]"
-                  }`}
-                />
-                <div>
-                  <p className="text-sm leading-5 text-[#393430]">{event.label}</p>
-                  <p className="mt-1 text-[0.66rem] tracking-[0.08em] text-[#918983] uppercase">
-                    {event.source === "webmcp" ? "WEBMCP" : "PERSON"} · {event.status}
-                  </p>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="px-2 py-8 text-sm leading-6 text-[#817973]">
-              {language === "ko"
-                ? "아직 실행된 도구가 없어요. 활동을 시작하면 여기에만 기록됩니다."
-                : "No tools have run yet. Activity will appear only here."}
-            </p>
-          )}
-        </div>
-      </aside>
-    </div>
+          <TabsContent value="history" className="min-h-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              {status !== "connected" ? (
+                <ItemGroup className="gap-1 py-2">
+                  <Item
+                    render={
+                      <button
+                        type="button"
+                        onClick={() => onOpenActivity("calligraphy")}
+                      />
+                    }
+                    className="cursor-pointer hover:bg-muted"
+                  >
+                    <ItemMedia variant="icon">
+                      <Brush />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        {language === "ko" ? "서예" : "Calligraphy"}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {language === "ko"
+                          ? "공중에 글자를 써보세요"
+                          : "Write a character in the air"}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <ArrowRight className="size-4 text-muted-foreground" />
+                    </ItemActions>
+                  </Item>
+
+                  <Item
+                    render={
+                      <button
+                        type="button"
+                        onClick={() => onOpenActivity("janggi")}
+                      />
+                    }
+                    className="cursor-pointer hover:bg-muted"
+                  >
+                    <ItemMedia variant="icon">
+                      <Grid3X3 />
+                    </ItemMedia>
+                    <ItemContent>
+                      <ItemTitle>
+                        {language === "ko" ? "장기" : "Janggi"}
+                      </ItemTitle>
+                      <ItemDescription>
+                        {language === "ko"
+                          ? "장기판을 직접 둘러보세요"
+                          : "Explore the Janggi board"}
+                      </ItemDescription>
+                    </ItemContent>
+                    <ItemActions>
+                      <ArrowRight className="size-4 text-muted-foreground" />
+                    </ItemActions>
+                  </Item>
+                </ItemGroup>
+              ) : events.length ? (
+                <ItemGroup className="gap-1 py-2">
+                  {events.map((event) => (
+                    <Item key={event.id} data-event-source={event.source}>
+                      <ItemMedia variant="icon">
+                        <ActivityIcon
+                          className={
+                            event.status === "failed"
+                              ? "text-destructive"
+                              : event.status === "done"
+                                ? "text-emerald-600"
+                                : event.status === "human"
+                                  ? "text-primary"
+                                  : "animate-pulse text-primary"
+                          }
+                        />
+                      </ItemMedia>
+                      <ItemContent>
+                        <ItemTitle>{event.label}</ItemTitle>
+                        <ItemDescription className="text-xs uppercase">
+                          {event.source === "webmcp" ? "WEBMCP" : "PERSON"} · {event.status}
+                        </ItemDescription>
+                      </ItemContent>
+                    </Item>
+                  ))}
+                </ItemGroup>
+              ) : (
+                <Item className="mt-2">
+                  <ItemContent>
+                    <ItemTitle>
+                      {language === "ko" ? "실행 기록 없음" : "No activity yet"}
+                    </ItemTitle>
+                    <ItemDescription>
+                      {language === "ko"
+                        ? "WebMCP 도구가 실행되면 여기에 표시됩니다."
+                        : "WebMCP calls will appear here."}
+                    </ItemDescription>
+                  </ItemContent>
+                </Item>
+              )}
+            </ScrollArea>
+          </TabsContent>
+
+          <TabsContent value="tools" className="min-h-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              <ItemGroup className="gap-1 py-2">
+                {(Object.keys(TOOL_COPY) as ToolName[]).map((toolName) => (
+                  <Item key={toolName} size="sm">
+                    <ItemContent>
+                      <ItemTitle className="font-mono text-xs">
+                        {toolName}
+                      </ItemTitle>
+                      <ItemDescription className="text-xs">
+                        {language === "ko"
+                          ? TOOL_COPY[toolName]
+                          : TOOL_COPY_EN[toolName]}
+                      </ItemDescription>
+                    </ItemContent>
+                  </Item>
+                ))}
+              </ItemGroup>
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -2331,7 +2603,7 @@ function SupportOverlay({
                 <span className="text-[0.64rem] font-semibold tracking-[0.12em] text-[#92503f] uppercase">
                   {language === "ko" ? "보이는 문장 전부" : "Everything shared"}
                 </span>
-                <textarea
+                <Textarea
                   className="mt-3 min-h-28 w-full resize-none rounded-xl border border-black/[0.08] bg-[#fbf9f4] p-3 text-sm leading-6 outline-none transition focus:border-[#b65f49]/40 focus:ring-2 focus:ring-[#b65f49]/12"
                   value={support.minimumDisclosure}
                   onChange={(event) => onUpdateDisclosure(event.target.value)}
@@ -2583,8 +2855,9 @@ function PanelEyebrow({
   tone?: "terracotta" | "green";
 }) {
   return (
-    <div
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[0.66rem] font-semibold tracking-[0.1em] uppercase ${
+    <Badge
+      variant="outline"
+      className={`h-auto gap-2 rounded-md px-3 py-1.5 text-[0.66rem] font-semibold tracking-[0.1em] uppercase ${
         tone === "green"
           ? "bg-[#dfece2] text-[#2e6840]"
           : "bg-[#ead9cf] text-[#934936]"
@@ -2592,18 +2865,20 @@ function PanelEyebrow({
     >
       <Icon aria-hidden="true" className="size-3.5" />
       {label}
-    </div>
+    </Badge>
   );
 }
 
 function SummaryBlock({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-black/[0.065] bg-white/55 p-4">
-      <p className="text-[0.65rem] font-semibold tracking-[0.12em] text-[#8b827b] uppercase">
-        {label}
-      </p>
-      <p className="mt-2 text-sm leading-6 text-[#37322e]">{value}</p>
-    </div>
+    <Card size="sm" className="rounded-xl border-black/[0.065] bg-white/55 shadow-none">
+      <CardContent className="p-4">
+        <p className="text-[0.65rem] font-semibold tracking-[0.12em] text-[#8b827b] uppercase">
+          {label}
+        </p>
+        <p className="mt-2 text-sm leading-6 text-[#37322e]">{value}</p>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -2621,9 +2896,10 @@ function ConfirmationRow({
   description: string;
 }) {
   return (
-    <button
+    <Button
       type="button"
-      className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/35 disabled:cursor-default ${
+      variant="outline"
+      className={`h-auto w-full justify-start gap-3 rounded-xl p-3.5 text-left transition focus-visible:ring-[#b65f49]/35 disabled:cursor-default ${
         checked
           ? "border-emerald-700/15 bg-emerald-50"
           : disabled
@@ -2649,7 +2925,7 @@ function ConfirmationRow({
           {description}
         </span>
       </span>
-    </button>
+    </Button>
   );
 }
 

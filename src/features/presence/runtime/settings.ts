@@ -35,8 +35,8 @@ export const HERO_FRACTAL_CAMERA = {
   cameraDistance: [5.44, 1.33, 0.55],
   cameraTarget: [0, 0.18, 0],
   fov: 30,
-  maxMouseRotation: 5,
-  mouseLerp: 0.02,
+  maxMouseRotation: 7.5,
+  mouseLerp: 0.026,
 } satisfies HeroFractalCamera;
 export const HERO_FRACTAL_MATERIAL = {
   baseColor: [17 / 255, 24 / 255, 32 / 255],
@@ -46,15 +46,15 @@ export const HERO_FRACTAL_MATERIAL = {
   ambientStrength: 0.34,
 } satisfies HeroFractalMaterial;
 export const HERO_ORB_MATERIAL = {
-  baseColor: [207 / 255, 101 / 255, 73 / 255],
-  roughness: 0.19,
+  baseColor: [194 / 255, 83 / 255, 59 / 255],
+  roughness: 0.12,
   diffuseStrength: 0.76,
-  specularStrength: 1,
-  ambientStrength: 0.5,
+  specularStrength: 1.16,
+  ambientStrength: 0.34,
 } satisfies HeroFractalMaterial;
 export const HERO_FRACTAL_GLASS = {
   fractalScale: 0.72,
-  orbScale: 0.76,
+  orbScale: 0.8,
   orbOffsetY: 0.06,
   sphereMix: 0,
   ior: 1.149,
@@ -66,5 +66,5 @@ export const HERO_FRACTAL_GLASS = {
   iridescenceStrength: 0.04,
   iridescenceFrequency: 2,
   environmentRotation: [0, -36, 0],
-  environmentExposure: 1.12,
+  environmentExposure: 1.18,
 } satisfies HeroFractalGlass;

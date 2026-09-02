@@ -38,20 +38,22 @@ const PRESENCE_LABELS: Record<OrbPresence, string> = {
 };
 
 const PRESENCE_VITALITY: Record<OrbPresence, number> = {
-  ready: 0.48,
-  listening: 0.9,
-  receiving: 0.72,
+  ready: 0.86,
+  listening: 0.96,
+  receiving: 0.82,
   creating: 1,
-  speaking: 0.84,
-  awaiting: 0.28,
-  connected: 0.58,
+  speaking: 0.92,
+  awaiting: 0.48,
+  connected: 0.72,
 };
 
 export function GlassOrbScene({
+  connected,
   mood,
   presence,
   mode = "hero",
 }: {
+  connected: boolean;
   mood: OrbMood;
   presence: OrbPresence;
   mode?: "hero" | "prompt";
@@ -59,6 +61,7 @@ export function GlassOrbScene({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const rendererRef = useRef<GlassRenderer | null>(null);
   const presenceRef = useRef(presence);
+  const connectedRef = useRef(connected);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
@@ -87,7 +90,11 @@ export function GlassOrbScene({
         });
         rendererRef.current = renderer;
         renderer.setSphereMix(1);
-        renderer.setVitality(PRESENCE_VITALITY[presenceRef.current]);
+        renderer.setVitality(
+          connectedRef.current
+            ? PRESENCE_VITALITY[presenceRef.current]
+            : 0.28,
+        );
         await renderer.ready;
 
         if (!cancelled) setStatus("ready");
@@ -108,26 +115,38 @@ export function GlassOrbScene({
   }, [mode]);
 
   useEffect(() => {
+    connectedRef.current = connected;
     presenceRef.current = presence;
-    rendererRef.current?.setVitality(PRESENCE_VITALITY[presence]);
-  }, [presence]);
+    rendererRef.current?.setVitality(
+      connected ? PRESENCE_VITALITY[presence] : 0.28,
+    );
+  }, [connected, presence]);
+
+  const visualFilter = connected
+    ? MOOD_FILTERS[mood]
+    : "grayscale saturate-[0.08] brightness-[1.03] contrast-[0.9]";
 
   return (
     <div
       className={
         mode === "hero"
-          ? "masil-orb-stage pointer-events-none absolute left-1/2 top-[2.5rem] h-[clamp(18rem,25vw,23rem)] w-[clamp(18rem,25vw,23rem)] -translate-x-1/2"
+          ? "masil-orb-stage pointer-events-none absolute left-1/2 top-[calc(50%_-_13.5rem)] h-[clamp(18rem,25vw,23rem)] w-[clamp(18rem,25vw,23rem)] -translate-x-1/2"
           : "masil-orb-stage pointer-events-none absolute left-1/2 top-[5rem] z-20 size-[5.5rem] -translate-x-1/2 opacity-95 sm:top-[5.25rem] sm:size-[6.25rem]"
       }
       data-testid="glass-orb-scene"
       data-presence={presence}
+      data-connected={connected}
     >
       <canvas
         ref={canvasRef}
-        className={`masil-orb-canvas block h-full w-full touch-none transition-[filter,opacity,transform] duration-1000 ${MOOD_FILTERS[mood]} ${
+        className={`masil-orb-canvas block h-full w-full touch-none transition-[filter,opacity,transform] duration-[1200ms] ease-[cubic-bezier(.16,1,.3,1)] ${visualFilter} ${
           status === "ready" ? "opacity-100" : "opacity-0"
         } ${presence === "receiving" || presence === "listening" ? "scale-[1.025]" : "scale-100"}`}
-        aria-label="말과 선택에 반응하며 빛이 달라지는 MASIL Orb"
+        aria-label={
+          connected
+            ? "Agent와 연결되어 말과 선택에 반응하는 MASIL Orb"
+            : "Agent 연결을 기다리는 MASIL Orb"
+        }
       />
 
       {status === "ready" ? (
