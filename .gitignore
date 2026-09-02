@@ -1,0 +1,21 @@
+.DS_Store
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# JavaScript build output
+node_modules/
+.next/
+.turbo/
+dist/
+out/
+coverage/
+*.tsbuildinfo
+
+# Hosting and local tooling
+.vercel/
+.netlify/
+*.log
