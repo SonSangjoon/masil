@@ -1,5 +1,7 @@
 # MASIL
 
+[**Open MASIL →**](https://masil-webmcp.vercel.app)
+
 > **When the community center is out of reach and the web is impossible to
 > navigate, where does creative life go?**
 
@@ -164,10 +166,10 @@ npm run typecheck
 npm run build
 ```
 
-Deployment uses Vercel's Git integration. Import this repository from the
-Vercel dashboard to create Preview deployments for pull requests and Production
-deployments from `main`; no Vercel deployment token is stored in this
-repository.
+Deployment uses Vercel's Git integration. Pull requests create Preview
+deployments, and `main` deploys to
+[masil-webmcp.vercel.app](https://masil-webmcp.vercel.app). No Vercel
+deployment token is stored in this repository.
 
 ## License
 
