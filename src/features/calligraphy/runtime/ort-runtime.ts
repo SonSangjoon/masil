@@ -47,6 +47,10 @@ import {
   type HandResultInput,
   type VisualPipeline,
 } from "./visual-pipeline";
+import {
+  createCalligraphyReferenceMask,
+  type CalligraphyReferenceMask,
+} from "./reference-mask";
 import { resolveCalligraphyRenderSize } from "./render-resolution";
 
 export interface CameraRenderer {
@@ -55,6 +59,11 @@ export interface CameraRenderer {
   readonly closed: Promise<void>;
   clear(): void;
   dispose(): void;
+  setReferenceMask(options: {
+    readonly character: string;
+    readonly referenceImageUrl?: string;
+    readonly stage?: HTMLElement | null;
+  }): void;
 }
 
 interface RendererOptions {
@@ -97,6 +106,9 @@ export function createCameraRenderer({
   let analysisCopiedToken = -1;
   let displayCopiedToken = -1;
   let painting = false;
+  let referenceStage: HTMLElement | undefined;
+  let referenceVersion = 0;
+  let pendingReferenceMask: CalligraphyReferenceMask | undefined;
   let draining: Promise<void> | undefined;
   let shutdown: Promise<void> | undefined;
   let resolveClosed!: () => void;
@@ -115,6 +127,60 @@ export function createCameraRenderer({
     if (!disposed && !displayFrame) {
       displayFrame = requestAnimationFrame(draw);
     }
+  };
+  const updateReferenceBounds = () => {
+    if (!pipeline || !referenceStage) return;
+    const canvasRect = canvas.getBoundingClientRect();
+    const stageRect = referenceStage.getBoundingClientRect();
+    if (!(canvasRect.width > 0) || !(canvasRect.height > 0)) return;
+    pipeline.setReferenceBounds({
+      left: (stageRect.left - canvasRect.left) / canvasRect.width,
+      top: (stageRect.top - canvasRect.top) / canvasRect.height,
+      right: (stageRect.right - canvasRect.left) / canvasRect.width,
+      bottom: (stageRect.bottom - canvasRect.top) / canvasRect.height,
+    });
+  };
+  const applyPendingReferenceMask = () => {
+    if (!pipeline || !pendingReferenceMask) return;
+    const mask = pendingReferenceMask;
+    pendingReferenceMask = undefined;
+    try {
+      pipeline.setReferenceMask(mask.bitmap, mask.width, mask.height);
+    } finally {
+      mask.bitmap.close();
+    }
+    updateReferenceBounds();
+    requestDisplayFrame();
+  };
+  const setReferenceMask: CameraRenderer["setReferenceMask"] = ({
+    character,
+    referenceImageUrl,
+    stage,
+  }) => {
+    referenceStage = stage ?? undefined;
+    updateReferenceBounds();
+    const version = ++referenceVersion;
+    if (!character) {
+      pendingReferenceMask?.bitmap.close();
+      pendingReferenceMask = undefined;
+      pipeline?.clearReferenceMask();
+      requestDisplayFrame();
+      return;
+    }
+    void createCalligraphyReferenceMask(character, referenceImageUrl)
+      .then((mask) => {
+        if (!mask) return;
+        if (disposed || version !== referenceVersion) {
+          mask.bitmap.close();
+          return;
+        }
+        pendingReferenceMask?.bitmap.close();
+        pendingReferenceMask = mask;
+        applyPendingReferenceMask();
+      })
+      .catch((error: unknown) => {
+        if (!disposed && version === referenceVersion) console.error(error);
+      });
   };
 
   const applyResize = () => {
@@ -146,6 +212,7 @@ export function createCameraRenderer({
         MAX_CAMERA_RENDER_PIXELS,
       ),
     );
+    updateReferenceBounds();
   };
   const onWindowResize = () => {
     if (window.devicePixelRatio === lastDpr) return;
@@ -328,6 +395,7 @@ export function createCameraRenderer({
       sourceWidth: camera.width,
       sourceHeight: camera.height,
     });
+    applyPendingReferenceMask();
     tracker = createHandTracker({
       sourceWidth: camera.width,
       sourceHeight: camera.height,
@@ -382,6 +450,13 @@ export function createCameraRenderer({
     try {
       detectorInput?.dispose();
     } catch {}
+    try {
+      pendingReferenceMask?.bitmap.close();
+      pendingReferenceMask = undefined;
+    } catch {}
+    try {
+      pipeline?.dispose();
+    } catch {}
     for (const release of [
       () => detector?.release(),
       () => shared?.release(),
@@ -408,6 +483,7 @@ export function createCameraRenderer({
 
     if (disposed) return { failed, failure };
     disposed = true;
+    referenceVersion += 1;
     setPainting(false);
     attempt(() => {
       if (displayFrame) cancelAnimationFrame(displayFrame);
@@ -456,6 +532,7 @@ export function createCameraRenderer({
         fail(error);
       }
     },
+    setReferenceMask,
     dispose,
   };
 }

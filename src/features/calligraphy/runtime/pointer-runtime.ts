@@ -178,7 +178,7 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
       hasRenderedPoint = true;
       active = true;
       pointerSeen = true;
-      targetOpenness = 0.22;
+      targetOpenness = 0.08;
       pendingPointer = { point, stroke: false, engaged: true };
       requestDraw();
     },

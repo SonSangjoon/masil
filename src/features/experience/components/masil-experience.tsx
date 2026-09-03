@@ -655,6 +655,92 @@ const DEFAULT_CHARACTER_CHOICES: Record<Language, CharacterChoice[]> = {
   ],
 };
 
+const LOCAL_HANDOFF_DETAILS: Record<
+  Language,
+  Pick<LocalHandoff, "owner" | "callbackAt" | "firstStep">
+> = {
+  ko: {
+    owner: "김하늘 생활지원 매니저 · 데모",
+    callbackAt: "오늘 오후 4시 30분",
+    firstStep: "상황을 다시 처음부터 묻지 않고, 중단된 반찬 배달부터 확인",
+  },
+  en: {
+    owner: "Kim Haneul, support manager · demo",
+    callbackAt: "4:30 PM today",
+    firstStep:
+      "Start with the interrupted delivery without asking the person to repeat everything",
+  },
+};
+
+const LOCALIZED_DEMO_VALUE_PAIRS = [
+  {
+    ko: SUPPORT_EXAMPLE.ko.summary,
+    en: SUPPORT_EXAMPLE.en.summary,
+  },
+  {
+    ko: SUPPORT_EXAMPLE.ko.desiredOutcome,
+    en: SUPPORT_EXAMPLE.en.desiredOutcome,
+  },
+  {
+    ko: MINIMUM_DISCLOSURE_EXAMPLE.ko,
+    en: MINIMUM_DISCLOSURE_EXAMPLE.en,
+  },
+  {
+    ko: LOCAL_HANDOFF_DETAILS.ko.owner,
+    en: LOCAL_HANDOFF_DETAILS.en.owner,
+  },
+  {
+    ko: LOCAL_HANDOFF_DETAILS.ko.callbackAt,
+    en: LOCAL_HANDOFF_DETAILS.en.callbackAt,
+  },
+  {
+    ko: LOCAL_HANDOFF_DETAILS.ko.firstStep,
+    en: LOCAL_HANDOFF_DETAILS.en.firstStep,
+  },
+] as const;
+
+function localizeKnownDemoValue(value: string, language: Language): string {
+  const pair = LOCALIZED_DEMO_VALUE_PAIRS.find(
+    (candidate) => candidate.ko === value || candidate.en === value,
+  );
+  return pair?.[language] ?? value;
+}
+
+function localizeSessionState(
+  state: DemoSession,
+  language: Language,
+): DemoSession {
+  return {
+    ...state,
+    caption: localizeSystemCaption(state.caption, language),
+    support: state.support
+      ? {
+          ...state.support,
+          summary: localizeKnownDemoValue(state.support.summary, language),
+          desiredOutcome: localizeKnownDemoValue(
+            state.support.desiredOutcome,
+            language,
+          ),
+          minimumDisclosure: localizeKnownDemoValue(
+            state.support.minimumDisclosure,
+            language,
+          ),
+        }
+      : null,
+    handoff: state.handoff
+      ? {
+          ...state.handoff,
+          owner: localizeKnownDemoValue(state.handoff.owner, language),
+          callbackAt: localizeKnownDemoValue(
+            state.handoff.callbackAt,
+            language,
+          ),
+          firstStep: localizeKnownDemoValue(state.handoff.firstStep, language),
+        }
+      : null,
+  };
+}
+
 const MAX_CALLIGRAPHY_CHARACTERS = 4;
 const PERSON_JANGGI_SIDE = "cho" as const;
 const AGENT_JANGGI_SIDE = "han" as const;
@@ -1206,10 +1292,9 @@ export function MasilExperience() {
           document.documentElement.lang = nextLanguage;
           storeLanguage(nextLanguage);
           setLanguage(nextLanguage);
-          updateSession((state) => ({
-            ...state,
-            caption: localizeSystemCaption(state.caption, nextLanguage),
-          }));
+          updateSession((state) =>
+            localizeSessionState(state, nextLanguage),
+          );
           finishEvent(
             eventId,
             "done",
@@ -2046,19 +2131,11 @@ export function MasilExperience() {
             throw new Error(`STALE_REVISION:${current.revision}`);
           }
           const activeLanguage = languageRef.current;
+          const handoffDetails = LOCAL_HANDOFF_DETAILS[activeLanguage];
           const handoff: LocalHandoff = {
             id: `MASIL-${String(1042 + current.revision).padStart(4, "0")}`,
             status: "waiting",
-            owner:
-              activeLanguage === "ko"
-                ? "김하늘 생활지원 매니저 · 데모"
-                : "Kim Haneul, support manager · demo",
-            callbackAt:
-              activeLanguage === "ko" ? "오늘 오후 4시 30분" : "4:30 PM today",
-            firstStep:
-              activeLanguage === "ko"
-                ? "상황을 다시 처음부터 묻지 않고, 중단된 반찬 배달부터 확인"
-                : "Start with the interrupted delivery without asking the person to repeat everything",
+            ...handoffDetails,
           };
           const next = updateSession((state) => ({
             ...state,
@@ -3137,7 +3214,7 @@ function CalligraphyCharacterPrompt({
         <p
           className="masil-balance max-w-none whitespace-nowrap text-[clamp(1.2rem,2.5vw,1.7rem)] leading-[1.3] font-medium tracking-[-0.04em] text-[#5f5751]"
         >
-          {request.question}
+          {localizeSystemCaption(request.question, language)}
         </p>
 
         <CalligraphyRequestProjection language={language} />
