@@ -159,19 +159,31 @@ export async function registerMasilWebMcpProvider(options: {
   execute: MasilToolExecutor;
   descriptors?: readonly MasilToolDescriptor[];
   isActive?: () => boolean;
+  signal?: AbortSignal;
 }) {
   const {
     modelContext,
     execute,
     descriptors = MASIL_TOOL_DESCRIPTORS,
     isActive = () => true,
+    signal,
   } = options;
   const registered: MasilToolName[] = [];
+  const registrationController = new AbortController();
+  const abortRegistration = () => registrationController.abort();
+  if (signal?.aborted) abortRegistration();
+  else signal?.addEventListener("abort", abortRegistration, { once: true });
   let pendingCalligraphyRecovery: string | undefined;
+
+  const cleanup = async () => {
+    registrationController.abort();
+    signal?.removeEventListener("abort", abortRegistration);
+    await unregisterMasilWebMcpTools(modelContext, registered);
+  };
 
   try {
     for (const descriptor of descriptors) {
-      if (!isActive()) break;
+      if (!isActive() || registrationController.signal.aborted) break;
       if (modelContext.unregisterTool) {
         try {
           await Promise.resolve(modelContext.unregisterTool(descriptor.name));
@@ -211,15 +223,19 @@ export async function registerMasilWebMcpProvider(options: {
           }
         },
       };
-      await Promise.resolve(modelContext.registerTool(webMcpTool));
+      await Promise.resolve(
+        modelContext.registerTool(webMcpTool, {
+          signal: registrationController.signal,
+        }),
+      );
       registered.push(descriptor.name);
     }
   } catch (error) {
-    await unregisterMasilWebMcpTools(modelContext, registered);
+    await cleanup();
     throw error;
   }
 
-  return () => unregisterMasilWebMcpTools(modelContext, registered);
+  return cleanup;
 }
 
 async function unregisterMasilWebMcpTools(

@@ -18,6 +18,7 @@ export function useMasilWebMcpProvider(execute: MasilToolExecutor) {
     let active = true;
     let retryTimer = 0;
     let unregister: (() => Promise<void>) | null = null;
+    const registrationController = new AbortController();
 
     const start = async (attempt = 0) => {
       await Promise.resolve();
@@ -41,8 +42,10 @@ export function useMasilWebMcpProvider(execute: MasilToolExecutor) {
           modelContext,
           execute,
           isActive: () => active,
+          signal: registrationController.signal,
         });
         if (active) setStatus("connected");
+        else void unregister();
       } catch {
         if (active) setStatus("error");
       }
@@ -52,6 +55,7 @@ export function useMasilWebMcpProvider(execute: MasilToolExecutor) {
 
     return () => {
       active = false;
+      registrationController.abort();
       window.clearTimeout(retryTimer);
       void unregister?.();
     };

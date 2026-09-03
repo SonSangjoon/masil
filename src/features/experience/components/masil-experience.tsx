@@ -95,6 +95,12 @@ import {
   MASIL_WEBMCP_CONTRACT_HASH,
   MASIL_WEBMCP_CONTRACT_VERSION,
 } from "@/features/webmcp/contract";
+import {
+  MASIL_WEBMCP_AGENT_HINT,
+  MASIL_WEBMCP_DISCOVERY_CHANNEL,
+  MASIL_WEBMCP_TOOL_SCOPE,
+  MASIL_WEBMCP_TRANSPORT,
+} from "@/features/webmcp/discovery";
 import { createInstrumentedMasilExecutor } from "@/features/webmcp/provider";
 import type {
   MasilActivity,
@@ -2326,6 +2332,13 @@ export function MasilExperience() {
         data-testid="masil-flow-demo"
         data-stage={session.stage}
         data-activity={session.activity ?? "none"}
+        data-webmcp-provider="MASIL"
+        data-webmcp-registration-status={webMcpStatus}
+        data-webmcp-tool-count={toolDescriptors.length}
+        data-webmcp-transport={MASIL_WEBMCP_TRANSPORT}
+        data-webmcp-tool-scope={MASIL_WEBMCP_TOOL_SCOPE}
+        data-webmcp-discovery={MASIL_WEBMCP_DISCOVERY_CHANNEL}
+        data-webmcp-agent-hint={MASIL_WEBMCP_AGENT_HINT}
       >
       <MasilWorldTransition
         ref={worldTransitionRef}

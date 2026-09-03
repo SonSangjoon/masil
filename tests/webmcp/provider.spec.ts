@@ -7,6 +7,10 @@ import {
   registeredBrowserTools,
   waitForRegisteredTools,
 } from "./host";
+import {
+  MASIL_WEBMCP_AGENT_HINT,
+  MASIL_WEBMCP_DISCOVERY_ELEMENT_ID,
+} from "../../src/features/webmcp/discovery";
 
 async function openPageWithProvider(page: Page) {
   await installWebMcpTestHost(page);
@@ -83,6 +87,33 @@ test("registers the complete contract and exposes matching capabilities", async 
   expect(capabilities.structuredContent?.contractHash).toMatch(
     /^fnv1a:[a-f0-9]{8}$/,
   );
+
+  const shell = page.getByTestId("masil-flow-demo");
+  await expect(shell).toHaveAttribute("data-webmcp-registration-status", "connected");
+  await expect(shell).toHaveAttribute("data-webmcp-tool-count", "20");
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-discovery",
+    "webmcp-capability-fetchTools",
+  );
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-agent-hint",
+    MASIL_WEBMCP_AGENT_HINT,
+  );
+
+  const discoveryJson = await page
+    .locator(`#${MASIL_WEBMCP_DISCOVERY_ELEMENT_ID}`)
+    .textContent();
+  expect(JSON.parse(discoveryJson ?? "{}")).toMatchObject({
+    provider: "MASIL",
+    transport: "document.modelContext",
+    toolScope: "current-browser-tab",
+    discovery: { capability: "webmcp", operation: "fetchTools" },
+    toolCount: 20,
+  });
+  await expect(
+    page.locator('meta[name="webmcp-discovery"]'),
+  ).toHaveAttribute("content", "webmcp-capability-fetchTools");
+  await expect(page.getByText(MASIL_WEBMCP_AGENT_HINT, { exact: true })).toHaveCount(0);
 });
 
 test("language, panels, activity transitions, and home use semantic tools", async ({
