@@ -11,6 +11,7 @@ import {
   renderHeroFractalScene,
   resizeHeroFractalScene,
   setHeroFractalSceneSettings,
+  type HeroBehaviorWeights,
   type HeroFloorAo,
   type HeroFractalScene,
 } from "./scene";
@@ -38,6 +39,47 @@ const ENVIRONMENT_DEBUG_CAMERA_POSITION = [0, 0, 3] as const;
 const WORLD_AXES_MODEL_MATRIX = modelMatrix(1.45, [0, 0, 0]);
 const CAMERA_TARGET_AXES_SCALE = 0.22;
 const SPHERE_MORPH_DURATION_MS = 1040;
+const BEHAVIOR_TRANSITION_DURATION_MS = 1080;
+
+type MutableBehaviorWeights = [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
+
+function behaviorWeightsFor(value: number): MutableBehaviorWeights {
+  const index = Math.round(Math.min(7, Math.max(0, value)));
+  return [
+    index === 0 ? 1 : 0,
+    index === 1 ? 1 : 0,
+    index === 2 ? 1 : 0,
+    index === 3 ? 1 : 0,
+    index === 4 ? 1 : 0,
+    index === 5 ? 1 : 0,
+    index === 6 ? 1 : 0,
+    index === 7 ? 1 : 0,
+  ];
+}
+
+function copyBehaviorWeights(
+  weights: HeroBehaviorWeights,
+): MutableBehaviorWeights {
+  return [
+    weights[0],
+    weights[1],
+    weights[2],
+    weights[3],
+    weights[4],
+    weights[5],
+    weights[6],
+    weights[7],
+  ];
+}
 
 interface RendererOptions {
   readonly canvas: HTMLCanvasElement;
@@ -50,6 +92,9 @@ interface Renderer {
   setSphereMix(value: number): void;
   setVitality(value: number): void;
   setTransition(value: number): void;
+  setForm(value: number): void;
+  setBehavior(value: number): void;
+  react(kind: "recoil" | "celebrate"): void;
   dispose(): void;
 }
 
@@ -275,6 +320,19 @@ export function createRenderer(options: RendererOptions): Renderer {
   let vitalityTarget = 0.42;
   let transitionCurrent = 0;
   let transitionTarget = 0;
+  let formCurrent = 0;
+  let formTarget = 0;
+  let behaviorCurrent = behaviorWeightsFor(0);
+  let behaviorStart = behaviorWeightsFor(0);
+  let behaviorTarget = behaviorWeightsFor(0);
+  let behaviorTargetIndex = 0;
+  let behaviorTransitionStartTime = Number.NEGATIVE_INFINITY;
+  let behaviorTransitionActive = false;
+  let reactionDirection = 0;
+  let reactionStartTime = Number.NEGATIVE_INFINITY;
+  let reactionDuration = 0;
+  let reactionValue = 0;
+  let reactionPhase = 0;
   let isCanvasVisible = true;
   let visibilityObserver: IntersectionObserver | undefined;
   let pointerTargetX = 0;
@@ -321,6 +379,10 @@ export function createRenderer(options: RendererOptions): Renderer {
         time: orbTime,
         vitality: vitalityCurrent,
         transition: transitionCurrent,
+        form: formCurrent,
+        behaviorWeights: behaviorCurrent,
+        reaction: reactionValue,
+        reactionPhase,
         view: {
           ...cameraControls,
           pointer: [pointerCurrentX, pointerCurrentY],
@@ -455,11 +517,46 @@ export function createRenderer(options: RendererOptions): Renderer {
     orbTime = (time - orbEpoch) * 0.001;
     vitalityCurrent += (vitalityTarget - vitalityCurrent) * 0.035;
     transitionCurrent += (transitionTarget - transitionCurrent) * 0.065;
+    formCurrent += (formTarget - formCurrent) * 0.048;
+    if (behaviorTransitionActive) {
+      const behaviorProgress = Math.min(
+        1,
+        Math.max(
+          0,
+          (time - behaviorTransitionStartTime) /
+            BEHAVIOR_TRANSITION_DURATION_MS,
+        ),
+      );
+      const behaviorEase =
+        behaviorProgress * behaviorProgress * (3 - 2 * behaviorProgress);
+      for (let index = 0; index < behaviorCurrent.length; index += 1) {
+        behaviorCurrent[index] =
+          behaviorStart[index] +
+          (behaviorTarget[index] - behaviorStart[index]) * behaviorEase;
+      }
+      if (behaviorProgress >= 1) {
+        behaviorCurrent = copyBehaviorWeights(behaviorTarget);
+        behaviorTransitionActive = false;
+      }
+    }
+    const reactionElapsed = time - reactionStartTime;
+    if (reactionElapsed >= 0 && reactionElapsed < reactionDuration) {
+      reactionPhase = reactionElapsed / reactionDuration;
+      const envelope =
+        Math.sin(reactionPhase * Math.PI) * (1 - reactionPhase * 0.16);
+      reactionValue = reactionDirection * envelope;
+    } else {
+      reactionValue = 0;
+      reactionPhase = 0;
+    }
     if (Math.abs(vitalityTarget - vitalityCurrent) < 0.0005) {
       vitalityCurrent = vitalityTarget;
     }
     if (Math.abs(transitionTarget - transitionCurrent) < 0.0005) {
       transitionCurrent = transitionTarget;
+    }
+    if (Math.abs(formTarget - formCurrent) < 0.0005) {
+      formCurrent = formTarget;
     }
     renderHero();
     orbFrame = requestAnimationFrame(animateOrb);
@@ -534,6 +631,45 @@ export function createRenderer(options: RendererOptions): Renderer {
       requestMaterialDraw();
       return;
     }
+    requestOrbAnimation();
+  };
+
+  const setForm = (value: number) => {
+    formTarget = Math.min(1, Math.max(0, value));
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      formCurrent = formTarget;
+      requestMaterialDraw();
+      return;
+    }
+    requestOrbAnimation();
+  };
+
+  const setBehavior = (value: number) => {
+    const nextIndex = Math.round(Math.min(7, Math.max(0, value)));
+    if (nextIndex === behaviorTargetIndex) return;
+    behaviorTargetIndex = nextIndex;
+    behaviorStart = copyBehaviorWeights(behaviorCurrent);
+    behaviorTarget = behaviorWeightsFor(nextIndex);
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      behaviorCurrent = copyBehaviorWeights(behaviorTarget);
+      behaviorTransitionActive = false;
+      requestMaterialDraw();
+      return;
+    }
+
+    behaviorTransitionStartTime = performance.now();
+    behaviorTransitionActive = true;
+    requestOrbAnimation();
+  };
+
+  const react = (kind: "recoil" | "celebrate") => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    reactionDirection = kind === "recoil" ? -1 : 1;
+    reactionDuration = kind === "recoil" ? 920 : 1220;
+    reactionStartTime = performance.now();
+    reactionValue = 0;
+    reactionPhase = 0;
     requestOrbAnimation();
   };
 
@@ -777,7 +913,16 @@ export function createRenderer(options: RendererOptions): Renderer {
     fail(error);
   });
 
-  return { ready, setSphereMix, setVitality, setTransition, dispose };
+  return {
+    ready,
+    setSphereMix,
+    setVitality,
+    setTransition,
+    setForm,
+    setBehavior,
+    react,
+    dispose,
+  };
 }
 
 function createDebugAxesGeometry(gpu: Gpu): Geometry {

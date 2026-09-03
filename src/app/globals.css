@@ -159,8 +159,70 @@ body {
   filter: drop-shadow(0 24px 46px rgb(143 70 48 / 15%));
 }
 
+.masil-orb-stage[data-presence="receiving"] {
+  filter: drop-shadow(0 22px 42px rgb(143 70 48 / 17%));
+}
+
+.masil-orb-stage[data-presence="creating"] {
+  filter: drop-shadow(0 26px 54px rgb(170 68 39 / 22%));
+}
+
+.masil-orb-stage[data-presence="speaking"] {
+  filter: drop-shadow(0 28px 58px rgb(183 78 48 / 20%));
+}
+
+@keyframes masil-orb-life-drift {
+  0%,
+  100% {
+    transform: translate3d(-1.15%, 1.1%, 0) rotate(-0.35deg) scale(1);
+  }
+  19% {
+    transform: translate3d(1.7%, -2.15%, 0) rotate(0.62deg) scale(1.007);
+  }
+  47% {
+    transform: translate3d(2.15%, 0.3%, 0) rotate(-0.24deg) scale(0.995);
+  }
+  72% {
+    transform: translate3d(-1.75%, -1.5%, 0) rotate(0.46deg) scale(1.005);
+  }
+}
+
+.masil-orb-life {
+  transform-origin: 50% 50%;
+  will-change: transform;
+  animation: masil-orb-life-drift 7.8s cubic-bezier(0.45, 0, 0.3, 1) -2.1s
+    infinite;
+}
+
+.masil-orb-layout-motion,
+.masil-orb-reaction {
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
 .masil-orb-canvas {
   transform-origin: 50% 50%;
+}
+
+@keyframes masil-motion-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.masil-motion-progress {
+  animation-name: masil-motion-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: both;
+}
+
+.masil-home-copy {
+  /* Preserve the current composition at ordinary heights. Only short viewports
+     gain the extra clearance needed to keep the living Orb off the copy. */
+  top: calc(60% + clamp(0rem, calc(14rem - 35svh), 3.75rem));
 }
 
 .masil-balance {

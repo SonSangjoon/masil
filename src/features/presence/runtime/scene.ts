@@ -31,6 +31,16 @@ export const HERO_FLOOR_AO_DEFAULTS = {
 };
 
 export type HeroFloorAo = typeof HERO_FLOOR_AO_DEFAULTS;
+export type HeroBehaviorWeights = readonly [
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+];
 
 type SceneOutput = Surface | Target;
 
@@ -51,6 +61,11 @@ export interface HeroFractalSceneSettings {
   readonly time?: number;
   readonly vitality?: number;
   readonly transition?: number;
+  readonly form?: number;
+  readonly behavior?: number;
+  readonly behaviorWeights?: HeroBehaviorWeights;
+  readonly reaction?: number;
+  readonly reactionPhase?: number;
   readonly view?: {
     readonly position: readonly [number, number, number];
     readonly target: readonly [number, number, number];
@@ -197,6 +212,22 @@ export function setHeroFractalSceneSettings(
   const time = settings.time ?? 0;
   const vitality = clamp01(settings.vitality ?? 0.42);
   const transition = clamp01(settings.transition ?? 0);
+  const form = clamp01(settings.form ?? 0);
+  const behavior = Math.round(
+    Math.min(7, Math.max(0, settings.behavior ?? 0)),
+  );
+  const behaviorWeights = settings.behaviorWeights ?? [
+    behavior === 0 ? 1 : 0,
+    behavior === 1 ? 1 : 0,
+    behavior === 2 ? 1 : 0,
+    behavior === 3 ? 1 : 0,
+    behavior === 4 ? 1 : 0,
+    behavior === 5 ? 1 : 0,
+    behavior === 6 ? 1 : 0,
+    behavior === 7 ? 1 : 0,
+  ];
+  const reaction = Math.min(1, Math.max(-1, settings.reaction ?? 0));
+  const reactionPhase = clamp01(settings.reactionPhase ?? 0);
 
   scene.background.set({
     params: {
@@ -220,6 +251,21 @@ export function setHeroFractalSceneSettings(
       time,
       vitality,
       transition,
+      form,
+      behaviorWeightsA: [
+        clamp01(behaviorWeights[0]),
+        clamp01(behaviorWeights[1]),
+        clamp01(behaviorWeights[2]),
+        clamp01(behaviorWeights[3]),
+      ],
+      behaviorWeightsB: [
+        clamp01(behaviorWeights[4]),
+        clamp01(behaviorWeights[5]),
+        clamp01(behaviorWeights[6]),
+        clamp01(behaviorWeights[7]),
+      ],
+      reaction,
+      reactionPhase,
       material: orbMaterial,
       environmentRotation,
       environmentExposure: glass.environmentExposure,
