@@ -85,6 +85,14 @@ import {
 } from "@/features/janggi/model/game";
 import type { MasilWebMcpAdapter } from "@/features/webmcp/adapter";
 import {
+  MASIL_AGENT_BROWSER_CONTROL_FALLBACK,
+  MASIL_AGENT_CONTROL_MODE,
+  MASIL_AGENT_PRIMARY_INTERFACE,
+  MASIL_AGENT_ROUTING_HINT,
+  MASIL_AGENT_TAB_TITLE,
+  MASIL_AGENT_WEBMCP_PRIORITY,
+} from "@/agent-routing";
+import {
   getValidMasilActions,
   MASIL_HUMAN_ONLY_ACTIONS,
   MASIL_SINGLE_AGENT_BOUNDARY,
@@ -739,10 +747,7 @@ export function MasilExperience() {
   useEffect(() => {
     languageRef.current = language;
     document.documentElement.lang = language;
-    document.title =
-      language === "ko"
-        ? "MASIL — 말로 여는 생활 공간"
-        : "MASIL — Everyday, together";
+    document.title = MASIL_AGENT_TAB_TITLE;
   }, [language]);
 
   useEffect(() => {
@@ -2338,6 +2343,16 @@ export function MasilExperience() {
         data-webmcp-transport={MASIL_WEBMCP_TRANSPORT}
         data-webmcp-tool-scope={MASIL_WEBMCP_TOOL_SCOPE}
         data-webmcp-discovery={MASIL_WEBMCP_DISCOVERY_CHANNEL}
+        data-webmcp-primary-agent-interface={
+          MASIL_AGENT_PRIMARY_INTERFACE
+        }
+        data-webmcp-agent-control-mode={MASIL_AGENT_CONTROL_MODE}
+        data-webmcp-priority={MASIL_AGENT_WEBMCP_PRIORITY}
+        data-webmcp-browser-control-fallback={
+          MASIL_AGENT_BROWSER_CONTROL_FALLBACK
+        }
+        data-webmcp-direct-ui-control-owner="person"
+        data-webmcp-agent-routing-hint={MASIL_AGENT_ROUTING_HINT}
         data-webmcp-agent-hint={MASIL_WEBMCP_AGENT_HINT}
       >
       <MasilWorldTransition

@@ -1,6 +1,10 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import {
+  MASIL_AGENT_ROUTING_ELEMENT_ID,
+  MASIL_AGENT_ROUTING_HINT,
+} from "../../src/agent-routing";
+import {
   createReferenceDataUrl,
   executeBrowserTool,
   installWebMcpTestHost,
@@ -67,6 +71,7 @@ test("registers the complete contract and exposes matching capabilities", async 
   page,
 }) => {
   await openPageWithProvider(page);
+  await expect(page).toHaveTitle("MASIL — Use WebMCP");
   const tools = await registeredBrowserTools(page);
   const capabilities = await executeBrowserTool(
     page,
@@ -99,6 +104,26 @@ test("registers the complete contract and exposes matching capabilities", async 
     "data-webmcp-agent-hint",
     MASIL_WEBMCP_AGENT_HINT,
   );
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-primary-agent-interface",
+    "webmcp",
+  );
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-priority",
+    "required-when-available",
+  );
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-agent-control-mode",
+    "webmcp-first",
+  );
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-direct-ui-control-owner",
+    "person",
+  );
+  await expect(shell).toHaveAttribute(
+    "data-webmcp-agent-routing-hint",
+    MASIL_AGENT_ROUTING_HINT,
+  );
 
   const discoveryJson = await page
     .locator(`#${MASIL_WEBMCP_DISCOVERY_ELEMENT_ID}`)
@@ -110,10 +135,32 @@ test("registers the complete contract and exposes matching capabilities", async 
     discovery: { capability: "webmcp", operation: "fetchTools" },
     toolCount: 20,
   });
+  const routingJson = await page
+    .locator(`#${MASIL_AGENT_ROUTING_ELEMENT_ID}`)
+    .textContent();
+  expect(JSON.parse(routingJson ?? "{}")).toMatchObject({
+    provider: "MASIL",
+    primaryInterface: "webmcp",
+    controlMode: "webmcp-first",
+    webMcpPriority: "required-when-available",
+    browserControlFallback:
+      "only-when-current-tab-webmcp-is-unavailable",
+    directUiControlOwner: "person",
+    actionOrder: [
+      "fetch-current-tab-webmcp-tools",
+      "when-available-call-the-matching-masil-tool",
+      "use-browser-control-only-if-current-tab-webmcp-is-unavailable",
+    ],
+  });
   await expect(
     page.locator('meta[name="webmcp-discovery"]'),
   ).toHaveAttribute("content", "webmcp-capability-fetchTools");
+  await expect(page.locator('meta[name="webmcp-priority"]')).toHaveAttribute(
+    "content",
+    "required-when-available",
+  );
   await expect(page.getByText(MASIL_WEBMCP_AGENT_HINT, { exact: true })).toHaveCount(0);
+  await expect(page.getByText(MASIL_AGENT_ROUTING_HINT, { exact: true })).toHaveCount(0);
 });
 
 test("language, panels, activity transitions, and home use semantic tools", async ({
