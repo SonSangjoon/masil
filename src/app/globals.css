@@ -23,8 +23,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --font-sans: var(--font-sans);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-pretendard);
+  --font-heading: var(--font-pretendard);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -53,9 +53,10 @@
   --border: color-mix(in srgb, #171513 12%, transparent);
   --input: color-mix(in srgb, #171513 14%, transparent);
   --ring: #b65f49;
-  --radius: 0.625rem;
-  --font-sans: Pretendard, "Noto Sans KR", Inter, ui-sans-serif, system-ui,
-    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --radius: 0.75rem;
+  --font-pretendard: "Pretendard Variable", Pretendard, "Noto Sans KR", Inter,
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
   --masil-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --masil-ease-flow: cubic-bezier(0.45, 0, 0.2, 1);
 }
@@ -72,10 +73,86 @@ body {
 }
 
 .masil-shell {
+  isolation: isolate;
   background:
-    radial-gradient(circle at 50% 16%, rgb(207 118 87 / 7%), transparent 27rem),
-    radial-gradient(circle at 50% 57%, rgb(255 252 247 / 76%), transparent 33rem),
+    radial-gradient(circle at 50% 15%, rgb(207 118 87 / 8%), transparent 29rem),
+    radial-gradient(circle at 50% 58%, rgb(255 253 249 / 84%), transparent 34rem),
+    linear-gradient(135deg, #f8f5ef 0%, #f5f1e9 48%, #f8f5ef 100%),
     #f7f4ed;
+}
+
+.masil-shell[data-stage="home"] {
+  background-size: 118% 118%, 116% 116%, 112% 112%, auto;
+  animation: masil-ambient-tide 24s ease-in-out infinite alternate;
+}
+
+.masil-shell[data-stage="home"]::before,
+.masil-shell[data-stage="home"]::after {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  content: "";
+}
+
+.masil-shell[data-stage="home"]::before {
+  inset: -24%;
+  background:
+    repeating-linear-gradient(
+      96deg,
+      rgb(88 64 47 / 2.6%) 0,
+      rgb(88 64 47 / 2.6%) 1px,
+      transparent 1px,
+      transparent 8px
+    ),
+    repeating-linear-gradient(
+      5deg,
+      rgb(255 255 255 / 24%) 0,
+      rgb(255 255 255 / 24%) 1px,
+      transparent 1px,
+      transparent 10px
+    );
+  opacity: 0.52;
+  mask-image: radial-gradient(ellipse at center, #000 0%, transparent 72%);
+  transform: rotate(-1.5deg) scale(1.04);
+  transform-origin: 50% 42%;
+  animation: masil-fabric-drift 28s ease-in-out infinite alternate;
+}
+
+.masil-shell[data-stage="home"]::after {
+  inset: -28%;
+  background:
+    radial-gradient(
+      ellipse 62% 24% at 12% 28%,
+      transparent 55%,
+      rgb(178 102 76 / 7%) 61%,
+      rgb(255 255 255 / 34%) 65%,
+      transparent 72%
+    ),
+    radial-gradient(
+      ellipse 58% 22% at 88% 62%,
+      transparent 54%,
+      rgb(255 255 255 / 42%) 60%,
+      rgb(145 102 76 / 5.5%) 66%,
+      transparent 73%
+    ),
+    radial-gradient(
+      ellipse 68% 26% at 38% 94%,
+      transparent 58%,
+      rgb(159 97 74 / 5%) 64%,
+      rgb(255 255 255 / 30%) 68%,
+      transparent 75%
+    );
+  opacity: 0.88;
+  filter: blur(18px);
+  transform: translate3d(-3%, -1.5%, 0) rotate(-1deg) scale(1.04)
+    skewY(-0.8deg);
+  transform-origin: 48% 52%;
+  animation: masil-cloth-wave 18s cubic-bezier(0.45, 0, 0.2, 1) infinite
+    alternate;
+}
+
+.masil-topbar {
+  background: transparent;
 }
 
 .masil-orb-stage {
@@ -94,7 +171,7 @@ body {
 body {
   margin: 0;
   color: var(--foreground);
-  font-family: var(--font-sans);
+  font-family: var(--font-pretendard);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -126,28 +203,119 @@ button:not(:disabled),
   animation: masil-copy-arrive 880ms var(--masil-ease-out) both;
 }
 
-@keyframes masil-prompt-cycle {
+@keyframes masil-prompt-swap {
   0% {
     opacity: 0;
-    transform: translateY(72%);
-    filter: blur(5px);
+    transform: translateY(68%);
+    filter: blur(3px);
   }
-  14%,
-  74% {
+
+  62% {
+    opacity: 1;
+    transform: translateY(-5%);
+    filter: blur(0.2px);
+  }
+
+  100% {
     opacity: 1;
     transform: translateY(0);
     filter: blur(0);
   }
-  100% {
+}
+
+.masil-prompt-swap {
+  will-change: transform, opacity, filter;
+  animation: masil-prompt-swap 420ms var(--masil-ease-out) both;
+}
+
+@keyframes masil-calligraphy-slot-spin {
+  0% {
     opacity: 0;
-    transform: translateY(-72%);
-    filter: blur(4px);
+    transform: translateY(72%) rotateX(-48deg);
+    filter: blur(3px);
+  }
+
+  68% {
+    opacity: 1;
+    transform: translateY(-5%) rotateX(3deg);
+    filter: blur(0.15px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0);
+    filter: blur(0);
   }
 }
 
-.masil-prompt-cycle {
+.masil-calligraphy-slot-spin {
+  transform-origin: 50% 55%;
   will-change: transform, opacity, filter;
-  animation: masil-prompt-cycle 3200ms var(--masil-ease-flow) both;
+  animation-name: masil-calligraphy-slot-spin;
+  animation-timing-function: var(--masil-ease-out);
+  animation-fill-mode: both;
+}
+
+@keyframes masil-mic-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(182 95 73 / 0%);
+    transform: scale(1);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px rgb(182 95 73 / 7%);
+    transform: scale(1.025);
+  }
+}
+
+.masil-mic-active {
+  animation: masil-mic-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes masil-fabric-drift {
+  0% {
+    transform: translate3d(-1.2%, -0.8%, 0) rotate(-1.5deg) scale(1.04);
+  }
+
+  50% {
+    transform: translate3d(0.7%, 0.9%, 0) rotate(-0.7deg) scale(1.055);
+  }
+
+  100% {
+    transform: translate3d(1.25%, -0.25%, 0) rotate(0.2deg) scale(1.045);
+  }
+}
+
+@keyframes masil-ambient-tide {
+  0% {
+    background-position: 46% 11%, 51% 57%, 46% 50%, 0 0;
+  }
+
+  52% {
+    background-position: 53% 17%, 46% 52%, 51% 48%, 0 0;
+  }
+
+  100% {
+    background-position: 48% 13%, 55% 61%, 48% 53%, 0 0;
+  }
+}
+
+@keyframes masil-cloth-wave {
+  0% {
+    transform: translate3d(-3%, -1.5%, 0) rotate(-1deg) scale(1.04)
+      skewY(-0.8deg);
+  }
+
+  48% {
+    transform: translate3d(2.2%, 1.3%, 0) rotate(0.35deg) scale(1.075)
+      skewY(1.1deg);
+  }
+
+  100% {
+    transform: translate3d(-0.6%, 2.4%, 0) rotate(0.8deg) scale(1.055)
+      skewY(-0.35deg);
+  }
 }
 
 @keyframes masil-world-arrive {
@@ -198,7 +366,8 @@ button:not(:disabled),
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .masil-prompt-cycle {
+  .masil-prompt-swap,
+  .masil-calligraphy-slot-spin {
     opacity: 1 !important;
     transform: none !important;
     filter: none !important;

@@ -149,11 +149,11 @@ export function AirCalligraphyCanvas({
         fallBackToPointer(
           language === "ko"
             ? denied
-              ? "카메라 사용이 허용되지 않아 화면에 직접 쓸 수 있게 바꿨어요."
-              : "손을 찾지 못해 화면에 직접 쓸 수 있게 바꿨어요."
+              ? "카메라 없이도 괜찮아요. 화면을 누른 채 바로 써보세요."
+              : "손을 인식하지 못했어요. 화면을 누른 채 바로 써보세요."
             : denied
-              ? "Camera access was declined, so direct drawing is ready."
-              : "Hand tracking was unavailable, so direct drawing is ready.",
+              ? "That’s okay—press and draw directly on the screen instead."
+              : "We couldn’t find your hand. Press and draw directly on the screen instead.",
         );
       });
 
@@ -173,8 +173,8 @@ export function AirCalligraphyCanvas({
     setMode("fallback");
     setError(
       language === "ko"
-        ? "카메라를 껐어요. 화면에 직접 이어서 쓸 수 있어요."
-        : "Camera off. You can continue directly on the screen.",
+        ? "카메라를 껐어요. 화면을 누른 채 이어서 써보세요."
+        : "Camera off. Press and draw directly on the screen to continue.",
     );
     onCameraStateChange?.("fallback", "person-stopped-camera");
     startPointerRenderer();
@@ -259,19 +259,19 @@ export function AirCalligraphyCanvas({
           )}
           {language === "ko"
             ? mode === "idle"
-              ? "공중 쓰기 준비"
+              ? "손으로 써볼까요?"
               : mode === "requesting"
-              ? "카메라를 여는 중"
+              ? "손을 찾고 있어요"
               : mode === "hand"
-                ? "주먹은 1시로 닿기 · 손바닥은 2시로 들기"
-                : "누르면 1시로 닿기 · 놓으면 2시로 들기"
+                ? "주먹을 쥐면 쓰고 · 손을 펴면 멈춰요"
+                : "누른 채 쓰고 · 놓으면 멈춰요"
             : mode === "idle"
-              ? "Ready for air writing"
+              ? "Ready to write with your hand?"
               : mode === "requesting"
-              ? "Opening camera"
+              ? "Looking for your hand"
               : mode === "hand"
-                ? "Fist touches at one · open palm lifts to two"
-                : "Press to touch at one · release to lift at two"}
+                ? "Close your hand to write · open it to pause"
+                : "Press and draw · release to pause"}
         </div>
 
         <div className="flex items-center gap-2">
@@ -308,7 +308,9 @@ export function AirCalligraphyCanvas({
             onClick={onRequestCamera}
           >
             <Camera aria-hidden="true" className="mr-2 size-4" />
-            {language === "ko" ? "공중에서 쓰기 시작" : "Start air writing"}
+            {language === "ko"
+              ? "손으로 공중에 써보기"
+              : "Write in the air with your hand"}
           </Button>
         </div>
       ) : null}
