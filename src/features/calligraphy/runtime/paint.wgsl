@@ -39,6 +39,14 @@ fn capsule_coverage(texel: vec2f, brush: BrushState) -> f32 {
   let ab = b - a;
   let t = clamp(dot(texel - a, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
   let d = distance(texel, a + ab * t);
+  let segment_length = length(ab);
+  var axis = vec2f(1.0, 0.0);
+  if (segment_length > 1e-4) {
+    axis = ab / segment_length;
+  }
+  let normal = vec2f(-axis.y, axis.x);
+  let along = dot(texel, axis);
+  let across = dot(texel, normal);
   let current_radius = select(uniforms.radius, brush.radius, brush.radius > 0.0);
   let previous_radius = select(
     current_radius,
@@ -47,17 +55,23 @@ fn capsule_coverage(texel: vec2f, brush: BrushState) -> f32 {
   );
   let radius = mix(previous_radius, current_radius, smoothstep(0.0, 1.0, t));
 
-  // A stable paper-space grain gently breaks the otherwise perfect capsule
-  // edge. Keeping the core dense preserves legibility while the perimeter
-  // reads like bundled bristles rather than a digital marker.
-  let tooth = (ink_noise(floor(texel * 0.58)) - 0.5) * min(2.0, radius * 0.16);
+  // Grain follows the stroke axis, like bundled hairs dragging across paper.
+  // Only the outer band breaks apart; the loaded core remains densely inked.
+  let strand = ink_noise(vec2f(floor(along * 0.22), floor(across * 1.35)));
+  let tooth = (strand - 0.5) * min(2.4, radius * 0.18);
   let silhouette = clamp(
     (radius + tooth - d) / max(uniforms.feather, 1e-3) + 0.5,
     0.0,
     1.0
   );
-  let fibre = mix(0.82, 1.0, ink_noise(floor(texel * vec2f(0.31, 0.73))));
-  return silhouette * fibre;
+  let dense_fibre = mix(
+    0.96,
+    1.0,
+    ink_noise(vec2f(floor(along * 0.34), floor(across * 0.78)))
+  );
+  let broken_edge = mix(0.62, 1.0, strand);
+  let edge = smoothstep(radius * 0.58, radius + 1.0, d);
+  return silhouette * mix(dense_fibre, broken_edge, edge);
 }
 
 @compute @workgroup_size(64)

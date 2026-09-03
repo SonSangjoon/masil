@@ -1990,7 +1990,9 @@ export function MasilExperience() {
             onRequestCamera={requestCameraFromCanvas}
           />
 
-          {session.stage === "activity" && !characterRequest ? (
+          {session.stage === "activity" &&
+          session.activity !== "janggi" &&
+          !characterRequest ? (
             <AgentSceneCaption
               caption={session.caption}
               language={language}

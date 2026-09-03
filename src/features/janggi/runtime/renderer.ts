@@ -1,5 +1,14 @@
-import type { Effect, Geometry, Gpu, Surface, Target } from "vgpu";
-import { draw, effect, frame, geometry, storage, surface, target } from "vgpu";
+import type { Effect, Geometry, Gpu, Surface, Target, Texture } from "vgpu";
+import {
+  draw,
+  effect,
+  frame,
+  geometry,
+  sampler,
+  storage,
+  surface,
+  target,
+} from "vgpu";
 import { box, cylinder, perspectiveCamera, torus } from "vgpu/scene";
 
 import presentWgsl from "@/features/presence/runtime/hero-fractal-present.wgsl";
@@ -11,6 +20,8 @@ import type {
 } from "@/features/janggi/model/game";
 import boardWgsl from "./janggi-board.wgsl";
 import piecesWgsl from "./janggi-pieces.wgsl";
+import { createJanggiGlyphAtlas } from "./glyph-atlas";
+import { janggiMoveTravel } from "./motion";
 
 type JanggiRenderer = {
   ready: Promise<void>;
@@ -86,7 +97,7 @@ function cameraFor(
   const easedFocus = easeInOut(focus);
   const start = gridToWorld(move?.from ?? { row: 7, col: 2 });
   const end = gridToWorld(move?.to ?? { row: 7, col: 2 });
-  const travel = easeInOut(clamp01((moveProgress - 0.16) / 0.66));
+  const travel = janggiMoveTravel(moveProgress);
   const subject = {
     x: lerp(start.x, end.x, travel),
     z: lerp(start.z, end.z, travel),
@@ -174,6 +185,8 @@ export function createJanggiRenderer({
   let pieceGeometry: Geometry | undefined;
   let pieceRingGeometry: Geometry | undefined;
   let pieceStateBuffer: ReturnType<typeof storage> | undefined;
+  let glyphAtlas: Texture | undefined;
+  let glyphSampler: GPUSampler | undefined;
   let present: Effect | undefined;
   let resizeObserver: ResizeObserver | undefined;
   let visibilityObserver: IntersectionObserver | undefined;
@@ -190,15 +203,22 @@ export function createJanggiRenderer({
   let lastReportedCameraFocus = -1;
   let lastReportedMoveProgress = -1;
   const epoch = performance.now();
+  const pieceIndexById = new Map(
+    initialGame.pieces.map((piece) => [piece.id, piece.index]),
+  );
 
-  const encodePieces = (state: JanggiGameState) => {
+  const encodePieces = (
+    state: JanggiGameState,
+    retainedPieceId: string | null = null,
+  ) => {
     const data = new Float32Array(32 * 4);
     for (const piece of state.pieces) {
       const offset = piece.index * 4;
       data[offset] = piece.col;
       data[offset + 1] = piece.row;
       data[offset + 2] = piece.side === "cho" ? 1 : 0;
-      data[offset + 3] = piece.active ? 1 : 0;
+      data[offset + 3] =
+        piece.id === retainedPieceId ? 2 : piece.active ? 1 : 0;
     }
     return data;
   };
@@ -213,19 +233,25 @@ export function createJanggiRenderer({
       );
       moveProgress = 0;
     } else if (moveState === "moved") {
+      const moveDuration = activeMove?.capturedPieceId ? 2.25 : 1.6;
+      const cameraReturnAt = activeMove?.capturedPieceId ? 1.98 : 1.45;
       moveProgress = lerp(
         moveProgressAtChange,
         1,
-        easeInOut(elapsed / 1.6),
+        easeInOut(elapsed / moveDuration),
       );
-      if (elapsed < 1.45) {
+      if (elapsed < cameraReturnAt) {
         cameraFocus = lerp(
           cameraFocusAtChange,
           1,
           easeInOut(elapsed / 0.38),
         );
       } else {
-        cameraFocus = lerp(1, 0, easeInOut((elapsed - 1.45) / 0.95));
+        cameraFocus = lerp(
+          1,
+          0,
+          easeInOut((elapsed - cameraReturnAt) / 0.95),
+        );
       }
     } else {
       cameraFocus = lerp(
@@ -285,28 +311,53 @@ export function createJanggiRenderer({
       moveToCol: activeMove?.to.col ?? 0,
       moveToRow: activeMove?.to.row ?? 0,
     };
+    const capturedPieceIndex = activeMove?.capturedPieceId
+      ? (pieceIndexById.get(activeMove.capturedPieceId) ?? -1)
+      : -1;
+    const boardBaseDraw = boardBaseDrawRef;
     const boardDraw = boardDrawRef;
     const piecesDraw = piecesDrawRef;
     const pieceRingsDraw = pieceRingsDrawRef;
-    if (!boardDraw || !piecesDraw || !pieceRingsDraw || !pieceStateBuffer) return;
+    if (
+      !boardBaseDraw ||
+      !boardDraw ||
+      !piecesDraw ||
+      !pieceRingsDraw ||
+      !pieceStateBuffer ||
+      !glyphAtlas ||
+      !glyphSampler
+    )
+      return;
     const currentGpu = gpu;
     const currentOutput = output;
     const currentScene = scene;
     const currentPresent = present;
-    boardDraw.set({ params, pieceStates: pieceStateBuffer });
+    boardBaseDraw.set({
+      params: { ...params, capturedPieceIndex, part: 1 },
+      pieceStates: pieceStateBuffer,
+    });
+    boardDraw.set({
+      params: { ...params, capturedPieceIndex, part: 0 },
+      pieceStates: pieceStateBuffer,
+    });
     piecesDraw.set({
       params: { ...params, part: 0 },
       pieceStates: pieceStateBuffer,
+      glyphAtlas,
+      glyphSampler,
     });
     pieceRingsDraw.set({
       params: { ...params, part: 1 },
       pieceStates: pieceStateBuffer,
+      glyphAtlas,
+      glyphSampler,
     });
     currentPresent.set({ sceneTexture: currentScene });
     frame(currentGpu, (currentFrame) => {
       currentFrame.pass(
         { target: currentScene, clear: [0, 0, 0, 0] },
         (pass) => {
+          pass.draw(boardBaseDraw);
           pass.draw(boardDraw);
           pass.draw(piecesDraw);
           pass.draw(pieceRingsDraw);
@@ -320,6 +371,7 @@ export function createJanggiRenderer({
     frameId = requestAnimationFrame(render);
   };
 
+  let boardBaseDrawRef: ReturnType<typeof draw> | undefined;
   let boardDrawRef: ReturnType<typeof draw> | undefined;
   let piecesDrawRef: ReturnType<typeof draw> | undefined;
   let pieceRingsDrawRef: ReturnType<typeof draw> | undefined;
@@ -352,6 +404,7 @@ export function createJanggiRenderer({
       format: output.format,
       depth: true,
       msaa: 4,
+      clearColor: [0, 0, 0, 0],
       label: "masil-janggi-scene",
     });
     boardGeometry = geometry(gpu, box({ size: 1 }));
@@ -377,6 +430,24 @@ export function createJanggiRenderer({
     );
     pieceStateBuffer = storage(gpu, 32 * 4 * Float32Array.BYTES_PER_ELEMENT, "read");
     pieceStateBuffer.write(encodePieces(game));
+    glyphAtlas = await createJanggiGlyphAtlas(gpu, initialGame.pieces);
+    glyphSampler = sampler(gpu, {
+      minFilter: "linear",
+      magFilter: "linear",
+      addressModeU: "clamp-to-edge",
+      addressModeV: "clamp-to-edge",
+    });
+    if (disposed) {
+      glyphAtlas.destroy();
+      gpu.dispose();
+      return;
+    }
+    boardBaseDrawRef = draw(gpu, {
+      shader: boardWgsl,
+      geometry: boardGeometry,
+      cull: "back",
+      label: "masil-janggi-board-base",
+    });
     boardDrawRef = draw(gpu, {
       shader: boardWgsl,
       geometry: boardGeometry,
@@ -400,10 +471,10 @@ export function createJanggiRenderer({
       label: "masil-janggi-piece-rings",
     });
     present = effect(gpu, presentWgsl, {
-      blend: "premultiplied",
       label: "masil-janggi-present",
     });
     await Promise.all([
+      boardBaseDrawRef.compile(scene),
       boardDrawRef.compile(scene),
       piecesDrawRef.compile(scene),
       pieceRingsDrawRef.compile(scene),
@@ -436,7 +507,12 @@ export function createJanggiRenderer({
     game = nextGame;
     moveState = state;
     activeMove = move;
-    pieceStateBuffer?.write(encodePieces(game));
+    pieceStateBuffer?.write(
+      encodePieces(
+        game,
+        state === "moved" ? (move?.capturedPieceId ?? null) : null,
+      ),
+    );
     stateStartedAt = performance.now();
     startAnimation();
   };
@@ -451,6 +527,7 @@ export function createJanggiRenderer({
     boardGeometry?.destroy();
     pieceGeometry?.destroy();
     pieceRingGeometry?.destroy();
+    glyphAtlas?.destroy();
     output?.dispose();
     gpu?.dispose();
   };
