@@ -1,0 +1,21 @@
+{
+  "agent": {
+    "usage": {
+      "input": 38303,
+      "cachedInput": 30854,
+      "output": 729,
+      "reasoning": 414,
+      "total": 39032
+    },
+    "modelLatencyMs": 34156.34154299999,
+    "wallTimeMs": 37316.44612499999,
+    "turns": 13,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [],
+    "totalDurationMs": 0,
+    "timeToVisibleSuccessMs": null
+  }
+}

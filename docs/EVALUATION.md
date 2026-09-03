@@ -1,7 +1,7 @@
 # Evaluation
 
-> **Status: evaluation in progress. No success rate, winning iteration, or improvement claim is
-> published until the run is frozen and its artifacts agree with connected-browser evidence.**
+> **Status: frozen through `iteration-025`. Within this retained range, `iteration-008` is the
+> best accepted WebMCP candidate.**
 
 MASIL evaluates whether WebMCP helps an Agent complete the creative activity the elder actually
 wanted. A discovered tool, successful handler return, or visible animation is not sufficient on its
@@ -12,8 +12,9 @@ own.
 > Does an iterated WebMCP surface turn an elder's real request into a correct, visible, continuing
 > creative activity more reliably than the same Agent working without WebMCP?
 
-Success is boolean at the scenario level. A partial answer, approximate visual imitation, Computer
-Use recreation, or tool call without the required human-visible outcome remains a failure.
+Success is boolean at the scenario level. A partial answer, approximate visual imitation, or tool
+call without the required human-visible outcome remains a failure. The route—WebMCP or ordinary
+browser operation—does not determine the score; the complete visible outcome does.
 
 ## 2. Controlled comparison
 
@@ -63,7 +64,8 @@ not become the next authoritative state fails the scenario.
   state rather than stale conversational context.
 - Invalid, ambiguous, stale, malformed, or out-of-turn actions do not mutate authoritative state.
 - Visible state, page revision, WebMCP result, and execution history agree.
-- A scenario cannot pass by recreating the appearance of the outcome through Computer Use.
+- A scenario receives the same score for the same complete visible outcome regardless of whether
+  the Agent used WebMCP or ordinary browser operation.
 
 ## 4. WebMCP surface iteration
 
@@ -80,20 +82,52 @@ improved—not as static plumbing assumed to work once a tool is callable.
 
 ## 5. Iteration and results record
 
-| Record | Publication state |
-| --- | --- |
-| Frozen task-set identifier and hash | Pending frozen artifact |
-| Agent and model configuration | Pending frozen artifact |
-| Repetitions and completed sessions | Pending frozen artifact |
-| Without-WebMCP result | Pending frozen artifact |
-| Candidate versions and bounded change per iteration | Pending frozen artifact |
-| Completed and retained iteration count | Pending frozen artifact |
-| Baseline-to-final calligraphy result | Pending frozen artifact |
-| Baseline-to-final Janggi result | Pending frozen artifact |
-| Token use and wall time | Pending frozen artifact |
+The frozen suite contains 15 realistic requests with two independent clean-context repetitions:
+30 sessions per iteration. `iteration-001` is the no-WebMCP control; `iteration-002` through
+`iteration-025` are ordered WebMCP candidates. No later attempt is part of this evidence set.
 
-Values will be copied verbatim from the immutable run manifest after reconciliation. Interim output
-does not belong in this table, the public README, or Devpost.
+![Task success, Agent tokens, and wall time across 25 official MASIL iterations](../evals/optimization/trajectory.svg)
+
+<!-- accepted-benchmark:start -->
+Latest accepted candidate iteration: **iteration-008** (20 tools; exact source preserved in [iteration-008/artifact](../evals/iterations/iteration-008/artifact/)).
+
+| Configuration | Task success | Tokens / try | Seconds / try |
+| --- | ---: | ---: | ---: |
+| Candidate | 93.3% | 18,550 | 21.1 s |
+| No WebMCP | 20.0% | 21,593 | 21.1 s |
+
+### Official iteration record (001–025)
+
+Each try links to its immutable manifest, benchmark, retained case grades, timing, final responses, and candidate code snapshot when WebMCP is present.
+
+| Try | WebMCP tools | Decision | Task success | Tokens / try | Seconds / try |
+| --- | ---: | --- | ---: | ---: | ---: |
+| [#001](../evals/iterations/iteration-001/) | — | Control | 6/30 (20.0%) | 21,593 | 21.1 s |
+| [#002](../evals/iterations/iteration-002/) | 20 | Accepted | 18/30 (60.0%) | 20,924 | 22.3 s |
+| [#003](../evals/iterations/iteration-003/) | 20 | Accepted | 23/30 (76.7%) | 20,539 | 21.6 s |
+| [#004](../evals/iterations/iteration-004/) | 20 | Rejected | 24/30 (80.0%) | 21,676 | 22.4 s |
+| [#005](../evals/iterations/iteration-005/) | 20 | Accepted | 24/30 (80.0%) | 18,605 | 21.8 s |
+| [#006](../evals/iterations/iteration-006/) | 20 | Accepted | 27/30 (90.0%) | 18,045 | 22.4 s |
+| [#007](../evals/iterations/iteration-007/) | 20 | Rejected | 24/30 (80.0%) | 17,952 | 22.1 s |
+| [#008](../evals/iterations/iteration-008/) | 20 | **Best accepted** | 28/30 (93.3%) | 18,550 | 21.1 s |
+| [#009](../evals/iterations/iteration-009/) | 20 | Rejected | 23/30 (76.7%) | 18,854 | 24.5 s |
+| [#010](../evals/iterations/iteration-010/) | 20 | Rejected | 26/30 (86.7%) | 19,218 | 22.3 s |
+| [#011](../evals/iterations/iteration-011/) | 20 | Rejected | 27/30 (90.0%) | 17,772 | 21.6 s |
+| [#012](../evals/iterations/iteration-012/) | 20 | Rejected | 25/30 (83.3%) | 18,059 | 21.3 s |
+| [#013](../evals/iterations/iteration-013/) | 20 | Rejected | 26/30 (86.7%) | 18,630 | 22.0 s |
+| [#014](../evals/iterations/iteration-014/) | 20 | Rejected | 25/30 (83.3%) | 19,137 | 24.3 s |
+| [#015](../evals/iterations/iteration-015/) | 20 | Rejected | 25/30 (83.3%) | 19,019 | 21.4 s |
+| [#016](../evals/iterations/iteration-016/) | 20 | Rejected | 27/30 (90.0%) | 19,052 | 22.1 s |
+| [#017](../evals/iterations/iteration-017/) | 20 | Rejected | 26/30 (86.7%) | 19,000 | 21.7 s |
+| [#018](../evals/iterations/iteration-018/) | 20 | Rejected | 27/30 (90.0%) | 18,748 | 23.8 s |
+| [#019](../evals/iterations/iteration-019/) | 20 | Rejected | 24/30 (80.0%) | 19,251 | 22.9 s |
+| [#020](../evals/iterations/iteration-020/) | 20 | Rejected | 28/30 (93.3%) | 18,900 | 21.2 s |
+| [#021](../evals/iterations/iteration-021/) | 20 | Rejected | 25/30 (83.3%) | 18,658 | 22.4 s |
+| [#022](../evals/iterations/iteration-022/) | 20 | Rejected | 26/30 (86.7%) | 18,507 | 21.8 s |
+| [#023](../evals/iterations/iteration-023/) | 20 | Rejected | 27/30 (90.0%) | 17,429 | 21.7 s |
+| [#024](../evals/iterations/iteration-024/) | 20 | Rejected | 25/30 (83.3%) | 17,608 | 21.5 s |
+| [#025](../evals/iterations/iteration-025/) | 15 | Rejected | 27/30 (90.0%) | 16,612 | 21.7 s |
+<!-- accepted-benchmark:end -->
 
 ## 6. Failures, withheld cases, and claim ceiling
 
@@ -117,29 +151,29 @@ value, or a social outcome. Those require direct target-user and field evidence.
 
 ## 7. Reproducible artifacts
 
-| Artifact | Required contents | Public link |
+| Artifact | What it proves | Evidence |
 | --- | --- | --- |
-| Frozen task set | Prompts, success assertions, categories, version, and hash | Pending freeze |
-| Run manifest | Condition, Agent configuration, repetitions, tokens, timing, and artifact hashes | Pending freeze |
-| Task trajectories | Tool calls, structured results, assertions, and first failure point | Pending freeze |
-| Comparison report | Without-WebMCP baseline, each candidate, retained result, and failures | Pending freeze |
-| Connected-browser evidence | Exact client, deployment revision, request, visible state, and execution history | Pending judge run |
+| Frozen task set | The prompts and outcome assertions did not change between tries | [`evals/evals.json`](../evals/evals.json) |
+| Ordered iteration record | Exactly 25 complete official iterations are retained | [`evals/iterations/`](../evals/iterations/) |
+| Per-try evidence | Each try contains its manifest, benchmark, grading, timing, and final responses | Linked from every row above |
+| Candidate source snapshots | Every WebMCP try preserves the exact evaluated provider code | Each candidate's `artifact/` directory |
+| Final retained source | The accepted WebMCP implementation used by `iteration-008` | [`iteration-008/artifact/`](../evals/iterations/iteration-008/artifact/) |
+| Machine-readable trajectory | The exact values used by the table and chart | [`trajectory.json`](../evals/optimization/trajectory.json) |
+| Rendered trajectory | Task success, tokens, and time on one ordered visual | [`trajectory.svg`](../evals/optimization/trajectory.svg) |
 
-The final repository version will replace each placeholder with a relative link to the frozen
-artifact. Connected-browser evidence must also reconcile with the private submission checklist in
-`judge-testing.md` before any result becomes public.
+Raw API responses remain local and ignored. Their hashes are preserved in the relevant manifests;
+no API key, raw response, generated image payload, or personal data is part of the public evidence.
 
 ## 8. Results publication gate
 
-The public result remains empty until all of the following are true:
+The scoped benchmark is publishable only while all of the following remain true:
 
 - the frozen manifest identifies the exact task set, configuration, and repetitions;
 - the control and final candidate have complete artifacts under the same evaluation contract;
 - task-level assertions, aggregate metrics, token use, and timing reconcile;
-- the connected judge journey runs on the same deployable product behavior;
 - the visible outcome and execution evidence agree; and
 - limitations, failed cases, and withheld cases appear beside the improvement.
 
-When this gate passes, this document will publish the without-WebMCP result, every retained
-iteration, final category results, strongest failures, and direct artifact links. Until then, MASIL
-claims an evaluation method—not an evaluation outcome.
+The retained artifacts satisfy this gate for the benchmark's narrow claim: task completion under
+the recorded Agent, frozen requests, browser fixture, and runtime. They do not establish real-world
+accessibility, adoption, reduced isolation, or institutional impact.

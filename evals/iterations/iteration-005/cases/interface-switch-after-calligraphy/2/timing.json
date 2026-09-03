@@ -1,0 +1,527 @@
+{
+  "agent": {
+    "usage": {
+      "input": 26954,
+      "cachedInput": 24402,
+      "output": 342,
+      "reasoning": 62,
+      "total": 27296
+    },
+    "modelLatencyMs": 16167.779332000035,
+    "wallTimeMs": 31617.62745899998,
+    "turns": 8,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:39:04.029Z",
+        "completedAt": "2026-09-03T09:39:16.313Z",
+        "durationMs": 12284.900000095367,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T09:39:19.929Z",
+        "completedAt": "2026-09-03T09:39:20.383Z",
+        "durationMs": 453.59999990463257,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "calligraphy": {
+            "character": "秋夕",
+            "reading": "추석",
+            "meaning": "한가위",
+            "referenceImageAlt": "검은 먹선으로 쓴 秋夕 추석 글자본",
+            "referenceImagePresent": true,
+            "referenceImageTransport": "data-url",
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "transparentRatio": 0.9064,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "foregroundRatio": 0.093,
+              "inkBounds": {
+                "widthRatio": 0.5438,
+                "heightRatio": 0.662
+              },
+              "trueAlpha": true
+            }
+          },
+          "acceptedCharacterCount": 2,
+          "generatedByAgent": true,
+          "imageTransport": "data-url",
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "transparentRatio": 0.9064,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "foregroundRatio": 0.093,
+            "inkBounds": {
+              "widthRatio": 0.5438,
+              "heightRatio": 0.662
+            },
+            "trueAlpha": true
+          },
+          "assetContract": {
+            "formats": [
+              "image/png",
+              "image/webp"
+            ],
+            "canvas": {
+              "aspectRatio": "3:2",
+              "recommendedWidth": 1536,
+              "recommendedHeight": 1024,
+              "minimumWidth": 1200,
+              "minimumHeight": 800
+            },
+            "background": "Real transparent alpha (RGBA alpha=0), never white paper or baked checkerboard pixels.",
+            "ink": "Black brush-calligraphy only; no seal, signature, decoration, translation, or extra text.",
+            "composition": {
+              "outerSafeMargin": "At least 8% on every edge.",
+              "inkHeight": "46-84% of canvas height.",
+              "minimumInkWidthByCharacterCount": {
+                "1": 0.24,
+                "2": 0.42,
+                "3": 0.58,
+                "4": 0.68
+              },
+              "maximumInkWidth": "88% of canvas width.",
+              "layout": "Keep the complete 1-4 character phrase on one horizontal canvas."
+            },
+            "transport": "PNG/WebP data URL, same-origin URL, or CORS-readable HTTPS URL available to the MASIL page."
+          },
+          "cameraPermissionRequested": false,
+          "cameraStartTool": "masil_start_calligraphy_camera",
+          "browserPermissionRemainsPersonControlled": true,
+          "humanStrokeLayer": "separate-and-preserved"
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:39:28.140Z",
+        "completedAt": "2026-09-03T09:39:30.689Z",
+        "durationMs": 2549.800000190735,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "janggi",
+          "revision": 3,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_get_janggi_state",
+            "masil_move_janggi_piece",
+            "masil_wait_for_person_janggi_move"
+          ]
+        }
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_get_janggi_state",
+        "startedAt": "2026-09-03T09:39:31.994Z",
+        "completedAt": "2026-09-03T09:39:31.998Z",
+        "durationMs": 4.099999904632568,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 3,
+          "personSide": "cho",
+          "agentSide": "han",
+          "turnOwner": "person",
+          "coordinateSystem": {
+            "rows": "0 (한 진영) to 9 (초 진영)",
+            "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+            "choForward": "row - 1",
+            "hanForward": "row + 1"
+          },
+          "ruleProfile": {
+            "name": "common-janggi",
+            "choMovesFirst": true,
+            "passAllowedWhenNotInCheck": true,
+            "bikjangIsNotCheck": true,
+            "noChessStyleStalemate": true
+          },
+          "canPass": true,
+          "turn": "cho",
+          "moveNumber": 1,
+          "status": "playing",
+          "lastMove": null,
+          "pieces": [
+            {
+              "id": "han-cha-left",
+              "row": 0,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-left",
+              "row": 0,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-left",
+              "row": 0,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-left",
+              "row": 0,
+              "col": 3,
+              "legalMoves": []
+            },
+            {
+              "id": "han-king",
+              "row": 1,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-right",
+              "row": 0,
+              "col": 5,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-right",
+              "row": 0,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-right",
+              "row": 0,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-cha-right",
+              "row": 0,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-left",
+              "row": 2,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-right",
+              "row": 2,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-1",
+              "row": 3,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-2",
+              "row": 3,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-3",
+              "row": 3,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-4",
+              "row": 3,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-5",
+              "row": 3,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-byeong-1",
+              "row": 6,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 0
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-2",
+              "row": 6,
+              "col": 2,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 2
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-3",
+              "row": 6,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 4
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-4",
+              "row": 6,
+              "col": 6,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 6
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-5",
+              "row": 6,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 8
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-po-left",
+              "row": 7,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-po-right",
+              "row": 7,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-cha-left",
+              "row": 9,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 8,
+                  "col": 0
+                }
+              ]
+            },
+            {
+              "id": "cho-ma-left",
+              "row": 9,
+              "col": 1,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 7,
+                  "col": 2
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-left",
+              "row": 9,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-sa-left",
+              "row": 9,
+              "col": 3,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-king",
+              "row": 8,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 3
+                },
+                {
+                  "row": 7,
+                  "col": 4
+                },
+                {
+                  "row": 7,
+                  "col": 5
+                },
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sa-right",
+              "row": 9,
+              "col": 5,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-right",
+              "row": 9,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-ma-right",
+              "row": 9,
+              "col": 7,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 6
+                },
+                {
+                  "row": 7,
+                  "col": 8
+                }
+              ]
+            },
+            {
+              "id": "cho-cha-right",
+              "row": 9,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 8
+                },
+                {
+                  "row": 8,
+                  "col": 8
+                }
+              ]
+            }
+          ]
+        }
+      }
+    ],
+    "totalDurationMs": 15292.400000095367,
+    "timeToVisibleSuccessMs": 28542.326042
+  }
+}

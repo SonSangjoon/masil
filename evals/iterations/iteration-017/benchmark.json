@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-09-03T10:53:42.207Z",
+  "configurations": {
+    "candidate": {
+      "runs": 30,
+      "passed": 26,
+      "passRate": 0.8666666666666667,
+      "criticalPassRate": 0.9333333333333333,
+      "firstPassValidRate": 0.8,
+      "failedToolCalls": 4,
+      "expectedGuardRejections": 4,
+      "retries": 6,
+      "totalTokens": 570011,
+      "meanTokensPerRun": 19000.366666666665,
+      "meanWallTimeMs": 21727.560833399995,
+      "tokensPerSuccessfulOutcome": 21923.5,
+      "meanTimeToVisibleSuccessMs": 19131.17975165385
+    }
+  },
+  "categories": {
+    "calligraphy": {
+      "candidate": {
+        "runs": 16,
+        "passed": 14,
+        "passRate": 0.875,
+        "criticalPassRate": 0.875,
+        "firstPassValidRate": 0.875,
+        "failedToolCalls": 2,
+        "expectedGuardRejections": 4,
+        "retries": 4,
+        "totalTokens": 297003,
+        "meanTokensPerRun": 18562.6875,
+        "meanWallTimeMs": 25757.353976624992,
+        "tokensPerSuccessfulOutcome": 21214.5,
+        "meanTimeToVisibleSuccessMs": 22483.69287192857
+      }
+    },
+    "janggi": {
+      "candidate": {
+        "runs": 10,
+        "passed": 8,
+        "passRate": 0.8,
+        "criticalPassRate": 1,
+        "firstPassValidRate": 0.6,
+        "failedToolCalls": 2,
+        "expectedGuardRejections": 0,
+        "retries": 2,
+        "totalTokens": 181690,
+        "meanTokensPerRun": 18169,
+        "meanWallTimeMs": 14841.9870501,
+        "tokensPerSuccessfulOutcome": 22711.25,
+        "meanTimeToVisibleSuccessMs": 13511.825640750003
+      }
+    },
+    "interface": {
+      "candidate": {
+        "runs": 4,
+        "passed": 4,
+        "passRate": 1,
+        "criticalPassRate": 1,
+        "firstPassValidRate": 1,
+        "failedToolCalls": 0,
+        "expectedGuardRejections": 0,
+        "retries": 0,
+        "totalTokens": 91318,
+        "meanTokensPerRun": 22829.5,
+        "meanWallTimeMs": 22822.32271875,
+        "tokensPerSuccessfulOutcome": 22829.5,
+        "meanTimeToVisibleSuccessMs": 18636.09205249999
+      }
+    }
+  }
+}

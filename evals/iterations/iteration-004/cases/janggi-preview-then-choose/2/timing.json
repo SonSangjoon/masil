@@ -1,0 +1,1592 @@
+{
+  "agent": {
+    "usage": {
+      "input": 29919,
+      "cachedInput": 24187,
+      "output": 421,
+      "reasoning": 99,
+      "total": 30340
+    },
+    "modelLatencyMs": 22538.529791999972,
+    "wallTimeMs": 27599.840291999993,
+    "turns": 6,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:30:54.380Z",
+        "completedAt": "2026-09-03T09:30:56.926Z",
+        "durationMs": 2546.4000000953674,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "janggi",
+          "revision": 1,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_get_janggi_state",
+            "masil_move_janggi_piece",
+            "masil_wait_for_person_janggi_move"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_get_janggi_state",
+        "startedAt": "2026-09-03T09:30:57.996Z",
+        "completedAt": "2026-09-03T09:30:57.997Z",
+        "durationMs": 2,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 1,
+          "personSide": "cho",
+          "agentSide": "han",
+          "turnOwner": "person",
+          "coordinateSystem": {
+            "rows": "0 (한 진영) to 9 (초 진영)",
+            "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+            "choForward": "row - 1",
+            "hanForward": "row + 1"
+          },
+          "ruleProfile": {
+            "name": "common-janggi",
+            "choMovesFirst": true,
+            "passAllowedWhenNotInCheck": true,
+            "bikjangIsNotCheck": true,
+            "noChessStyleStalemate": true
+          },
+          "canPass": true,
+          "turn": "cho",
+          "moveNumber": 1,
+          "status": "playing",
+          "lastMove": null,
+          "pieces": [
+            {
+              "id": "han-cha-left",
+              "name": "한 차",
+              "label": "車",
+              "side": "han",
+              "kind": "cha",
+              "row": 0,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-left",
+              "name": "한 마",
+              "label": "馬",
+              "side": "han",
+              "kind": "ma",
+              "row": 0,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-left",
+              "name": "한 상",
+              "label": "象",
+              "side": "han",
+              "kind": "sang",
+              "row": 0,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-left",
+              "name": "한 사",
+              "label": "士",
+              "side": "han",
+              "kind": "sa",
+              "row": 0,
+              "col": 3,
+              "legalMoves": []
+            },
+            {
+              "id": "han-king",
+              "name": "한 왕",
+              "label": "漢",
+              "side": "han",
+              "kind": "king",
+              "row": 1,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-right",
+              "name": "한 사",
+              "label": "士",
+              "side": "han",
+              "kind": "sa",
+              "row": 0,
+              "col": 5,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-right",
+              "name": "한 상",
+              "label": "象",
+              "side": "han",
+              "kind": "sang",
+              "row": 0,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-right",
+              "name": "한 마",
+              "label": "馬",
+              "side": "han",
+              "kind": "ma",
+              "row": 0,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-cha-right",
+              "name": "한 차",
+              "label": "車",
+              "side": "han",
+              "kind": "cha",
+              "row": 0,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-left",
+              "name": "한 포",
+              "label": "包",
+              "side": "han",
+              "kind": "po",
+              "row": 2,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-right",
+              "name": "한 포",
+              "label": "包",
+              "side": "han",
+              "kind": "po",
+              "row": 2,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-1",
+              "name": "한 졸",
+              "label": "卒",
+              "side": "han",
+              "kind": "soldier",
+              "row": 3,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-2",
+              "name": "한 졸",
+              "label": "卒",
+              "side": "han",
+              "kind": "soldier",
+              "row": 3,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-3",
+              "name": "한 졸",
+              "label": "卒",
+              "side": "han",
+              "kind": "soldier",
+              "row": 3,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-4",
+              "name": "한 졸",
+              "label": "卒",
+              "side": "han",
+              "kind": "soldier",
+              "row": 3,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-5",
+              "name": "한 졸",
+              "label": "卒",
+              "side": "han",
+              "kind": "soldier",
+              "row": 3,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-byeong-1",
+              "name": "초 병",
+              "label": "兵",
+              "side": "cho",
+              "kind": "soldier",
+              "row": 6,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 0
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-2",
+              "name": "초 병",
+              "label": "兵",
+              "side": "cho",
+              "kind": "soldier",
+              "row": 6,
+              "col": 2,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 2
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-3",
+              "name": "초 병",
+              "label": "兵",
+              "side": "cho",
+              "kind": "soldier",
+              "row": 6,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 4
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-4",
+              "name": "초 병",
+              "label": "兵",
+              "side": "cho",
+              "kind": "soldier",
+              "row": 6,
+              "col": 6,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 6
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-5",
+              "name": "초 병",
+              "label": "兵",
+              "side": "cho",
+              "kind": "soldier",
+              "row": 6,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 8
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-po-left",
+              "name": "초 포",
+              "label": "砲",
+              "side": "cho",
+              "kind": "po",
+              "row": 7,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-po-right",
+              "name": "초 포",
+              "label": "砲",
+              "side": "cho",
+              "kind": "po",
+              "row": 7,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-cha-left",
+              "name": "초 차",
+              "label": "車",
+              "side": "cho",
+              "kind": "cha",
+              "row": 9,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 8,
+                  "col": 0
+                }
+              ]
+            },
+            {
+              "id": "cho-ma-left",
+              "name": "초 마",
+              "label": "馬",
+              "side": "cho",
+              "kind": "ma",
+              "row": 9,
+              "col": 1,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 7,
+                  "col": 2
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-left",
+              "name": "초 상",
+              "label": "象",
+              "side": "cho",
+              "kind": "sang",
+              "row": 9,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-sa-left",
+              "name": "초 사",
+              "label": "士",
+              "side": "cho",
+              "kind": "sa",
+              "row": 9,
+              "col": 3,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-king",
+              "name": "초 왕",
+              "label": "楚",
+              "side": "cho",
+              "kind": "king",
+              "row": 8,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 3
+                },
+                {
+                  "row": 7,
+                  "col": 4
+                },
+                {
+                  "row": 7,
+                  "col": 5
+                },
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sa-right",
+              "name": "초 사",
+              "label": "士",
+              "side": "cho",
+              "kind": "sa",
+              "row": 9,
+              "col": 5,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-right",
+              "name": "초 상",
+              "label": "象",
+              "side": "cho",
+              "kind": "sang",
+              "row": 9,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-ma-right",
+              "name": "초 마",
+              "label": "馬",
+              "side": "cho",
+              "kind": "ma",
+              "row": 9,
+              "col": 7,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 6
+                },
+                {
+                  "row": 7,
+                  "col": 8
+                }
+              ]
+            },
+            {
+              "id": "cho-cha-right",
+              "name": "초 차",
+              "label": "車",
+              "side": "cho",
+              "kind": "cha",
+              "row": 9,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 8
+                },
+                {
+                  "row": 8,
+                  "col": 8
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_move_janggi_piece",
+        "startedAt": "2026-09-03T09:30:59.971Z",
+        "completedAt": "2026-09-03T09:31:00.413Z",
+        "durationMs": 442.30000019073486,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "action": "preview",
+          "actor": "person",
+          "move": {
+            "id": "preview-1-cho-king-7-4",
+            "pieceId": "cho-king",
+            "pieceIndex": 27,
+            "pieceLabel": "楚",
+            "side": "cho",
+            "from": {
+              "row": 8,
+              "col": 4
+            },
+            "to": {
+              "row": 7,
+              "col": 4
+            },
+            "capturedPieceId": null,
+            "spokenMove": "초 왕이 (8,4)에서 (7,4)로 이동 가능",
+            "moveNumber": 1
+          },
+          "game": {
+            "coordinateSystem": {
+              "rows": "0 (한 진영) to 9 (초 진영)",
+              "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+              "choForward": "row - 1",
+              "hanForward": "row + 1"
+            },
+            "ruleProfile": {
+              "name": "common-janggi",
+              "choMovesFirst": true,
+              "passAllowedWhenNotInCheck": true,
+              "bikjangIsNotCheck": true,
+              "noChessStyleStalemate": true
+            },
+            "canPass": true,
+            "turn": "cho",
+            "moveNumber": 1,
+            "status": "playing",
+            "lastMove": null,
+            "pieces": [
+              {
+                "id": "han-cha-left",
+                "name": "한 차",
+                "label": "車",
+                "side": "han",
+                "kind": "cha",
+                "row": 0,
+                "col": 0,
+                "legalMoves": []
+              },
+              {
+                "id": "han-ma-left",
+                "name": "한 마",
+                "label": "馬",
+                "side": "han",
+                "kind": "ma",
+                "row": 0,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "han-sang-left",
+                "name": "한 상",
+                "label": "象",
+                "side": "han",
+                "kind": "sang",
+                "row": 0,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "han-sa-left",
+                "name": "한 사",
+                "label": "士",
+                "side": "han",
+                "kind": "sa",
+                "row": 0,
+                "col": 3,
+                "legalMoves": []
+              },
+              {
+                "id": "han-king",
+                "name": "한 왕",
+                "label": "漢",
+                "side": "han",
+                "kind": "king",
+                "row": 1,
+                "col": 4,
+                "legalMoves": []
+              },
+              {
+                "id": "han-sa-right",
+                "name": "한 사",
+                "label": "士",
+                "side": "han",
+                "kind": "sa",
+                "row": 0,
+                "col": 5,
+                "legalMoves": []
+              },
+              {
+                "id": "han-sang-right",
+                "name": "한 상",
+                "label": "象",
+                "side": "han",
+                "kind": "sang",
+                "row": 0,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "han-ma-right",
+                "name": "한 마",
+                "label": "馬",
+                "side": "han",
+                "kind": "ma",
+                "row": 0,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "han-cha-right",
+                "name": "한 차",
+                "label": "車",
+                "side": "han",
+                "kind": "cha",
+                "row": 0,
+                "col": 8,
+                "legalMoves": []
+              },
+              {
+                "id": "han-po-left",
+                "name": "한 포",
+                "label": "包",
+                "side": "han",
+                "kind": "po",
+                "row": 2,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "han-po-right",
+                "name": "한 포",
+                "label": "包",
+                "side": "han",
+                "kind": "po",
+                "row": 2,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-1",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 0,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-2",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-3",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 4,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-4",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-5",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 8,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-1",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 0,
+                "legalMoves": [
+                  {
+                    "row": 5,
+                    "col": 0
+                  },
+                  {
+                    "row": 6,
+                    "col": 1
+                  }
+                ]
+              },
+              {
+                "id": "cho-byeong-2",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 2,
+                "legalMoves": [
+                  {
+                    "row": 5,
+                    "col": 2
+                  },
+                  {
+                    "row": 6,
+                    "col": 1
+                  },
+                  {
+                    "row": 6,
+                    "col": 3
+                  }
+                ]
+              },
+              {
+                "id": "cho-byeong-3",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 4,
+                "legalMoves": [
+                  {
+                    "row": 5,
+                    "col": 4
+                  },
+                  {
+                    "row": 6,
+                    "col": 3
+                  },
+                  {
+                    "row": 6,
+                    "col": 5
+                  }
+                ]
+              },
+              {
+                "id": "cho-byeong-4",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 6,
+                "legalMoves": [
+                  {
+                    "row": 5,
+                    "col": 6
+                  },
+                  {
+                    "row": 6,
+                    "col": 5
+                  },
+                  {
+                    "row": 6,
+                    "col": 7
+                  }
+                ]
+              },
+              {
+                "id": "cho-byeong-5",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 8,
+                "legalMoves": [
+                  {
+                    "row": 5,
+                    "col": 8
+                  },
+                  {
+                    "row": 6,
+                    "col": 7
+                  }
+                ]
+              },
+              {
+                "id": "cho-po-left",
+                "name": "초 포",
+                "label": "砲",
+                "side": "cho",
+                "kind": "po",
+                "row": 7,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-po-right",
+                "name": "초 포",
+                "label": "砲",
+                "side": "cho",
+                "kind": "po",
+                "row": 7,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-cha-left",
+                "name": "초 차",
+                "label": "車",
+                "side": "cho",
+                "kind": "cha",
+                "row": 9,
+                "col": 0,
+                "legalMoves": [
+                  {
+                    "row": 7,
+                    "col": 0
+                  },
+                  {
+                    "row": 8,
+                    "col": 0
+                  }
+                ]
+              },
+              {
+                "id": "cho-ma-left",
+                "name": "초 마",
+                "label": "馬",
+                "side": "cho",
+                "kind": "ma",
+                "row": 9,
+                "col": 1,
+                "legalMoves": [
+                  {
+                    "row": 7,
+                    "col": 0
+                  },
+                  {
+                    "row": 7,
+                    "col": 2
+                  }
+                ]
+              },
+              {
+                "id": "cho-sang-left",
+                "name": "초 상",
+                "label": "象",
+                "side": "cho",
+                "kind": "sang",
+                "row": 9,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sa-left",
+                "name": "초 사",
+                "label": "士",
+                "side": "cho",
+                "kind": "sa",
+                "row": 9,
+                "col": 3,
+                "legalMoves": [
+                  {
+                    "row": 8,
+                    "col": 3
+                  },
+                  {
+                    "row": 9,
+                    "col": 4
+                  }
+                ]
+              },
+              {
+                "id": "cho-king",
+                "name": "초 왕",
+                "label": "楚",
+                "side": "cho",
+                "kind": "king",
+                "row": 8,
+                "col": 4,
+                "legalMoves": [
+                  {
+                    "row": 7,
+                    "col": 3
+                  },
+                  {
+                    "row": 7,
+                    "col": 4
+                  },
+                  {
+                    "row": 7,
+                    "col": 5
+                  },
+                  {
+                    "row": 8,
+                    "col": 3
+                  },
+                  {
+                    "row": 8,
+                    "col": 5
+                  },
+                  {
+                    "row": 9,
+                    "col": 4
+                  }
+                ]
+              },
+              {
+                "id": "cho-sa-right",
+                "name": "초 사",
+                "label": "士",
+                "side": "cho",
+                "kind": "sa",
+                "row": 9,
+                "col": 5,
+                "legalMoves": [
+                  {
+                    "row": 8,
+                    "col": 5
+                  },
+                  {
+                    "row": 9,
+                    "col": 4
+                  }
+                ]
+              },
+              {
+                "id": "cho-sang-right",
+                "name": "초 상",
+                "label": "象",
+                "side": "cho",
+                "kind": "sang",
+                "row": 9,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-ma-right",
+                "name": "초 마",
+                "label": "馬",
+                "side": "cho",
+                "kind": "ma",
+                "row": 9,
+                "col": 7,
+                "legalMoves": [
+                  {
+                    "row": 7,
+                    "col": 6
+                  },
+                  {
+                    "row": 7,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "cho-cha-right",
+                "name": "초 차",
+                "label": "車",
+                "side": "cho",
+                "kind": "cha",
+                "row": 9,
+                "col": 8,
+                "legalMoves": [
+                  {
+                    "row": 7,
+                    "col": 8
+                  },
+                  {
+                    "row": 8,
+                    "col": 8
+                  }
+                ]
+              }
+            ]
+          },
+          "rulesValidated": true,
+          "animation": "completed",
+          "toolResolvedAfterVisibleAnimation": false,
+          "shouldAgentReply": false,
+          "awaitingPersonSpeech": false,
+          "nextTurnOwner": "person",
+          "futureSpeechStartsNewAgentTurn": true
+        }
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_move_janggi_piece",
+        "startedAt": "2026-09-03T09:31:05.274Z",
+        "completedAt": "2026-09-03T09:31:07.303Z",
+        "durationMs": 2028.5999999046326,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 3,
+          "action": "move",
+          "actor": "person",
+          "move": {
+            "id": "move-1-cho-king-7-5",
+            "pieceId": "cho-king",
+            "pieceIndex": 27,
+            "pieceLabel": "楚",
+            "side": "cho",
+            "from": {
+              "row": 8,
+              "col": 4
+            },
+            "to": {
+              "row": 7,
+              "col": 5
+            },
+            "capturedPieceId": null,
+            "spokenMove": "초 왕을 오른쪽 위 칸으로 이동",
+            "moveNumber": 1
+          },
+          "game": {
+            "coordinateSystem": {
+              "rows": "0 (한 진영) to 9 (초 진영)",
+              "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+              "choForward": "row - 1",
+              "hanForward": "row + 1"
+            },
+            "ruleProfile": {
+              "name": "common-janggi",
+              "choMovesFirst": true,
+              "passAllowedWhenNotInCheck": true,
+              "bikjangIsNotCheck": true,
+              "noChessStyleStalemate": true
+            },
+            "canPass": true,
+            "turn": "han",
+            "moveNumber": 2,
+            "status": "playing",
+            "lastMove": {
+              "id": "move-1-cho-king-7-5",
+              "pieceId": "cho-king",
+              "pieceIndex": 27,
+              "pieceLabel": "楚",
+              "side": "cho",
+              "from": {
+                "row": 8,
+                "col": 4
+              },
+              "to": {
+                "row": 7,
+                "col": 5
+              },
+              "capturedPieceId": null,
+              "spokenMove": "초 왕을 오른쪽 위 칸으로 이동",
+              "moveNumber": 1
+            },
+            "pieces": [
+              {
+                "id": "han-cha-left",
+                "name": "한 차",
+                "label": "車",
+                "side": "han",
+                "kind": "cha",
+                "row": 0,
+                "col": 0,
+                "legalMoves": [
+                  {
+                    "row": 1,
+                    "col": 0
+                  },
+                  {
+                    "row": 2,
+                    "col": 0
+                  }
+                ]
+              },
+              {
+                "id": "han-ma-left",
+                "name": "한 마",
+                "label": "馬",
+                "side": "han",
+                "kind": "ma",
+                "row": 0,
+                "col": 1,
+                "legalMoves": [
+                  {
+                    "row": 2,
+                    "col": 0
+                  },
+                  {
+                    "row": 2,
+                    "col": 2
+                  }
+                ]
+              },
+              {
+                "id": "han-sang-left",
+                "name": "한 상",
+                "label": "象",
+                "side": "han",
+                "kind": "sang",
+                "row": 0,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "han-sa-left",
+                "name": "한 사",
+                "label": "士",
+                "side": "han",
+                "kind": "sa",
+                "row": 0,
+                "col": 3,
+                "legalMoves": [
+                  {
+                    "row": 0,
+                    "col": 4
+                  },
+                  {
+                    "row": 1,
+                    "col": 3
+                  }
+                ]
+              },
+              {
+                "id": "han-king",
+                "name": "한 왕",
+                "label": "漢",
+                "side": "han",
+                "kind": "king",
+                "row": 1,
+                "col": 4,
+                "legalMoves": [
+                  {
+                    "row": 0,
+                    "col": 4
+                  },
+                  {
+                    "row": 1,
+                    "col": 3
+                  },
+                  {
+                    "row": 1,
+                    "col": 5
+                  },
+                  {
+                    "row": 2,
+                    "col": 3
+                  },
+                  {
+                    "row": 2,
+                    "col": 4
+                  },
+                  {
+                    "row": 2,
+                    "col": 5
+                  }
+                ]
+              },
+              {
+                "id": "han-sa-right",
+                "name": "한 사",
+                "label": "士",
+                "side": "han",
+                "kind": "sa",
+                "row": 0,
+                "col": 5,
+                "legalMoves": [
+                  {
+                    "row": 0,
+                    "col": 4
+                  },
+                  {
+                    "row": 1,
+                    "col": 5
+                  }
+                ]
+              },
+              {
+                "id": "han-sang-right",
+                "name": "한 상",
+                "label": "象",
+                "side": "han",
+                "kind": "sang",
+                "row": 0,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "han-ma-right",
+                "name": "한 마",
+                "label": "馬",
+                "side": "han",
+                "kind": "ma",
+                "row": 0,
+                "col": 7,
+                "legalMoves": [
+                  {
+                    "row": 2,
+                    "col": 6
+                  },
+                  {
+                    "row": 2,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "han-cha-right",
+                "name": "한 차",
+                "label": "車",
+                "side": "han",
+                "kind": "cha",
+                "row": 0,
+                "col": 8,
+                "legalMoves": [
+                  {
+                    "row": 1,
+                    "col": 8
+                  },
+                  {
+                    "row": 2,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "han-po-left",
+                "name": "한 포",
+                "label": "包",
+                "side": "han",
+                "kind": "po",
+                "row": 2,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "han-po-right",
+                "name": "한 포",
+                "label": "包",
+                "side": "han",
+                "kind": "po",
+                "row": 2,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-1",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 0,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 1
+                  },
+                  {
+                    "row": 4,
+                    "col": 0
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-2",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 2,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 1
+                  },
+                  {
+                    "row": 3,
+                    "col": 3
+                  },
+                  {
+                    "row": 4,
+                    "col": 2
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-3",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 4,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 3
+                  },
+                  {
+                    "row": 3,
+                    "col": 5
+                  },
+                  {
+                    "row": 4,
+                    "col": 4
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-4",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 6,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 5
+                  },
+                  {
+                    "row": 3,
+                    "col": 7
+                  },
+                  {
+                    "row": 4,
+                    "col": 6
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-5",
+                "name": "한 졸",
+                "label": "卒",
+                "side": "han",
+                "kind": "soldier",
+                "row": 3,
+                "col": 8,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 7
+                  },
+                  {
+                    "row": 4,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "cho-byeong-1",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 0,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-2",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-3",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 4,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-4",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-5",
+                "name": "초 병",
+                "label": "兵",
+                "side": "cho",
+                "kind": "soldier",
+                "row": 6,
+                "col": 8,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-po-left",
+                "name": "초 포",
+                "label": "砲",
+                "side": "cho",
+                "kind": "po",
+                "row": 7,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-po-right",
+                "name": "초 포",
+                "label": "砲",
+                "side": "cho",
+                "kind": "po",
+                "row": 7,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-cha-left",
+                "name": "초 차",
+                "label": "車",
+                "side": "cho",
+                "kind": "cha",
+                "row": 9,
+                "col": 0,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-ma-left",
+                "name": "초 마",
+                "label": "馬",
+                "side": "cho",
+                "kind": "ma",
+                "row": 9,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sang-left",
+                "name": "초 상",
+                "label": "象",
+                "side": "cho",
+                "kind": "sang",
+                "row": 9,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sa-left",
+                "name": "초 사",
+                "label": "士",
+                "side": "cho",
+                "kind": "sa",
+                "row": 9,
+                "col": 3,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-king",
+                "name": "초 왕",
+                "label": "楚",
+                "side": "cho",
+                "kind": "king",
+                "row": 7,
+                "col": 5,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sa-right",
+                "name": "초 사",
+                "label": "士",
+                "side": "cho",
+                "kind": "sa",
+                "row": 9,
+                "col": 5,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sang-right",
+                "name": "초 상",
+                "label": "象",
+                "side": "cho",
+                "kind": "sang",
+                "row": 9,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-ma-right",
+                "name": "초 마",
+                "label": "馬",
+                "side": "cho",
+                "kind": "ma",
+                "row": 9,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-cha-right",
+                "name": "초 차",
+                "label": "車",
+                "side": "cho",
+                "kind": "cha",
+                "row": 9,
+                "col": 8,
+                "legalMoves": []
+              }
+            ]
+          },
+          "rulesValidated": true,
+          "animation": "completed",
+          "toolResolvedAfterVisibleAnimation": true,
+          "shouldAgentReply": true,
+          "awaitingPersonSpeech": false,
+          "nextTurnOwner": "agent",
+          "futureSpeechStartsNewAgentTurn": true
+        }
+      }
+    ],
+    "totalDurationMs": 5019.300000190735,
+    "timeToVisibleSuccessMs": 14744.371792000005
+  }
+}

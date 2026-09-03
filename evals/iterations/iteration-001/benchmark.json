@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-09-03T09:09:40.000Z",
+  "configurations": {
+    "no_webmcp": {
+      "runs": 30,
+      "passed": 6,
+      "passRate": 0.2,
+      "criticalPassRate": 0.2,
+      "firstPassValidRate": 0.2,
+      "failedToolCalls": 2,
+      "expectedGuardRejections": 0,
+      "retries": 2,
+      "totalTokens": 647804,
+      "meanTokensPerRun": 21593.466666666667,
+      "meanWallTimeMs": 21090.616434800006,
+      "tokensPerSuccessfulOutcome": 107967.33333333333,
+      "meanTimeToVisibleSuccessMs": 14729.496812333333
+    }
+  },
+  "categories": {
+    "calligraphy": {
+      "no_webmcp": {
+        "runs": 16,
+        "passed": 2,
+        "passRate": 0.125,
+        "criticalPassRate": 0.125,
+        "firstPassValidRate": 0.125,
+        "failedToolCalls": 2,
+        "expectedGuardRejections": 0,
+        "retries": 2,
+        "totalTokens": 313517,
+        "meanTokensPerRun": 19594.8125,
+        "meanWallTimeMs": 19812.938364625,
+        "tokensPerSuccessfulOutcome": 156758.5,
+        "meanTimeToVisibleSuccessMs": 9875.584082999998
+      }
+    },
+    "janggi": {
+      "no_webmcp": {
+        "runs": 10,
+        "passed": 4,
+        "passRate": 0.4,
+        "criticalPassRate": 0.4,
+        "firstPassValidRate": 0.4,
+        "failedToolCalls": 0,
+        "expectedGuardRejections": 0,
+        "retries": 0,
+        "totalTokens": 202867,
+        "meanTokensPerRun": 20286.7,
+        "meanWallTimeMs": 20726.404775200008,
+        "tokensPerSuccessfulOutcome": 50716.75,
+        "meanTimeToVisibleSuccessMs": 17156.453177000003
+      }
+    },
+    "interface": {
+      "no_webmcp": {
+        "runs": 4,
+        "passed": 0,
+        "passRate": 0,
+        "criticalPassRate": 0,
+        "firstPassValidRate": 0,
+        "failedToolCalls": 0,
+        "expectedGuardRejections": 0,
+        "retries": 0,
+        "totalTokens": 131420,
+        "meanTokensPerRun": 32855,
+        "meanWallTimeMs": 27111.857864499994,
+        "tokensPerSuccessfulOutcome": null,
+        "meanTimeToVisibleSuccessMs": null
+      }
+    }
+  }
+}

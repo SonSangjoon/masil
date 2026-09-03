@@ -1,7 +1,14 @@
 "use client";
 
 import { Camera, CameraOff, Hand, MousePointer2, RotateCcw } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 import { Button } from "@/components/ui/button";
 import type { PendingCameraRequest } from "@/features/calligraphy/runtime/camera-source";
@@ -17,6 +24,28 @@ import {
 
 type Language = "ko" | "en";
 type InputMode = "idle" | "requesting" | "hand" | "fallback" | "error";
+
+export type AirCalligraphyCanvasHandle = {
+  clear: () => void;
+  stopCamera: () => void;
+};
+
+type AirCalligraphyCanvasProps = {
+  cameraRequest?: PendingCameraRequest | null;
+  character: string;
+  language: Language;
+  onCameraStateChange?: (
+    state: "requesting" | "hand" | "fallback",
+    reason?: string,
+  ) => void;
+  onClear?: () => void;
+  onRequestCamera?: () => void;
+  onStopCamera?: () => void;
+  onWritingStateChange?: (active: boolean) => void;
+  referenceImageAlt?: string;
+  referenceImageId?: string;
+  referenceImageUrl?: string;
+};
 
 function referenceTextSize(characterCount: number) {
   if (characterCount <= 1) return "text-[clamp(16rem,36vw,40rem)]";
@@ -36,30 +65,25 @@ function normalizedPoint(
   };
 }
 
-export function AirCalligraphyCanvas({
-  cameraRequest = null,
-  character,
-  language,
-  onCameraStateChange,
-  onRequestCamera,
-  onWritingStateChange,
-  referenceImageAlt,
-  referenceImageId,
-  referenceImageUrl,
-}: {
-  cameraRequest?: PendingCameraRequest | null;
-  character: string;
-  language: Language;
-  onCameraStateChange?: (
-    state: "requesting" | "hand" | "fallback",
-    reason?: string,
-  ) => void;
-  onRequestCamera?: () => void;
-  onWritingStateChange?: (active: boolean) => void;
-  referenceImageAlt?: string;
-  referenceImageId?: string;
-  referenceImageUrl?: string;
-}) {
+export const AirCalligraphyCanvas = forwardRef<
+  AirCalligraphyCanvasHandle,
+  AirCalligraphyCanvasProps
+>(function AirCalligraphyCanvas(
+  {
+    cameraRequest = null,
+    character,
+    language,
+    onCameraStateChange,
+    onClear,
+    onRequestCamera,
+    onStopCamera,
+    onWritingStateChange,
+    referenceImageAlt,
+    referenceImageId,
+    referenceImageUrl,
+  },
+  ref,
+) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const pointerRendererRef = useRef<PointerRenderer | undefined>(undefined);
   const cameraRendererRef = useRef<CameraRenderer | undefined>(undefined);
@@ -189,7 +213,7 @@ export function AirCalligraphyCanvas({
     updateWritingState,
   ]);
 
-  const stopHands = () => {
+  const stopHands = useCallback(() => {
     updateWritingState(false);
     cameraRequest?.abort();
     cameraRendererRef.current?.dispose();
@@ -202,19 +226,37 @@ export function AirCalligraphyCanvas({
     );
     onCameraStateChange?.("fallback", "person-stopped-camera");
     startPointerRenderer();
-  };
+  }, [
+    cameraRequest,
+    language,
+    onCameraStateChange,
+    startPointerRenderer,
+    updateWritingState,
+  ]);
 
-  const clear = () => {
+  const clear = useCallback(() => {
     updateWritingState(false);
     pointerRendererRef.current?.clear();
     cameraRendererRef.current?.clear();
-  };
+  }, [updateWritingState]);
+
+  useImperativeHandle(
+    ref,
+    () => ({ clear, stopCamera: stopHands }),
+    [clear, stopHands],
+  );
 
   const pointerActive = mode === "fallback" || mode === "error";
 
   return (
     <div className="relative isolate h-full min-h-[520px] overflow-hidden bg-[#f8f4ed] lg:min-h-[660px]">
-      <div className="pointer-events-none absolute inset-[8%] z-0 grid place-items-center overflow-hidden">
+      <div
+        className="pointer-events-none absolute top-1/2 left-1/2 z-0 grid -translate-x-1/2 -translate-y-1/2 place-items-center overflow-hidden"
+        style={{
+          aspectRatio: "3 / 2",
+          width: "min(88%, calc((100svh - 76px) * 1.32))",
+        }}
+      >
         {referenceImageUrl && failedReferenceUrl !== referenceImageUrl ? (
           // The source can be a page-local blob URL created from WebMCP data.
           // eslint-disable-next-line @next/next/no-img-element
@@ -222,6 +264,8 @@ export function AirCalligraphyCanvas({
             key={referenceImageId ?? referenceImageUrl}
             src={referenceImageUrl}
             alt={referenceImageAlt ?? `${character} 서예 글자본`}
+            data-testid="calligraphy-reference"
+            data-calligraphy-reference-text={character}
             className="h-full w-full select-none object-contain opacity-[0.32] grayscale contrast-150 mix-blend-multiply"
             draggable={false}
             onError={() => setFailedReferenceUrl(referenceImageUrl)}
@@ -229,6 +273,8 @@ export function AirCalligraphyCanvas({
         ) : character ? (
           <span
             aria-hidden="true"
+            data-testid="calligraphy-reference"
+            data-calligraphy-reference-text={character}
             className={`max-w-full select-none whitespace-nowrap text-center leading-none font-semibold tracking-[-0.08em] text-[#261d19]/[0.32] ${referenceTextSize(character.length)}`}
             style={{
               fontFamily:
@@ -311,7 +357,7 @@ export function AirCalligraphyCanvas({
               size="icon-sm"
               variant="outline"
               className="size-10 rounded-full border-transparent bg-transparent shadow-none hover:bg-black/[0.035]"
-              onClick={stopHands}
+              onClick={onStopCamera ?? stopHands}
               aria-label={language === "ko" ? "카메라 끄기" : "Turn camera off"}
             >
               <CameraOff aria-hidden="true" className="size-4" />
@@ -322,7 +368,7 @@ export function AirCalligraphyCanvas({
             size="icon-sm"
             variant="outline"
             className="size-10 rounded-full border-transparent bg-transparent shadow-none hover:bg-black/[0.035]"
-            onClick={clear}
+            onClick={onClear ?? clear}
             aria-label={language === "ko" ? "서예 지우기" : "Clear calligraphy"}
           >
             <RotateCcw aria-hidden="true" className="size-4" />
@@ -353,4 +399,6 @@ export function AirCalligraphyCanvas({
       </span>
     </div>
   );
-}
+});
+
+AirCalligraphyCanvas.displayName = "AirCalligraphyCanvas";

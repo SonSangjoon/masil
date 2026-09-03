@@ -1,0 +1,440 @@
+{
+  "agent": {
+    "usage": {
+      "input": 18779,
+      "cachedInput": 16722,
+      "output": 244,
+      "reasoning": 26,
+      "total": 19023
+    },
+    "modelLatencyMs": 8448.547584000044,
+    "wallTimeMs": 11963.939082999976,
+    "turns": 6,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T10:16:18.754Z",
+        "completedAt": "2026-09-03T10:16:21.307Z",
+        "durationMs": 2553,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "janggi",
+          "revision": 1,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_get_janggi_state",
+            "masil_move_janggi_piece",
+            "masil_wait_for_person_janggi_move"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_get_janggi_state",
+        "startedAt": "2026-09-03T10:16:22.257Z",
+        "completedAt": "2026-09-03T10:16:22.259Z",
+        "durationMs": 1.9000000953674316,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 1,
+          "personSide": "cho",
+          "agentSide": "han",
+          "turnOwner": "person",
+          "coordinateSystem": {
+            "rows": "0 (한 진영) to 9 (초 진영)",
+            "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+            "choForward": "row - 1",
+            "hanForward": "row + 1"
+          },
+          "ruleProfile": {
+            "name": "common-janggi",
+            "choMovesFirst": true,
+            "passAllowedWhenNotInCheck": true,
+            "bikjangIsNotCheck": true,
+            "noChessStyleStalemate": true
+          },
+          "canPass": true,
+          "turn": "cho",
+          "moveNumber": 1,
+          "status": "playing",
+          "lastMove": null,
+          "pieces": [
+            [
+              "han-cha-left",
+              0,
+              0,
+              []
+            ],
+            [
+              "han-ma-left",
+              0,
+              1,
+              []
+            ],
+            [
+              "han-sang-left",
+              0,
+              2,
+              []
+            ],
+            [
+              "han-sa-left",
+              0,
+              3,
+              []
+            ],
+            [
+              "han-king",
+              1,
+              4,
+              []
+            ],
+            [
+              "han-sa-right",
+              0,
+              5,
+              []
+            ],
+            [
+              "han-sang-right",
+              0,
+              6,
+              []
+            ],
+            [
+              "han-ma-right",
+              0,
+              7,
+              []
+            ],
+            [
+              "han-cha-right",
+              0,
+              8,
+              []
+            ],
+            [
+              "han-po-left",
+              2,
+              1,
+              []
+            ],
+            [
+              "han-po-right",
+              2,
+              7,
+              []
+            ],
+            [
+              "han-jol-1",
+              3,
+              0,
+              []
+            ],
+            [
+              "han-jol-2",
+              3,
+              2,
+              []
+            ],
+            [
+              "han-jol-3",
+              3,
+              4,
+              []
+            ],
+            [
+              "han-jol-4",
+              3,
+              6,
+              []
+            ],
+            [
+              "han-jol-5",
+              3,
+              8,
+              []
+            ],
+            [
+              "cho-byeong-1",
+              6,
+              0,
+              [
+                [
+                  5,
+                  0
+                ],
+                [
+                  6,
+                  1
+                ]
+              ]
+            ],
+            [
+              "cho-byeong-2",
+              6,
+              2,
+              [
+                [
+                  5,
+                  2
+                ],
+                [
+                  6,
+                  1
+                ],
+                [
+                  6,
+                  3
+                ]
+              ]
+            ],
+            [
+              "cho-byeong-3",
+              6,
+              4,
+              [
+                [
+                  5,
+                  4
+                ],
+                [
+                  6,
+                  3
+                ],
+                [
+                  6,
+                  5
+                ]
+              ]
+            ],
+            [
+              "cho-byeong-4",
+              6,
+              6,
+              [
+                [
+                  5,
+                  6
+                ],
+                [
+                  6,
+                  5
+                ],
+                [
+                  6,
+                  7
+                ]
+              ]
+            ],
+            [
+              "cho-byeong-5",
+              6,
+              8,
+              [
+                [
+                  5,
+                  8
+                ],
+                [
+                  6,
+                  7
+                ]
+              ]
+            ],
+            [
+              "cho-po-left",
+              7,
+              1,
+              []
+            ],
+            [
+              "cho-po-right",
+              7,
+              7,
+              []
+            ],
+            [
+              "cho-cha-left",
+              9,
+              0,
+              [
+                [
+                  7,
+                  0
+                ],
+                [
+                  8,
+                  0
+                ]
+              ]
+            ],
+            [
+              "cho-ma-left",
+              9,
+              1,
+              [
+                [
+                  7,
+                  0
+                ],
+                [
+                  7,
+                  2
+                ]
+              ]
+            ],
+            [
+              "cho-sang-left",
+              9,
+              2,
+              []
+            ],
+            [
+              "cho-sa-left",
+              9,
+              3,
+              [
+                [
+                  8,
+                  3
+                ],
+                [
+                  9,
+                  4
+                ]
+              ]
+            ],
+            [
+              "cho-king",
+              8,
+              4,
+              [
+                [
+                  7,
+                  3
+                ],
+                [
+                  7,
+                  4
+                ],
+                [
+                  7,
+                  5
+                ],
+                [
+                  8,
+                  3
+                ],
+                [
+                  8,
+                  5
+                ],
+                [
+                  9,
+                  4
+                ]
+              ]
+            ],
+            [
+              "cho-sa-right",
+              9,
+              5,
+              [
+                [
+                  8,
+                  5
+                ],
+                [
+                  9,
+                  4
+                ]
+              ]
+            ],
+            [
+              "cho-sang-right",
+              9,
+              6,
+              []
+            ],
+            [
+              "cho-ma-right",
+              9,
+              7,
+              [
+                [
+                  7,
+                  6
+                ],
+                [
+                  7,
+                  8
+                ]
+              ]
+            ],
+            [
+              "cho-cha-right",
+              9,
+              8,
+              [
+                [
+                  7,
+                  8
+                ],
+                [
+                  8,
+                  8
+                ]
+              ]
+            ]
+          ],
+          "pieceTupleFormat": "[id,row,col,[[legalRow,legalCol],...]]"
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_set_language",
+        "startedAt": "2026-09-03T10:16:25.454Z",
+        "completedAt": "2026-09-03T10:16:25.897Z",
+        "durationMs": 442.2000002861023,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "language": "en",
+          "pageLanguage": "en"
+        }
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_set_webmcp_panel",
+        "startedAt": "2026-09-03T10:16:25.903Z",
+        "completedAt": "2026-09-03T10:16:26.345Z",
+        "durationMs": 442.5,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "open": true,
+          "tab": "history"
+        }
+      }
+    ],
+    "totalDurationMs": 3439.6000003814697,
+    "timeToVisibleSuccessMs": 9197.914541999984
+  }
+}

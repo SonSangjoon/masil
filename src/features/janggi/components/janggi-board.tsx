@@ -315,6 +315,22 @@ function VgpuJanggiBoard({
           : `A shared 3D Janggi board. It is ${game.turn === "cho" ? "Cho" : "Han"}'s turn.`
       }
       data-testid="janggi-vgpu-board"
+      data-janggi-turn={game.turn}
+      data-janggi-move-number={game.moveNumber}
+      data-janggi-move-state={moveState}
+      data-janggi-last-piece={game.lastMove?.pieceId ?? ""}
+      data-janggi-last-from={
+        game.lastMove
+          ? `${game.lastMove.from.row},${game.lastMove.from.col}`
+          : ""
+      }
+      data-janggi-last-to={
+        game.lastMove ? `${game.lastMove.to.row},${game.lastMove.to.col}` : ""
+      }
+      data-janggi-active-piece={activeMove?.pieceId ?? ""}
+      data-janggi-active-to={
+        activeMove ? `${activeMove.to.row},${activeMove.to.col}` : ""
+      }
       onClick={() => setSelection(null)}
     >
       <div className="pointer-events-none absolute inset-x-[12%] bottom-[5%] h-[17%] rounded-[50%] bg-[#8d6b45]/14 blur-3xl" />
