@@ -188,8 +188,8 @@ export function AirCalligraphyCanvas({
   const pointerActive = mode === "fallback" || mode === "error";
 
   return (
-    <div className="relative h-full min-h-[520px] overflow-hidden bg-[#f8f4ed] lg:min-h-[660px]">
-      <div className="pointer-events-none absolute inset-[8%] z-10 grid place-items-center overflow-hidden">
+    <div className="relative isolate h-full min-h-[520px] overflow-hidden bg-[#f8f4ed] lg:min-h-[660px]">
+      <div className="pointer-events-none absolute inset-[8%] z-0 grid place-items-center overflow-hidden">
         {referenceImageUrl && failedReferenceUrl !== referenceImageUrl ? (
           // The source can be a page-local blob URL created from WebMCP data.
           // eslint-disable-next-line @next/next/no-img-element
@@ -217,7 +217,7 @@ export function AirCalligraphyCanvas({
 
       <canvas
         ref={canvasRef}
-        className={`relative z-0 block h-full min-h-[520px] w-full touch-none lg:min-h-[660px] ${
+        className={`relative z-10 block h-full min-h-[520px] w-full touch-none mix-blend-multiply lg:min-h-[660px] ${
           pointerActive ? "cursor-none" : "cursor-default"
         }`}
         aria-label={

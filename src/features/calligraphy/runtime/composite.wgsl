@@ -163,7 +163,9 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   let bristle_base = tip + axis * bristle_length;
   let ferrule_end = bristle_base + axis * ferrule_length;
   let handle_end = ferrule_end + axis * handle_length;
-  let opacity = mix(1.0, 0.16, fade_lift);
+  // The lifted brush stays materially present. Pose and distance communicate
+  // pen-up; extreme transparency made the object look like a ghost cursor.
+  let opacity = mix(1.0, 0.58, fade_lift);
 
   let hair_local = local_coordinate(display_point, tip, axis);
   let hair_t = clamp(hair_local.x / max(bristle_length, 1e-4), 0.0, 1.0);
@@ -222,8 +224,9 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   let shadow_strength = mix(0.18, 0.055, fade_lift);
   color = mix(color, color * 0.55, brush_shadow * shadow_strength * opacity);
 
-  // Clean ivory-jade handle: an off-white translucent body keeps the mineral
-  // depth of the Janggi pieces without the previous muddy amber cast.
+  // Matte lacquered wood belongs to the paper-and-ink material world. The
+  // previous translucent jade treatment inherited too much from Janggi and
+  // disappeared against the warm paper when the brush lifted.
   let handle_local = local_coordinate(display_point, ferrule_end, axis);
   let handle_t = clamp(
     handle_local.x / max(handle_length, 1e-4),
@@ -261,71 +264,50 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
     1.0
   );
   let handle_round = sqrt(max(1.0 - handle_cross * handle_cross, 0.0));
-  let jade_noise = material_noise(
-    vec2f(handle_local.x * 0.055, handle_local.y * 0.22) + vec2f(2.3, -5.7)
+  let wood_noise = material_noise(
+    vec2f(handle_local.x * 0.045, handle_local.y * 0.30) + vec2f(2.3, -5.7)
   );
-  let broad_cloud = sin(
-    handle_local.x * 0.115 +
-    handle_local.y * 0.46 +
-    sin(handle_local.x * 0.047) * 1.55
+  let long_grain = 0.5 + 0.5 * sin(
+    handle_local.x * 0.30 +
+    handle_local.y * 0.20 +
+    wood_noise * 4.6
   );
-  let fine_cloud = sin(
-    handle_local.x * 0.31 -
-    handle_local.y * 0.82 +
-    jade_noise * 3.1
-  );
-  let jade_cloud = broad_cloud * 0.52 +
-    fine_cloud * 0.22 +
-    (jade_noise - 0.5) * 0.52;
-  let stone_line = pow(max(1.0 - abs(sin(
-    handle_local.x * 0.17 -
-    handle_local.y * 0.44 +
-    jade_cloud * 2.35
-  )), 0.0), 13.0);
-  let ivory_jade_dark = vec3f(0.285, 0.272, 0.238);
-  let ivory_jade = vec3f(0.76, 0.735, 0.665);
-  let ivory_jade_light = vec3f(1.0, 0.982, 0.91);
+  let wood_dark = vec3f(0.105, 0.047, 0.027);
+  let wood_mid = vec3f(0.355, 0.145, 0.070);
+  let wood_light = vec3f(0.59, 0.315, 0.155);
   var handle_material = mix(
-    ivory_jade_dark,
-    ivory_jade,
-    0.58 + jade_cloud * 0.11 + handle_round * 0.19
+    wood_dark,
+    wood_mid,
+    0.34 + handle_round * 0.44 + (wood_noise - 0.5) * 0.12
   );
   handle_material = mix(
     handle_material,
-    ivory_jade_light,
-    stone_line * 0.18
+    wood_light,
+    long_grain * (0.055 + handle_round * 0.055)
   );
-  let jade_fresnel = pow(abs(handle_cross), 2.65);
-  let inner_glow = pow(max(1.0 - abs(handle_cross), 0.0), 2.2);
-  handle_material *= 0.79 + handle_round * 0.22;
-  handle_material += ivory_jade_light *
-    (inner_glow * 0.10 + jade_fresnel * 0.075);
-  let lacquer_line = pow(
+  let edge_falloff = pow(abs(handle_cross), 2.35);
+  handle_material *= 0.74 + handle_round * 0.28 - edge_falloff * 0.08;
+  let matte_line = pow(
     max(1.0 - abs(handle_cross + 0.32), 0.0),
-    19.0
+    10.0
   );
-  handle_material += vec3f(1.0, 0.995, 0.95) * lacquer_line * 0.34;
+  handle_material += vec3f(0.82, 0.48, 0.25) * matte_line * 0.10;
   let node_distance = min(
     abs(handle_local.x - handle_length * 0.34),
     abs(handle_local.x - handle_length * 0.72)
   );
   let carved_ring = 1.0 - smoothstep(0.55 * scale, 1.25 * scale, node_distance);
-  let handle_alpha = opacity * mix(0.60, 0.91, jade_fresnel);
-  let transmitted_handle = mix(
-    base * vec3f(1.0, 0.992, 0.95),
-    handle_material,
-    0.68
-  );
+  let handle_alpha = opacity * 0.97;
   color = mix(
     color,
-    ivory_jade_dark,
-    handle_outline * 0.46 * opacity
+    wood_dark * 0.58,
+    handle_outline * 0.72 * opacity
   );
-  color = mix(color, transmitted_handle, handle * handle_alpha);
+  color = mix(color, handle_material, handle * handle_alpha);
   color = mix(
     color,
-    ivory_jade_dark * 0.72 + ivory_jade_light * 0.16,
-    carved_ring * handle * 0.42 * opacity
+    wood_dark * 0.70 + wood_light * 0.08,
+    carved_ring * handle * 0.50 * opacity
   );
   let end_ring = (
     1.0 - smoothstep(
@@ -334,7 +316,7 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
       abs(handle_local.x - (handle_length - 3.7 * scale))
     )
   ) * handle;
-  color = mix(color, vec3f(0.25, 0.23, 0.19), end_ring * 0.58 * opacity);
+  color = mix(color, wood_dark * 0.72, end_ring * 0.62 * opacity);
   let pommel = 1.0 - smoothstep(
     handle_radius * 0.64,
     handle_radius * 1.08,
@@ -342,12 +324,12 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   );
   color = mix(
     color,
-    ivory_jade_dark + vec3f(lacquer_line * 0.13),
-    pommel * 0.52 * opacity
+    wood_dark + vec3f(matte_line * 0.045),
+    pommel * 0.74 * opacity
   );
 
-  // A restrained champagne ferrule separates the pale jade from the hair while
-  // preserving the crafted, dimensional attachment point.
+  // Aged brass and horn keep the attachment readable without jewellery-like
+  // sparkle competing with the ink.
   let ferrule_local = local_coordinate(display_point, bristle_base, axis);
   let ferrule = capsule_mask(
     display_point,
@@ -371,20 +353,20 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
     vec2f(ferrule_local.x * 0.42, ferrule_local.y * 0.46) + vec2f(-1.7, 8.1)
   );
   var ferrule_material = mix(
-    vec3f(0.20, 0.185, 0.155),
-    vec3f(0.74, 0.675, 0.53),
-    0.22 + ferrule_round * 0.56 + metal_noise * 0.10
+    vec3f(0.115, 0.085, 0.050),
+    vec3f(0.58, 0.405, 0.195),
+    0.18 + ferrule_round * 0.52 + metal_noise * 0.08
   );
   let metal_glint = pow(
     max(1.0 - abs(ferrule_cross + 0.25), 0.0),
     24.0
   );
-  ferrule_material += vec3f(1.0, 0.94, 0.74) * metal_glint * 0.30;
+  ferrule_material += vec3f(0.92, 0.68, 0.34) * metal_glint * 0.12;
   let patina = smoothstep(0.69, 0.88, metal_noise) * (0.35 + lift * 0.2);
   ferrule_material = mix(
     ferrule_material,
-    vec3f(0.23, 0.29, 0.25),
-    patina * 0.18
+    vec3f(0.18, 0.15, 0.095),
+    patina * 0.15
   );
   color = mix(
     color,
@@ -405,12 +387,12 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
     ferrule_groove * 0.62 * opacity
   );
 
-  // Bright ivory goat-hair makes the ink-loaded working third unmistakable.
-  // The irregular boundary and wet highlight keep the transition organic.
+  // Warm goat hair remains legible on paper, while the ink-loaded lower half
+  // visually explains why this brush produces the dense mark underneath it.
   color = mix(
     color,
     vec3f(0.085, 0.072, 0.058),
-    bristle_outline * 0.76 * opacity
+    bristle_outline * 0.88 * opacity
   );
   let hair_cross = clamp(
     (hair_local.y - hair_curve) / max(hair_width, 1e-4),
@@ -423,17 +405,17 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   );
   let filament = pow(strand_wave, 7.0);
   let natural_hair = mix(
-    vec3f(0.49, 0.43, 0.35),
-    vec3f(0.89, 0.84, 0.73),
-    0.34 + hair_noise * 0.36 + hair_round * 0.24
+    vec3f(0.38, 0.30, 0.22),
+    vec3f(0.84, 0.76, 0.61),
+    0.30 + hair_noise * 0.34 + hair_round * 0.28
   );
   var hair_material = natural_hair;
   hair_material *= 0.80 + hair_round * 0.24;
-  hair_material += vec3f(0.96, 0.91, 0.80) * filament * 0.20;
+  hair_material += vec3f(0.94, 0.86, 0.69) * filament * 0.14;
   let ink_boundary_noise = noise2(
     vec2f((hair_local.y - hair_curve) * 0.34, 9.7)
   );
-  let ink_boundary = 0.33 + (ink_boundary_noise - 0.5) * 0.085;
+  let ink_boundary = 0.56 + (ink_boundary_noise - 0.5) * 0.11;
   let inked = 1.0 - smoothstep(
     ink_boundary - 0.016,
     ink_boundary + 0.021,
@@ -444,7 +426,7 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   hair_material = mix(
     hair_material,
     inked_hair,
-    inked * mix(0.90, 1.0, pressure)
+    inked * mix(0.96, 1.0, pressure)
   );
   let ink_meniscus = 1.0 - smoothstep(
     0.012,
@@ -458,7 +440,7 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   );
   let wet_glint = pow(max(1.0 - abs(hair_cross + 0.27), 0.0), 21.0) *
     pressure * inked * (1.0 - smoothstep(0.05, 0.31, hair_t));
-  hair_material += vec3f(0.24, 0.22, 0.19) * wet_glint * 0.24;
+  hair_material += vec3f(0.18, 0.165, 0.14) * wet_glint * 0.16;
   color = mix(color, hair_material, bristles * opacity);
 
   return color;
@@ -523,12 +505,13 @@ fn fs_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
     base = softened * vec3f(1.025, 1.0, 0.975) + vec3f(paper_grain);
   }
 
-  let ink_grain = grain(position.xy * 0.67) * 0.026;
+  let ink_grain = grain(position.xy * 0.67) * 0.014;
   let ink_pool = smoothstep(0.30, 0.96, coverage);
-  let wet_ink = vec3f(0.074, 0.061, 0.053) +
+  let wet_ink = vec3f(0.025, 0.022, 0.020) +
     vec3f(ink_grain, ink_grain * 0.68, ink_grain * 0.52) -
-    vec3f(ink_pool * 0.012);
-  let ink = mix(base, wet_ink, smoothstep(0.035, 0.88, coverage));
+    vec3f(ink_pool * 0.006);
+  let ink_opacity = smoothstep(0.012, 0.52, coverage);
+  let ink = mix(base, wet_ink, ink_opacity);
   var color = ink;
 
   if (uniforms.show_cursor > 0.5) {
