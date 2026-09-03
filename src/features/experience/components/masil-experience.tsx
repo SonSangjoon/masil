@@ -4,9 +4,11 @@ import {
   Activity as ActivityIcon,
   ArrowLeft,
   ArrowRight,
+  ArrowUpRight,
   Brush,
   Check,
   CheckCircle2,
+  Copy,
   LockKeyhole,
   MessageCircle,
   Mic,
@@ -38,10 +40,12 @@ import {
   ItemTitle,
 } from "@/components/ui/item";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -77,6 +81,7 @@ type Presence =
   | "awaiting"
   | "connected";
 type WebMcpStatus = "checking" | "connected" | "demo" | "error";
+type WebMcpDrawerView = "overview" | "connection";
 type ProviderStatus = "waiting" | "needs-info" | "accepted";
 type InvocationSource = "webmcp" | "person";
 type JanggiActor = "person" | "agent";
@@ -176,6 +181,12 @@ const AGENT_PROMPTS: Record<Language, readonly string[]> = {
 };
 
 const AGENT_PROMPT_INTERVAL_MS = 3200;
+const WEBMCP_CONNECTION_TIMEOUT_MS = 7000;
+const CHROME_WEBMCP_FLAG_URL = "chrome://flags/#enable-webmcp-testing";
+const WEBMCP_GUIDE_URL: Record<Language, string> = {
+  ko: "https://learn.chatgpt.com/ko-KR/docs/webmcp",
+  en: "https://learn.chatgpt.com/docs/webmcp",
+};
 
 type PendingJanggiAnimation = {
   moveId: string;
@@ -395,6 +406,8 @@ export function MasilExperience() {
   const [transitionProgress, setTransitionProgress] = useState(0);
   const [events, setEvents] = useState<DemoEvent[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
+  const [webMcpDrawerView, setWebMcpDrawerView] =
+    useState<WebMcpDrawerView>("overview");
   const [characterRequest, setCharacterRequest] =
     useState<CharacterChoiceRequest | null>(null);
   const [cameraRequest, setCameraRequest] =
@@ -429,6 +442,16 @@ export function MasilExperience() {
   useEffect(() => {
     document.documentElement.lang = language;
   }, [language]);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setWebMcpStatus((current) =>
+        current === "checking" ? "demo" : current,
+      );
+    }, WEBMCP_CONNECTION_TIMEOUT_MS);
+
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   const addEvent = useCallback(
     (
@@ -1817,6 +1840,7 @@ export function MasilExperience() {
 
   const isHome = session.stage === "home";
   const isWebMcpConnected = webMcpStatus === "connected";
+  const isWebMcpChecking = webMcpStatus === "checking";
   const isFluidTransition = transitionProgress > 0;
   const keepsAgentSeed = session.stage === "activity" && !isFluidTransition;
   const showHeroOrb = isHome || isFluidTransition;
@@ -1898,13 +1922,20 @@ export function MasilExperience() {
             variant="outline"
             size="sm"
             className="h-9 gap-2 border-black/[0.045] bg-white/24 px-3 text-[0.7rem] font-medium tracking-[0.02em] text-[#5f5852] backdrop-blur-sm hover:border-black/[0.08] hover:bg-white/42 hover:text-[#211e1b]"
-            onClick={() => setLogsOpen((current) => !current)}
+            onClick={() => {
+              if (logsOpen) {
+                setLogsOpen(false);
+                return;
+              }
+              setWebMcpDrawerView("overview");
+              setLogsOpen(true);
+            }}
             aria-expanded={logsOpen}
             aria-controls="webmcp-panel"
             aria-label={
               language === "ko"
-                ? `WebMCP ${webMcpStatus === "connected" ? "연결됨" : "연결되지 않음"}. 패널 ${logsOpen ? "닫기" : "열기"}`
-                : `WebMCP ${webMcpStatus === "connected" ? "connected" : "not connected"}. ${logsOpen ? "Close" : "Open"} panel`
+                ? `WebMCP ${isWebMcpConnected ? "연결됨" : isWebMcpChecking ? "연결 확인 중" : "연결되지 않음"}. 패널 ${logsOpen ? "닫기" : "열기"}`
+                : `WebMCP ${isWebMcpConnected ? "connected" : isWebMcpChecking ? "connecting" : "not connected"}. ${logsOpen ? "Close" : "Open"} panel`
             }
             data-testid="open-event-log"
           >
@@ -1912,13 +1943,19 @@ export function MasilExperience() {
             <span
               aria-hidden="true"
               className={`size-1.5 rounded-full ${
-                webMcpStatus === "connected"
+                isWebMcpConnected
                   ? "bg-[#3b8a62] shadow-[0_0_0_3px_rgba(59,138,98,0.12)]"
-                  : "bg-[#c34f45] shadow-[0_0_0_3px_rgba(195,79,69,0.1)]"
+                  : isWebMcpChecking
+                    ? "animate-pulse bg-[#b65f49] shadow-[0_0_0_3px_rgba(182,95,73,0.11)]"
+                    : "bg-[#c34f45] shadow-[0_0_0_3px_rgba(195,79,69,0.1)]"
               }`}
             />
             <span className="text-[0.62rem] font-semibold tracking-[0.08em] text-[#716963] uppercase">
-              {webMcpStatus === "connected" ? "CONNECTED" : "UNCONNECTED"}
+              {isWebMcpConnected
+                ? "CONNECTED"
+                : isWebMcpChecking
+                  ? "CONNECTING"
+                  : "UNCONNECTED"}
             </span>
           </Button>
         </div>
@@ -1928,8 +1965,12 @@ export function MasilExperience() {
         <HomeScreen
           language={language}
           caption={session.caption}
-          connected={isWebMcpConnected}
+          onOpenConnectionGuide={() => {
+            setWebMcpDrawerView("connection");
+            setLogsOpen(true);
+          }}
           presence={presence}
+          status={webMcpStatus}
         />
       ) : (
         <section
@@ -1978,6 +2019,8 @@ export function MasilExperience() {
         events={events}
         language={language}
         onClose={() => setLogsOpen(false)}
+        onBackToOverview={() => setWebMcpDrawerView("overview")}
+        onOpenConnectionGuide={() => setWebMcpDrawerView("connection")}
         onOpenActivity={(activity) => {
           setLogsOpen(false);
           void executeTool(
@@ -1998,6 +2041,7 @@ export function MasilExperience() {
         open={logsOpen}
         status={webMcpStatus}
         toolCount={toolDescriptors.length}
+        view={webMcpDrawerView}
       />
     </main>
   );
@@ -2006,24 +2050,360 @@ export function MasilExperience() {
 const MASIL_PRIMARY_PROMPT_CLASS =
   "text-[clamp(1.5rem,2.35vw,2.25rem)] leading-none font-medium tracking-[-0.055em]";
 
+function ConnectionGuideLink({
+  language,
+  onClick,
+  testId,
+}: {
+  language: Language;
+  onClick: () => void;
+  testId: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="link"
+      size="sm"
+      className="h-auto px-0 text-muted-foreground"
+      onClick={onClick}
+      data-testid={testId}
+    >
+      {language === "ko" ? "연결 방법 보기" : "View connection steps"}
+      <ArrowUpRight
+        aria-hidden="true"
+        data-icon="inline-end"
+      />
+    </Button>
+  );
+}
+
+function ConnectionGuidePanel({
+  language,
+  onBack,
+}: {
+  language: Language;
+  onBack: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [guideTab, setGuideTab] = useState<"chatgpt" | "chrome">("chrome");
+
+  const copyChromeFlagUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(CHROME_WEBMCP_FLAG_URL);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <>
+      <SheetHeader className="shrink-0" data-testid="connection-guide">
+        <div className="flex items-start gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="-ml-2 shrink-0"
+            onClick={onBack}
+            aria-label={
+              language === "ko"
+                ? "WebMCP 상태로 돌아가기"
+                : "Back to WebMCP status"
+            }
+            data-testid="connection-guide-back"
+          >
+            <ArrowLeft aria-hidden="true" />
+          </Button>
+          <div className="min-w-0 flex-1">
+            <SheetTitle>
+              {language === "ko" ? "에이전트 연결" : "Connect your Agent"}
+            </SheetTitle>
+            <SheetDescription>
+              {language === "ko"
+                ? "지금 MASIL을 연 곳을 선택하세요."
+                : "Choose where you opened MASIL."}
+            </SheetDescription>
+          </div>
+        </div>
+      </SheetHeader>
+
+      <Separator />
+
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="px-4 pb-5">
+          <Tabs
+            value={guideTab}
+            onValueChange={(value) => {
+              if (value === "chatgpt" || value === "chrome") {
+                setGuideTab(value);
+              }
+            }}
+            className="gap-5"
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="chatgpt">ChatGPT</TabsTrigger>
+              <TabsTrigger value="chrome">Chrome</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="chatgpt">
+              <Item
+                variant="muted"
+                className="border border-[#b65f49]/10 bg-[#b65f49]/[0.045] px-3.5 py-3.5"
+              >
+                <ItemMedia variant="icon" className="text-[#9f4c38]">
+                  <MessageCircle />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>
+                    {language === "ko"
+                      ? "별도 설정 없이 연결돼요"
+                      : "No additional setup needed"}
+                    <Badge variant="secondary" className="font-normal">
+                      {language === "ko" ? "추천" : "Recommended"}
+                    </Badge>
+                  </ItemTitle>
+                  <ItemDescription className="line-clamp-none">
+                    {language === "ko"
+                      ? "ChatGPT의 인앱 브라우저에서 MASIL 링크를 열면 사이트 도구가 자동으로 연결됩니다."
+                      : "Open the MASIL link in ChatGPT's in-app browser and site tools connect automatically."}
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
+
+              <ItemGroup className="mt-3 gap-0">
+                <ConnectionStep
+                  number="1"
+                  title={
+                    language === "ko"
+                      ? "ChatGPT 안에서 MASIL 열기"
+                      : "Open MASIL inside ChatGPT"
+                  }
+                  description={
+                    language === "ko"
+                      ? "이 페이지의 라이브 URL을 ChatGPT 대화에서 여세요."
+                      : "Open this page's live URL from a ChatGPT conversation."
+                  }
+                />
+                <ConnectionStep
+                  number="2"
+                  title={
+                    language === "ko"
+                      ? "CONNECTED 확인"
+                      : "Check for CONNECTED"
+                  }
+                  description={
+                    language === "ko"
+                      ? "상단 상태가 초록색으로 바뀌면 바로 에이전트에게 요청할 수 있어요."
+                      : "When the status above turns green, you can ask your Agent right away."
+                  }
+                  last
+                />
+              </ItemGroup>
+            </TabsContent>
+
+            <TabsContent value="chrome">
+              <Item
+                variant="muted"
+                className="border border-[#b65f49]/10 bg-[#b65f49]/[0.045] px-3.5 py-3.5"
+              >
+                <ItemMedia variant="icon" className="text-[#9f4c38]">
+                  <Workflow />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle>
+                    {language === "ko"
+                      ? "처음 한 번만 설정해요"
+                      : "Set it up just once"}
+                  </ItemTitle>
+                  <ItemDescription className="line-clamp-none">
+                    {language === "ko"
+                      ? "WebMCP를 켜고 Chrome을 다시 시작하면 다음부터 자동으로 연결됩니다."
+                      : "Enable WebMCP and relaunch Chrome; it will connect automatically next time."}
+                  </ItemDescription>
+                </ItemContent>
+              </Item>
+
+              <ItemGroup className="mt-3 gap-0">
+                <ConnectionStep
+                  number="1"
+                  title={
+                    language === "ko" ? "설정 주소 복사" : "Copy the setup address"
+                  }
+                  description={CHROME_WEBMCP_FLAG_URL}
+                  code
+                  action={
+                    <Button
+                      type="button"
+                      variant={copied ? "secondary" : "outline"}
+                      size="sm"
+                      onClick={() => void copyChromeFlagUrl()}
+                      data-testid="copy-chrome-webmcp-flag"
+                    >
+                      {copied ? (
+                        <Check aria-hidden="true" data-icon="inline-start" />
+                      ) : (
+                        <Copy aria-hidden="true" data-icon="inline-start" />
+                      )}
+                      {copied
+                        ? language === "ko"
+                          ? "복사됨"
+                          : "Copied"
+                        : language === "ko"
+                          ? "복사"
+                          : "Copy"}
+                    </Button>
+                  }
+                />
+                <ConnectionStep
+                  number="2"
+                  title={
+                    language === "ko"
+                      ? "WebMCP Testing 켜기"
+                      : "Enable WebMCP Testing"
+                  }
+                  description={
+                    language === "ko"
+                      ? "주소창에 붙여넣고 설정을 Enabled로 바꾸세요."
+                      : "Paste it into the address bar and change the setting to Enabled."
+                  }
+                />
+                <ConnectionStep
+                  number="3"
+                  title={
+                    language === "ko" ? "Chrome 다시 시작" : "Relaunch Chrome"
+                  }
+                  description={
+                    language === "ko"
+                      ? "MASIL로 돌아와 상단 상태가 초록색인지 확인하세요."
+                      : "Return to MASIL and check that the status above is green."
+                  }
+                  last
+                />
+              </ItemGroup>
+
+              <Item
+                variant="muted"
+                size="xs"
+                className="mt-4 bg-[#3b8a62]/[0.055] text-[#2f6f50]"
+              >
+                <ItemMedia>
+                  <span
+                    aria-hidden="true"
+                    className="size-1.5 rounded-full bg-[#3b8a62] shadow-[0_0_0_3px_rgba(59,138,98,0.1)]"
+                  />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle className="text-xs text-[#2f6f50]">
+                    {language === "ko"
+                      ? "CONNECTED가 보이면 준비 완료"
+                      : "You're ready when CONNECTED appears"}
+                  </ItemTitle>
+                </ItemContent>
+              </Item>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </ScrollArea>
+
+      <SheetFooter className="shrink-0 border-t">
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto self-start px-0 text-muted-foreground"
+          nativeButton={false}
+          render={
+            <a
+              href={WEBMCP_GUIDE_URL[language]}
+              target="_blank"
+              rel="noreferrer"
+            />
+          }
+        >
+          {language === "ko"
+            ? "OpenAI 사이트 도구 가이드"
+            : "OpenAI guide to site tools"}
+          <ArrowUpRight aria-hidden="true" data-icon="inline-end" />
+        </Button>
+      </SheetFooter>
+    </>
+  );
+}
+
+function ConnectionStep({
+  action,
+  code = false,
+  description,
+  last = false,
+  number,
+  title,
+}: {
+  action?: React.ReactNode;
+  code?: boolean;
+  description: string;
+  last?: boolean;
+  number: string;
+  title: string;
+}) {
+  return (
+    <Item
+      size="sm"
+      className={`rounded-none border-x-0 border-t-0 px-1 py-4 ${
+        last ? "border-b-0" : "border-b border-black/[0.055]"
+      }`}
+    >
+      <ItemMedia>
+        <Badge
+          variant="outline"
+          className="size-6 justify-center rounded-full border-[#b65f49]/15 bg-[#b65f49]/[0.045] p-0 text-[0.68rem] font-medium text-[#9f4c38]"
+        >
+          {number}
+        </Badge>
+      </ItemMedia>
+      <ItemContent className="min-w-0">
+        <ItemTitle>{title}</ItemTitle>
+        <ItemDescription
+          className={
+            code
+              ? "line-clamp-1 font-mono text-[0.68rem]"
+              : "line-clamp-none text-[0.78rem]"
+          }
+          title={code ? description : undefined}
+        >
+          {description}
+        </ItemDescription>
+      </ItemContent>
+      {action ? <ItemActions>{action}</ItemActions> : null}
+    </Item>
+  );
+}
+
 function HomeScreen({
   language,
   caption,
-  connected,
+  onOpenConnectionGuide,
   presence,
+  status,
 }: {
   language: Language;
   caption: string;
-  connected: boolean;
+  onOpenConnectionGuide: () => void;
   presence: Presence;
+  status: WebMcpStatus;
 }) {
+  const connected = status === "connected";
+  const checking = status === "checking";
   const isDefaultHeadline =
     caption === INITIAL_SESSION.caption ||
     caption === "오늘은 무엇을\n같이 해볼까요?";
-  const headline = !connected
+  const headline = checking
     ? language === "ko"
-      ? "에이전트 연결이 필요합니다"
-      : "Agent connection required"
+      ? "사이트 도구를 확인하고 있어요"
+      : "Checking site tools"
+    : !connected
+      ? language === "ko"
+        ? "에이전트와 연결해 시작하세요"
+        : "Connect your Agent to get started"
     : isDefaultHeadline
       ? language === "ko"
         ? INITIAL_SESSION.caption
@@ -2034,14 +2414,33 @@ function HomeScreen({
     <section className="relative z-10 min-h-[100svh] px-5 pt-[76px] text-center sm:px-8">
       <div className="masil-copy-enter absolute inset-x-5 top-[60%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
         <h1
-          className={MASIL_PRIMARY_PROMPT_CLASS + " max-w-none whitespace-nowrap text-[#4f4944]"}
+          className={
+            MASIL_PRIMARY_PROMPT_CLASS +
+            " masil-balance max-w-[23rem] text-[#4f4944] sm:max-w-none sm:whitespace-nowrap"
+          }
         >
           {headline}
         </h1>
         {connected ? (
           <AgentProjection hero language={language} presence={presence} />
+        ) : !checking ? (
+          <p className="masil-balance mt-4 max-w-[31rem] text-sm leading-6 text-muted-foreground">
+            {language === "ko"
+              ? "ChatGPT에서는 바로 연결됩니다. Chrome에서는 WebMCP를 한 번 켜주세요."
+              : "ChatGPT connects automatically. In Chrome, enable WebMCP once."}
+          </p>
         ) : null}
       </div>
+
+      {!connected && !checking ? (
+        <div className="absolute inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-20 flex justify-center px-5 sm:bottom-8">
+          <ConnectionGuideLink
+            language={language}
+            onClick={onOpenConnectionGuide}
+            testId="home-connection-guide"
+          />
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -2271,19 +2670,25 @@ function AgentSceneCaption({
 function EventLogDrawer({
   events,
   language,
+  onBackToOverview,
   onClose,
+  onOpenConnectionGuide,
   onOpenActivity,
   open,
   status,
   toolCount,
+  view,
 }: {
   events: DemoEvent[];
   language: Language;
+  onBackToOverview: () => void;
   onClose: () => void;
+  onOpenConnectionGuide: () => void;
   onOpenActivity: (activity: Activity) => void;
   open: boolean;
   status: WebMcpStatus;
   toolCount: number;
+  view: WebMcpDrawerView;
 }) {
   return (
     <Sheet
@@ -2307,16 +2712,28 @@ function EventLogDrawer({
         className="w-[min(94vw,28rem)] border-black/[0.05] pt-[76px] sm:max-w-md"
         onOverlayClick={onClose}
       >
-        <SheetHeader className="shrink-0">
+        {view === "connection" ? (
+          <ConnectionGuidePanel language={language} onBack={onBackToOverview} />
+        ) : (
+          <>
+            <SheetHeader className="shrink-0">
           <SheetTitle>WebMCP</SheetTitle>
           <SheetDescription>
-            {language === "ko"
-              ? "연결 상태와 웹 도구를 확인합니다."
-              : "Inspect the connection and web tools."}
+            {status === "connected"
+              ? language === "ko"
+                ? "이 페이지에서 에이전트가 사용한 도구와 상태입니다."
+                : "Tools and activity shared with the Agent on this page."
+              : status === "checking"
+                ? language === "ko"
+                  ? "이 페이지의 사이트 도구를 확인하고 있어요."
+                  : "Checking this page for site tools."
+                : language === "ko"
+                  ? "연결되면 아래 사이트 도구를 에이전트가 직접 사용할 수 있어요."
+                  : "Once connected, your Agent can use the site tools below."}
           </SheetDescription>
-        </SheetHeader>
+            </SheetHeader>
 
-        <Tabs defaultValue="history" className="min-h-0 flex-1 px-4 pb-4">
+            <Tabs defaultValue="history" className="min-h-0 flex-1 px-4 pb-4">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="history">
               {status === "connected"
@@ -2328,7 +2745,7 @@ function EventLogDrawer({
                   : "Explore"}
             </TabsTrigger>
             <TabsTrigger value="tools">
-              {language === "ko" ? "등록 도구" : "Tools"} {toolCount}
+              {language === "ko" ? "사이트 도구" : "Site tools"} {toolCount}
             </TabsTrigger>
           </TabsList>
 
@@ -2454,7 +2871,27 @@ function EventLogDrawer({
               </ItemGroup>
             </ScrollArea>
           </TabsContent>
-        </Tabs>
+            </Tabs>
+
+            {status !== "connected" && status !== "checking" ? (
+              <SheetFooter className="shrink-0 border-t p-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="w-full justify-between text-muted-foreground"
+              onClick={onOpenConnectionGuide}
+              data-testid="drawer-connection-guide"
+            >
+              {language === "ko"
+                ? "에이전트 연결 방법"
+                : "How to connect your Agent"}
+              <ArrowRight aria-hidden="true" data-icon="inline-end" />
+            </Button>
+              </SheetFooter>
+            ) : null}
+          </>
+        )}
       </SheetContent>
     </Sheet>
   );
