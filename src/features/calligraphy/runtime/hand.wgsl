@@ -3,6 +3,7 @@
 
 struct Uniforms {
   source: vec2f,
+  display: vec2f,
   presence: vec2f,
   ran: vec2f,
   dt: f32,
@@ -86,6 +87,24 @@ fn in_unit(v: vec2f) -> bool {
   return all(v >= vec2f(0.0)) && all(v <= vec2f(1.0));
 }
 
+// Invert composite.wgsl's mirrored cover transform. Without this correction,
+// a portrait or ultrawide canvas shows the brush beside the visible hand.
+fn source_to_display(source_norm: vec2f) -> vec2f {
+  let source_aspect = uniforms.source.x / max(uniforms.source.y, 1.0);
+  let display_aspect = uniforms.display.x / max(uniforms.display.y, 1.0);
+  let mirrored = vec2f(1.0 - source_norm.x, source_norm.y);
+  if (display_aspect > source_aspect) {
+    return vec2f(
+      mirrored.x,
+      (mirrored.y - 0.5) * (source_aspect / display_aspect) + 0.5
+    );
+  }
+  return vec2f(
+    (mirrored.x - 0.5) * (display_aspect / source_aspect) + 0.5,
+    mirrored.y
+  );
+}
+
 // Builds the next crop around all landmarks and rotates the hand upright.
 fn next_roi(slot: u32) -> Roi {
   let start = crop_to_source(landmark_xy(slot, AXIS_START), rois[slot]);
@@ -131,7 +150,7 @@ fn brush_tip(slot: u32) -> vec2f {
   );
   let tip_px = centroid + vec2f(0.0, -offset);
   let source_norm = tip_px / max(uniforms.source, vec2f(1.0));
-  return vec2f(1.0 - source_norm.x, source_norm.y);
+  return source_to_display(source_norm);
 }
 
 // A fingertip moves back toward the wrist when that finger curls into a fist.
