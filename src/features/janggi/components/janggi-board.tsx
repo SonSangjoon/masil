@@ -207,7 +207,10 @@ function VgpuJanggiBoard({
           candidate.side === game.turn,
       );
       if (!piece) return;
-      const spokenMove = `${describeJanggiPiece(piece)}을 손으로 ${destination.row}행 ${destination.col}열에 둠`;
+      const spokenMove =
+        language === "ko"
+          ? `${describeJanggiPiece(piece)}을 손으로 ${destination.row}행 ${destination.col}열에 둠`
+          : `Moved ${describeJanggiPiece(piece, "en")} by hand to row ${destination.row}, column ${destination.col}`;
       setPersonMovePending(true);
       setSelection(null);
       try {
@@ -222,6 +225,7 @@ function VgpuJanggiBoard({
       game.moveNumber,
       game.pieces,
       game.turn,
+      language,
       onPersonMove,
       personMovePending,
     ]);
@@ -384,7 +388,7 @@ function VgpuJanggiBoard({
                   aria-label={
                     language === "ko"
                       ? `${describeJanggiPiece(piece)} 선택`
-                      : `Select ${describeJanggiPiece(piece)}`
+                      : `Select ${describeJanggiPiece(piece, "en")}`
                   }
                   aria-pressed={isSelected}
                   data-testid={`janggi-piece-${piece.id}`}
@@ -463,7 +467,9 @@ export function JanggiBoard({
   const movedPiece = activeMove
     ? game.pieces.find((piece) => piece.id === activeMove.pieceId)
     : null;
-  const movedName = movedPiece ? describeJanggiPiece(movedPiece) : "";
+  const movedName = movedPiece
+    ? describeJanggiPiece(movedPiece, language)
+    : "";
 
   return (
     <div className="relative h-full min-h-0 overflow-hidden bg-transparent px-4 pb-5 pt-[5.25rem] sm:px-8 sm:pb-6 sm:pt-[5.75rem] lg:px-10 lg:pb-8 lg:pt-8">
@@ -484,7 +490,7 @@ export function JanggiBoard({
             {moveState === "moved" && movedName
               ? language === "ko"
                 ? `${movedName}, 이렇게 두었어요.`
-                : "The piece is moving."
+                : `${movedName} is moving.`
               : moveState === "suggested"
                 ? language === "ko"
                   ? "이 수를 볼까요?"

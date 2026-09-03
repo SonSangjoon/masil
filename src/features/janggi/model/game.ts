@@ -501,17 +501,38 @@ export function previewJanggiMove(
   } satisfies JanggiMove;
 }
 
-export function describeJanggiPiece(piece: JanggiPiece) {
-  const side = piece.side === "cho" ? "초" : "한";
-  const names: Record<JanggiPieceKind, string> = {
-    cha: "차",
-    ma: "마",
-    sang: "상",
-    sa: "사",
-    king: "왕",
-    po: "포",
-    soldier: piece.side === "cho" ? "병" : "졸",
-  };
+export function describeJanggiPiece(
+  piece: JanggiPiece,
+  language: "ko" | "en" = "ko",
+) {
+  const side =
+    language === "ko"
+      ? piece.side === "cho"
+        ? "초"
+        : "한"
+      : piece.side === "cho"
+        ? "Cho"
+        : "Han";
+  const names: Record<JanggiPieceKind, string> =
+    language === "ko"
+      ? {
+          cha: "차",
+          ma: "마",
+          sang: "상",
+          sa: "사",
+          king: "왕",
+          po: "포",
+          soldier: piece.side === "cho" ? "병" : "졸",
+        }
+      : {
+          cha: "chariot",
+          ma: "horse",
+          sang: "elephant",
+          sa: "guard",
+          king: "general",
+          po: "cannon",
+          soldier: "soldier",
+        };
   return `${side} ${names[piece.kind]}`;
 }
 
