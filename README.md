@@ -1,5 +1,7 @@
 # MASIL — Reconnecting Korean Elders to Creative Life
 
+![MASIL home screen with its living Orb and an active WebMCP connection](docs/assets/screenshots/masil-home.jpg)
+
 > **Korean elders living alone can lose access to the places that sustained their creative lives.
 > The web may be the only path left, yet its interface can become a second closed door.**
 
@@ -7,9 +9,7 @@
 meaningful creative activity—and expand what is possible—without first mastering the web
 interface.**
 
-**Live demo:** [Open MASIL →](https://masil-webmcp.vercel.app) · **3-minute video:** pending final cut
-
-[**Quick start**](#quick-start)
+**Live demo:** [Open MASIL →](https://masil-webmcp.vercel.app)
 
 `MASIL` (마실) means casually stepping out into the neighborhood—a small trip that is no longer easy
 for the people this project serves.
@@ -62,6 +62,8 @@ prepared a reference may no longer be within reach.
 separate layer; the elder writes over it. Every request can become a new starting point, so the
 activity is no longer confined to material someone prepared in advance.
 
+![The first character traced in live black ink while the second remains as an Agent-generated calligraphy guide in MASIL](docs/assets/screenshots/masil-calligraphy.jpg)
+
 ### Janggi: familiar language becomes a complete match
 
 **Need:** Decades of Janggi experience do not teach coordinates, piece IDs, or web-game controls.
@@ -69,6 +71,8 @@ activity is no longer confined to material someone prepared in advance.
 **Experience:** WebMCP supplies the live position, turn, and legal moves; the Agent resolves the
 elder's familiar shorthand; MASIL validates the move. The Agent takes the other side, and the
 elder's direct move returns to it so the same match continues.
+
+![A Cho soldier occupying the captured square while a Han soldier flies away on MASIL's animated three-dimensional Janggi board](docs/assets/screenshots/masil-janggi-capture.jpg)
 
 ## Why WebMCP is necessary
 
