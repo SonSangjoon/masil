@@ -196,7 +196,9 @@ export function GlassOrbScene({
       {status === "ready" ? (
         <div className="absolute inset-0 grid place-items-center">
           <span className="sr-only" role="status">
-            {PRESENCE_LABELS[presence]}
+            {connected
+              ? PRESENCE_LABELS[presence]
+              : "Agent 연결을 기다리는 중"}
           </span>
         </div>
       ) : null}
