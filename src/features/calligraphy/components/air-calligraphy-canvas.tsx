@@ -48,10 +48,10 @@ type AirCalligraphyCanvasProps = {
 };
 
 function referenceTextSize(characterCount: number) {
-  if (characterCount <= 1) return "text-[clamp(16rem,36vw,40rem)]";
-  if (characterCount === 2) return "text-[clamp(10rem,24vw,24rem)]";
-  if (characterCount === 3) return "text-[clamp(7.5rem,18vw,17rem)]";
-  return "text-[clamp(6rem,14vw,13rem)]";
+  if (characterCount <= 1) return "min(52cqw, 72cqh)";
+  if (characterCount === 2) return "min(34cqw, 62cqh)";
+  if (characterCount === 3) return "min(24cqw, 54cqh)";
+  return "min(18cqw, 46cqh)";
 }
 
 function normalizedPoint(
@@ -249,13 +249,10 @@ export const AirCalligraphyCanvas = forwardRef<
   const pointerActive = mode === "fallback" || mode === "error";
 
   return (
-    <div className="relative isolate h-full min-h-[520px] overflow-hidden bg-[#f8f4ed] lg:min-h-[660px]">
+    <div className="relative isolate h-full min-h-0 overflow-hidden bg-[#f8f4ed]">
       <div
-        className="pointer-events-none absolute top-1/2 left-1/2 z-0 grid -translate-x-1/2 -translate-y-1/2 place-items-center overflow-hidden"
-        style={{
-          aspectRatio: "3 / 2",
-          width: "min(88%, calc((100svh - 76px) * 1.32))",
-        }}
+        className="pointer-events-none absolute inset-x-[6%] top-[5.75rem] bottom-[8.25rem] z-0 grid place-items-center overflow-hidden [container-type:size] sm:inset-x-[7%] sm:top-[6.25rem] sm:bottom-[8.75rem]"
+        data-testid="calligraphy-reference-stage"
       >
         {referenceImageUrl && failedReferenceUrl !== referenceImageUrl ? (
           // The source can be a page-local blob URL created from WebMCP data.
@@ -263,7 +260,11 @@ export const AirCalligraphyCanvas = forwardRef<
           <img
             key={referenceImageId ?? referenceImageUrl}
             src={referenceImageUrl}
-            alt={referenceImageAlt ?? `${character} 서예 글자본`}
+            alt={
+              language === "ko"
+                ? (referenceImageAlt ?? `${character} 서예 글자본`)
+                : `Calligraphy reference for ${character}`
+            }
             data-testid="calligraphy-reference"
             data-calligraphy-reference-text={character}
             className="h-full w-full select-none object-contain opacity-[0.32] grayscale contrast-150 mix-blend-multiply"
@@ -275,8 +276,9 @@ export const AirCalligraphyCanvas = forwardRef<
             aria-hidden="true"
             data-testid="calligraphy-reference"
             data-calligraphy-reference-text={character}
-            className={`max-w-full select-none whitespace-nowrap text-center leading-none font-semibold tracking-[-0.08em] text-[#261d19]/[0.32] ${referenceTextSize(character.length)}`}
+            className="max-h-full max-w-full select-none whitespace-nowrap text-center leading-none font-semibold tracking-[-0.08em] text-[#261d19]/[0.32]"
             style={{
+              fontSize: referenceTextSize(Array.from(character).length),
               fontFamily:
                 "STKaiti, KaiTi, Kaiti SC, Noto Serif CJK KR, Noto Serif KR, serif",
             }}
@@ -288,7 +290,7 @@ export const AirCalligraphyCanvas = forwardRef<
 
       <canvas
         ref={canvasRef}
-        className={`relative z-10 block h-full min-h-[520px] w-full touch-none mix-blend-multiply lg:min-h-[660px] ${
+        className={`relative z-10 block h-full min-h-0 w-full touch-none mix-blend-multiply ${
           pointerActive ? "cursor-none" : "cursor-default"
         }`}
         aria-label={

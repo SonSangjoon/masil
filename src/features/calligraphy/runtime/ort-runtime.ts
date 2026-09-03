@@ -47,6 +47,7 @@ import {
   type HandResultInput,
   type VisualPipeline,
 } from "./visual-pipeline";
+import { resolveCalligraphyRenderSize } from "./render-resolution";
 
 export interface CameraRenderer {
   readonly ready: Promise<void>;
@@ -65,8 +66,10 @@ interface RendererOptions {
 interface RenderSize {
   readonly width: number;
   readonly height: number;
-  readonly dpr: number;
+  readonly pixelRatio: number;
 }
+
+const MAX_CAMERA_RENDER_PIXELS = 1920 * 1080;
 
 export function createCameraRenderer({
   canvas,
@@ -87,10 +90,12 @@ export function createCameraRenderer({
   let displayFrame = 0;
   let resizeFrame = 0;
   let pendingSize: RenderSize | undefined;
+  let renderPixelRatio = 1;
   let lastDpr = typeof window === "undefined" ? 1 : window.devicePixelRatio;
   let lastResultMs: number | undefined;
   let pendingReset = false;
-  let copiedToken = -1;
+  let analysisCopiedToken = -1;
+  let displayCopiedToken = -1;
   let painting = false;
   let draining: Promise<void> | undefined;
   let shutdown: Promise<void> | undefined;
@@ -106,6 +111,11 @@ export function createCameraRenderer({
     painting = active;
     onWritingStateChange?.(active);
   };
+  const requestDisplayFrame = () => {
+    if (!disposed && !displayFrame) {
+      displayFrame = requestAnimationFrame(draw);
+    }
+  };
 
   const applyResize = () => {
     resizeFrame = 0;
@@ -113,10 +123,10 @@ export function createCameraRenderer({
     pendingSize = undefined;
     if (disposed || !size || !output) return;
     try {
-      output.resize([
-        Math.max(1, Math.round(size.width * size.dpr)),
-        Math.max(1, Math.round(size.height * size.dpr)),
-      ]);
+      renderPixelRatio = size.pixelRatio;
+      output.resize([size.width, size.height]);
+      pipeline?.resizeDisplay(size.width, size.height);
+      requestDisplayFrame();
     } catch (error) {
       fail(error);
     }
@@ -128,36 +138,43 @@ export function createCameraRenderer({
   };
   const measure = () => {
     const { width, height } = canvas.getBoundingClientRect();
-    resize({
-      width,
-      height,
-      dpr: Math.min(2, Math.max(1, window.devicePixelRatio || 1)),
-    });
+    resize(
+      resolveCalligraphyRenderSize(
+        width,
+        height,
+        window.devicePixelRatio,
+        MAX_CAMERA_RENDER_PIXELS,
+      ),
+    );
   };
   const onWindowResize = () => {
     if (window.devicePixelRatio === lastDpr) return;
     lastDpr = window.devicePixelRatio;
     measure();
   };
-  const copyFrame = () => {
-    if (!pipeline || camera.token === copiedToken) return;
-    copiedToken = camera.token;
-    pipeline.copyExternalFrame(camera.frame);
+  const copyAnalysisFrame = (token: number) => {
+    if (!pipeline || token === analysisCopiedToken) return;
+    analysisCopiedToken = token;
+    pipeline.copyAnalysisFrame(camera.frame);
+  };
+  const copyDisplayFrame = () => {
+    if (!pipeline || camera.token === displayCopiedToken) return;
+    displayCopiedToken = camera.token;
+    pipeline.copyDisplayFrame(camera.frame);
   };
   const draw = () => {
     displayFrame = 0;
     if (disposed || !pipeline || !output) return;
     try {
-      copyFrame();
+      copyDisplayFrame();
       pipeline.renderVisualFrame(output, {
-        dpr: Math.min(2, Math.max(1, window.devicePixelRatio || 1)),
+        dpr: renderPixelRatio,
         showCursor: painting,
         showCamera: true,
       });
     } catch (error) {
       fail(error);
     }
-    displayFrame = requestAnimationFrame(draw);
   };
 
   async function runDetector(): Promise<void> {
@@ -202,9 +219,12 @@ export function createCameraRenderer({
     }
   }
 
-  async function runOnce(): Promise<void> {
+  async function runOnce(token: number): Promise<void> {
     if (disposed || !shared || !gpu || !pipeline || !tracker) return;
-    copyFrame();
+    // Detector and landmark crops must use one latched frame. The preview has
+    // its own texture, so a newly decoded frame cannot invalidate an in-flight
+    // ROI and make the brush jump away from the visible hand.
+    copyAnalysisFrame(token);
     if (tracker.needsDetector()) {
       await runDetector();
       if (disposed) return;
@@ -277,6 +297,7 @@ export function createCameraRenderer({
         pipeline!.consumeHandLandmarks(consumed, dt, { reset });
       });
       setPainting(tracker.activeSlots().length > 0);
+      requestDisplayFrame();
     } finally {
       for (const tensor of outputs) tensor?.dispose();
     }
@@ -334,8 +355,13 @@ export function createCameraRenderer({
         : undefined;
     observer?.observe(canvas);
     window.addEventListener("resize", onWindowResize);
-    camera.start((token) => scheduler?.request(token));
-    displayFrame = requestAnimationFrame(draw);
+    // The source already emits exactly once per decoded video frame. Drawing
+    // from that clock avoids compositing duplicate camera frames at 60 fps.
+    camera.start((token) => {
+      scheduler?.request(token);
+      requestDisplayFrame();
+    });
+    requestDisplayFrame();
   };
 
   const initialization = initialize();
@@ -425,6 +451,7 @@ export function createCameraRenderer({
       try {
         pipeline?.clearMask();
         pendingReset = true;
+        requestDisplayFrame();
       } catch (error) {
         fail(error);
       }

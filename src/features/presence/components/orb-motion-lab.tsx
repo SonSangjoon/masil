@@ -29,6 +29,12 @@ type MotionSample = {
   durationMs: number;
 };
 
+type LabLanguage = "ko" | "en";
+type MotionSampleCopy = Pick<
+  MotionSample,
+  "group" | "title" | "tabLabel" | "description"
+>;
+
 const MOTION_SAMPLES: readonly MotionSample[] = [
   {
     id: "ready",
@@ -179,7 +185,95 @@ const MOTION_SAMPLES: readonly MotionSample[] = [
   },
 ] as const;
 
+const MOTION_SAMPLE_COPY_EN: Record<MotionSample["id"], MotionSampleCopy> = {
+  ready: {
+    group: "Foundation",
+    title: "Living breath",
+    tabLabel: "Breathing",
+    description:
+      "Its surface and center breathe at different, gentle rhythms instead of standing still.",
+  },
+  listening: {
+    group: "Conversation",
+    title: "Leaning in",
+    tabLabel: "Listening",
+    description:
+      "It leans toward the person and lengthens while waiting for them to finish.",
+  },
+  receiving: {
+    group: "WebMCP",
+    title: "Receiving a request",
+    tabLabel: "Receiving",
+    description:
+      "Quick ripples and a slower current pass through it in different directions.",
+  },
+  creating: {
+    group: "WebMCP",
+    title: "Shaping a space",
+    tabLabel: "Creating",
+    description:
+      "A broad inner current circles through the Orb as it shapes the next screen.",
+  },
+  speaking: {
+    group: "Conversation",
+    title: "Speaking",
+    tabLabel: "Speaking",
+    description:
+      "A pressure wave crosses its body to carry the rhythm of speech.",
+  },
+  awaiting: {
+    group: "Conversation",
+    title: "Waiting for confirmation",
+    tabLabel: "Awaiting",
+    description:
+      "Its movement quiets without stopping as it watches for the next choice.",
+  },
+  transition: {
+    group: "Screen",
+    title: "Flowing between screens",
+    tabLabel: "Transition",
+    description:
+      "The same Orb stretches and flows into its activity position without breaking continuity.",
+  },
+  "calligraphy-choice": {
+    group: "Calligraphy",
+    title: "Choosing-text droplet",
+    tabLabel: "Ink current",
+    description:
+      "An ink-like wave travels through its whole body to open the calligraphy experience.",
+  },
+  "calligraphy-writing": {
+    group: "Calligraphy",
+    title: "Staying beside the brush",
+    tabLabel: "Writing companion",
+    description:
+      "It settles into a smaller body beside the work without covering the writing space.",
+  },
+  connected: {
+    group: "WebMCP",
+    title: "Connection taking shape",
+    tabLabel: "Connected",
+    description:
+      "Fast motion releases into one rising current as the result settles.",
+  },
+  "janggi-recoil": {
+    group: "Janggi",
+    title: "When an Agent piece is captured",
+    tabLabel: "Agent capture",
+    description:
+      "It contracts on impact, then lets the shock pass through its whole body in a brief shiver.",
+  },
+  "janggi-celebrate": {
+    group: "Janggi",
+    title: "When a person’s piece is captured",
+    tabLabel: "Person capture",
+    description:
+      "It bounces upward and wobbles with the Agent’s delighted reaction.",
+  },
+};
+
 export function OrbMotionLab() {
+  const [language, setLanguage] = useState<LabLanguage>("ko");
   const [activeIndex, setActiveIndex] = useState(0);
   const [autoAdvance, setAutoAdvance] = useState(true);
   const [replayVersion, setReplayVersion] = useState(0);
@@ -187,6 +281,25 @@ export function OrbMotionLab() {
   const transitionProgressRef = useRef(0);
   const replayTransitionRef = useRef(false);
   const activeSample = MOTION_SAMPLES[activeIndex];
+  const activeCopy =
+    language === "ko" ? activeSample : MOTION_SAMPLE_COPY_EN[activeSample.id];
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem("masil.language");
+      if (stored === "ko" || stored === "en") {
+        queueMicrotask(() => setLanguage(stored));
+      }
+    } catch {
+      // The lab remains usable in Korean when storage is unavailable.
+    }
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+    document.title =
+      language === "ko" ? "MASIL — 오브 동작 연구실" : "MASIL — Orb motion lab";
+  }, [language]);
 
   useEffect(() => {
     if (!autoAdvance) return;
@@ -295,6 +408,7 @@ export function OrbMotionLab() {
         calligraphyWriting={activeSample.calligraphyWriting}
         connected
         form={activeSample.form ?? "body"}
+        language={language}
         mood={activeSample.mood}
         presence={activeSample.presence}
         reaction={reaction}
@@ -324,20 +438,22 @@ export function OrbMotionLab() {
       <section className="relative z-[110] mx-auto flex min-h-[calc(100svh-76px)] max-w-[1120px] flex-col justify-end px-5 pb-7 sm:px-8 sm:pb-9 lg:px-10">
         <div className="mx-auto mb-7 w-full max-w-[660px] text-center sm:mb-9">
           <p className="mb-3 text-[0.68rem] font-semibold tracking-[0.24em] text-[#b65f49]">
-            {activeSample.group} · {activeSample.index} / {MOTION_SAMPLES.length}
+            {activeCopy.group} · {activeSample.index} / {MOTION_SAMPLES.length}
           </p>
           <h1 className="masil-balance text-[clamp(1.65rem,4vw,2.65rem)] font-medium tracking-[-0.045em]">
-            {activeSample.title}
+            {activeCopy.title}
           </h1>
           <p className="masil-balance mx-auto mt-3 max-w-[560px] text-[0.88rem] leading-6 text-[#716963] sm:text-[0.94rem] sm:leading-7">
-            {activeSample.description}
+            {activeCopy.description}
           </p>
         </div>
 
         <div className="rounded-[1.5rem] border border-black/[0.055] bg-white/45 p-2.5 shadow-[0_22px_70px_rgb(95_55_39_/_0.07)] backdrop-blur-xl sm:rounded-[1.75rem] sm:p-3">
           <div className="flex items-center justify-between gap-3 px-2 pb-2.5 sm:px-3 sm:pb-3">
             <p className="text-[0.67rem] font-medium tracking-[0.08em] text-[#716963]">
-              동작은 확대 · 화면 전환은 실제 비율
+              {language === "ko"
+                ? "동작은 확대 · 화면 전환은 실제 비율"
+                : "Motion enlarged · transitions shown at actual scale"}
             </p>
             <div className="flex items-center gap-1.5">
               <button
@@ -351,14 +467,22 @@ export function OrbMotionLab() {
                 ) : (
                   <Play aria-hidden="true" className="size-3" strokeWidth={1.8} />
                 )}
-                {autoAdvance ? "자동 넘김 멈춤" : "자동 넘김 시작"}
+                {language === "ko"
+                  ? autoAdvance
+                    ? "자동 넘김 멈춤"
+                    : "자동 넘김 시작"
+                  : autoAdvance
+                    ? "Pause auto-play"
+                    : "Start auto-play"}
               </button>
               <button
                 type="button"
                 onClick={replay}
                 className="grid size-8 place-items-center rounded-full border border-black/[0.06] bg-white/65 text-[#4f4944] transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25"
-                aria-label="현재 동작 다시 보기"
-                title="현재 동작 다시 보기"
+                aria-label={
+                  language === "ko" ? "현재 동작 다시 보기" : "Replay motion"
+                }
+                title={language === "ko" ? "현재 동작 다시 보기" : "Replay motion"}
               >
                 <RotateCcw aria-hidden="true" className="size-3.5" strokeWidth={1.7} />
               </button>
@@ -368,6 +492,8 @@ export function OrbMotionLab() {
           <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6">
             {MOTION_SAMPLES.map((sample, index) => {
               const isActive = index === activeIndex;
+              const copy =
+                language === "ko" ? sample : MOTION_SAMPLE_COPY_EN[sample.id];
               return (
                 <button
                   key={sample.id}
@@ -385,10 +511,10 @@ export function OrbMotionLab() {
                       isActive ? "text-white/65" : "text-[#9a8f87]"
                     }`}
                   >
-                    {sample.index} · {sample.group}
+                    {sample.index} · {copy.group}
                   </span>
                   <span className="mt-1 block text-[0.72rem] font-medium tracking-[-0.015em] sm:text-[0.75rem]">
-                    {sample.tabLabel}
+                    {copy.tabLabel}
                   </span>
                   {isActive && autoAdvance ? (
                     <span

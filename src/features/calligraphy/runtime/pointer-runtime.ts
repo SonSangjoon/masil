@@ -5,6 +5,7 @@ import {
   type PaintPoint,
   type VisualPipeline,
 } from "./visual-pipeline";
+import { resolveCalligraphyRenderSize } from "./render-resolution";
 
 export interface PointerRenderer {
   readonly ready: Promise<void>;
@@ -30,16 +31,34 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
   let opennessVelocity = 0;
   let lastFrameMs = 0;
   let previous: PaintPoint = { x: 0.5, y: 0.5 };
+  let hasRenderedPoint = false;
+  let renderPixelRatio = 1;
+  let pendingPointer:
+    | {
+        readonly point: PaintPoint;
+        readonly stroke: boolean;
+        readonly engaged: boolean;
+      }
+    | undefined;
+
+  const requestDraw = () => {
+    if (!disposed && !animationFrame) {
+      animationFrame = requestAnimationFrame(draw);
+    }
+  };
 
   const resize = () => {
     resizeFrame = 0;
     if (disposed || !output) return;
     const rect = canvas.getBoundingClientRect();
-    const dpr = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
-    output.resize([
-      Math.max(1, Math.round(rect.width * dpr)),
-      Math.max(1, Math.round(rect.height * dpr)),
-    ]);
+    const size = resolveCalligraphyRenderSize(
+      rect.width,
+      rect.height,
+      window.devicePixelRatio,
+    );
+    renderPixelRatio = size.pixelRatio;
+    output.resize([size.width, size.height]);
+    requestDraw();
   };
 
   const requestResize = () => {
@@ -54,6 +73,7 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
         ? Math.min(0.034, (now - lastFrameMs) / 1000)
         : 1 / 60;
     lastFrameMs = now;
+    let opennessChanged = false;
     if (pointerSeen) {
       // A near-critically-damped spring gives press/release a deliberate settle
       // without the robotic constant-rate turn of a linear interpolation.
@@ -76,21 +96,46 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
       }
       if (Math.abs(nextOpenness - visualOpenness) > 0.0001) {
         visualOpenness = nextOpenness;
-        pipeline.paintPointer(
-          previous,
-          previous,
-          false,
-          active,
-          visualOpenness,
-        );
+        opennessChanged = true;
       }
     }
+
+    // Pointer hardware can report faster than the display refresh rate. Keep
+    // the newest point and bridge from the last rendered point so a stroke
+    // stays continuous without queueing one full-mask compute pass per event.
+    const pending = pendingPointer;
+    pendingPointer = undefined;
+    if (pending) {
+      const start = hasRenderedPoint ? previous : pending.point;
+      pipeline.paintPointer(
+        start,
+        pending.point,
+        pending.stroke,
+        pending.engaged,
+        visualOpenness,
+      );
+      previous = pending.point;
+      hasRenderedPoint = true;
+    } else if (pointerSeen && opennessChanged) {
+      pipeline.paintPointer(
+        previous,
+        previous,
+        false,
+        active,
+        visualOpenness,
+      );
+    }
+
     pipeline.renderVisualFrame(output, {
-      dpr: Math.min(2, Math.max(1, window.devicePixelRatio || 1)),
+      dpr: renderPixelRatio,
       showCursor: true,
       showCamera: false,
     });
-    animationFrame = requestAnimationFrame(draw);
+
+    const opennessSettled =
+      Math.abs(targetOpenness - visualOpenness) < 0.0005 &&
+      Math.abs(opennessVelocity) < 0.006;
+    if (pendingPointer || (pointerSeen && !opennessSettled)) requestDraw();
   };
 
   const initialize = async () => {
@@ -111,7 +156,6 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
     observer = new ResizeObserver(requestResize);
     observer.observe(canvas);
     resize();
-    animationFrame = requestAnimationFrame(draw);
   };
 
   const ready = initialize();
@@ -125,35 +169,28 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
       visualOpenness = 1;
       targetOpenness = 1;
       opennessVelocity = 0;
+      pendingPointer = undefined;
+      hasRenderedPoint = false;
+      requestDraw();
     },
     begin(point) {
       previous = point;
+      hasRenderedPoint = true;
       active = true;
       pointerSeen = true;
       targetOpenness = 0.22;
-      pipeline?.paintPointer(point, point, false, true, visualOpenness);
+      pendingPointer = { point, stroke: false, engaged: true };
+      requestDraw();
     },
     move(point) {
       pointerSeen = true;
-      pipeline?.paintPointer(
-        previous,
-        point,
-        active,
-        active,
-        visualOpenness,
-      );
-      previous = point;
+      pendingPointer = { point, stroke: active, engaged: active };
+      requestDraw();
     },
     end() {
       active = false;
       targetOpenness = 1;
-      pipeline?.paintPointer(
-        previous,
-        previous,
-        false,
-        false,
-        visualOpenness,
-      );
+      requestDraw();
     },
     dispose() {
       if (disposed) return;

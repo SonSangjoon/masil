@@ -13,7 +13,13 @@ type GlassRenderer = {
   dispose: () => void;
 };
 
+const rendererModulePromise =
+  typeof window === "undefined"
+    ? null
+    : import("@/features/presence/runtime/renderer");
+
 export type OrbMood = "idle" | "ink" | "janggi" | "stories" | "support";
+export type OrbLanguage = "ko" | "en";
 export type OrbPresence =
   | "ready"
   | "listening"
@@ -40,14 +46,56 @@ const MOOD_FILTERS: Record<OrbMood, string> = {
   support: "brightness-[1.04] saturate-[0.82] contrast-[1.03]",
 };
 
-const PRESENCE_LABELS: Record<OrbPresence, string> = {
-  ready: "Agent와 연결됨",
-  listening: "Agent가 듣는 중",
-  receiving: "WebMCP 요청을 받는 중",
-  creating: "공간을 만드는 중",
-  speaking: "MASIL이 말하는 중",
-  awaiting: "확인을 기다리는 중",
-  connected: "로컬 연결 결과가 준비됨",
+const PRESENCE_LABELS: Record<
+  OrbLanguage,
+  Record<OrbPresence, string>
+> = {
+  ko: {
+    ready: "Agent와 연결됨",
+    listening: "Agent가 듣는 중",
+    receiving: "WebMCP 요청을 받는 중",
+    creating: "공간을 만드는 중",
+    speaking: "MASIL이 말하는 중",
+    awaiting: "확인을 기다리는 중",
+    connected: "로컬 연결 결과가 준비됨",
+  },
+  en: {
+    ready: "Connected to the Agent",
+    listening: "The Agent is listening",
+    receiving: "Receiving a WebMCP request",
+    creating: "Creating the space",
+    speaking: "MASIL is speaking",
+    awaiting: "Waiting for confirmation",
+    connected: "The local connection result is ready",
+  },
+};
+
+const ORB_COPY: Record<
+  OrbLanguage,
+  {
+    connectedLabel: string;
+    waitingLabel: string;
+    waitingStatus: string;
+    loading: string;
+    error: string;
+  }
+> = {
+  ko: {
+    connectedLabel: "Agent와 연결되어 말과 선택에 반응하는 MASIL Orb",
+    waitingLabel: "Agent 연결을 기다리는 MASIL Orb",
+    waitingStatus: "Agent 연결을 기다리는 중",
+    loading: "공간을 여는 중…",
+    error:
+      "이 브라우저에서는 동적 공간을 열 수 없습니다. WebGPU를 지원하는 브라우저에서 다시 시도해 주세요.",
+  },
+  en: {
+    connectedLabel: "MASIL Orb responding to the Agent's words and choices",
+    waitingLabel: "MASIL Orb waiting for an Agent connection",
+    waitingStatus: "Waiting for an Agent connection",
+    loading: "Opening your space…",
+    error:
+      "This browser cannot open the interactive space. Please try again in a browser that supports WebGPU.",
+  },
 };
 
 const PRESENCE_VITALITY: Record<OrbPresence, number> = {
@@ -77,6 +125,7 @@ export function GlassOrbScene({
   calligraphyWriting = false,
   connected,
   form = "body",
+  language = "ko",
   mood,
   presence,
   reaction = null,
@@ -88,6 +137,7 @@ export function GlassOrbScene({
   calligraphyWriting?: boolean;
   connected: boolean;
   form?: OrbForm;
+  language?: OrbLanguage;
   mood: OrbMood;
   presence: OrbPresence;
   reaction?: OrbReaction | null;
@@ -144,8 +194,10 @@ export function GlassOrbScene({
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const { createRenderer } =
-          await import("@/features/presence/runtime/renderer");
+        const { createRenderer } = await (
+          rendererModulePromise ??
+          import("@/features/presence/runtime/renderer")
+        );
         if (cancelled) return;
 
         renderer = createRenderer({
@@ -331,6 +383,7 @@ export function GlassOrbScene({
   const visualFilter = connected
     ? MOOD_FILTERS[mood]
     : "grayscale saturate-[0.08] brightness-[1.03] contrast-[0.9]";
+  const copy = ORB_COPY[language];
   // Product screens hand off from the hero only. The motion lab also keeps the
   // same transition geometry while leaving the sample, so the small Orb can
   // grow back into whichever enlarged body language the viewer selects next.
@@ -507,22 +560,18 @@ export function GlassOrbScene({
           <div className="masil-orb-life absolute inset-0">
             <canvas
               ref={canvasRef}
-              className={`masil-orb-canvas block h-full w-full touch-none transition-[filter,opacity,transform] duration-[1200ms] ease-[cubic-bezier(.16,1,.3,1)] ${visualFilter} ${
+              className={`masil-orb-canvas block h-full w-full touch-none transition-[filter,opacity,transform] duration-[1200ms,360ms,1200ms] ease-[cubic-bezier(.16,1,.3,1)] ${visualFilter} ${
                 status === "ready" ? "opacity-100" : "opacity-0"
               } ${calligraphyWriting ? "scale-[1.12]" : presence === "receiving" || presence === "listening" ? "scale-[1.025]" : "scale-100"}`}
-              aria-label={
-                connected
-                  ? "Agent와 연결되어 말과 선택에 반응하는 MASIL Orb"
-                  : "Agent 연결을 기다리는 MASIL Orb"
-              }
+              aria-label={connected ? copy.connectedLabel : copy.waitingLabel}
             />
 
             {status === "ready" ? (
               <div className="absolute inset-0 grid place-items-center">
                 <span className="sr-only" role="status">
                   {connected
-                    ? PRESENCE_LABELS[presence]
-                    : "Agent 연결을 기다리는 중"}
+                    ? PRESENCE_LABELS[language][presence]
+                    : copy.waitingStatus}
                 </span>
               </div>
             ) : null}
@@ -532,15 +581,14 @@ export function GlassOrbScene({
                 className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-sm tracking-[-0.01em] text-muted-foreground"
                 role="status"
               >
-                공간을 여는 중…
+                {copy.loading}
               </p>
             ) : null}
 
             {status === "error" ? (
               <div className="absolute inset-0 grid place-items-center px-6 text-center">
                 <p className="max-w-sm text-base leading-7 text-muted-foreground">
-                  이 브라우저에서는 동적 공간을 열 수 없습니다. WebGPU를 지원하는
-                  브라우저에서 다시 시도해 주세요.
+                  {copy.error}
                 </p>
               </div>
             ) : null}

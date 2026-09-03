@@ -466,24 +466,21 @@ fn camera_sample(uv: vec2f, resolution: vec2f) -> vec3f {
   let point = camera_uv(uv, resolution);
   // Match the reference demo's frosted pre-writing surface: the person and
   // hand remain legible as a silhouette without competing with the guide.
-  let blur = texel * 7.5;
-  let taps = array<vec2f, 9>(
+  // Four bilinear taps retain the frosted Air Painting feel at less than half
+  // the texture-fetch cost of the previous full-resolution 3x3 kernel.
+  let blur = texel * 5.5;
+  let taps = array<vec2f, 4>(
     vec2f(-1.0, -1.0),
-    vec2f(0.0, -1.0),
     vec2f(1.0, -1.0),
-    vec2f(-1.0, 0.0),
-    vec2f(0.0, 0.0),
-    vec2f(1.0, 0.0),
     vec2f(-1.0, 1.0),
-    vec2f(0.0, 1.0),
     vec2f(1.0, 1.0),
   );
   var color = vec3f(0.0);
-  for (var index = 0u; index < 9u; index = index + 1u) {
+  for (var index = 0u; index < 4u; index = index + 1u) {
     let sampleUv = clamp(point + taps[index] * blur, vec2f(0.0), vec2f(1.0));
     color += textureSample(frameTexture, frameSampler, sampleUv).rgb;
   }
-  return color / 9.0;
+  return color * 0.25;
 }
 
 @fragment

@@ -60,8 +60,11 @@ export async function requestCamera(signal: AbortSignal) {
     audio: false,
     video: {
       facingMode: "user",
-      width: { ideal: 1280 },
-      height: { ideal: 720 },
+      // The models immediately reduce this to 256px and 224px crops. A 540p
+      // source preserves hand detail without competing with inference at 60fps.
+      width: { ideal: 960 },
+      height: { ideal: 540 },
+      frameRate: { ideal: 30, max: 30 },
     },
   });
   let stream: MediaStream;

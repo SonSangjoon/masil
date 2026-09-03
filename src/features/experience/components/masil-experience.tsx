@@ -18,6 +18,7 @@ import {
   UserRoundCheck,
   Workflow,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import {
   useCallback,
   useEffect,
@@ -27,15 +28,11 @@ import {
   type RefObject,
 } from "react";
 
-import {
-  AirCalligraphyCanvas,
-  type AirCalligraphyCanvasHandle,
-} from "@/features/calligraphy/components/air-calligraphy-canvas";
+import type { AirCalligraphyCanvasHandle } from "@/features/calligraphy/components/air-calligraphy-canvas";
 import {
   GlassOrbScene,
   type OrbReaction,
 } from "@/features/presence/components/glass-orb-scene";
-import { JanggiBoard } from "@/features/janggi/components/janggi-board";
 import {
   MasilWorldTransition,
   type MasilWorldTransitionHandle,
@@ -115,11 +112,41 @@ import type {
 } from "@/features/webmcp/types";
 import { useMasilWebMcpProvider } from "@/features/webmcp/use-masil-webmcp-provider";
 
+const AirCalligraphyCanvas = dynamic(() =>
+  import("@/features/calligraphy/components/air-calligraphy-canvas").then(
+    (module) => module.AirCalligraphyCanvas,
+  ),
+);
+const JanggiBoard = dynamic(() =>
+  import("@/features/janggi/components/janggi-board").then(
+    (module) => module.JanggiBoard,
+  ),
+);
+
 type Language = MasilLanguage;
 type Activity = MasilActivity;
 type Stage = MasilStage;
 type Presence = MasilPresence;
 type WebMcpDrawerView = "overview" | "connection";
+
+const LANGUAGE_STORAGE_KEY = "masil.language";
+
+function readStoredLanguage(): Language | null {
+  try {
+    const value = window.localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return value === "ko" || value === "en" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeLanguage(language: Language): void {
+  try {
+    window.localStorage.setItem(LANGUAGE_STORAGE_KEY, language);
+  } catch {
+    // Language switching still works when storage is unavailable.
+  }
+}
 type ProviderStatus = "waiting" | "needs-info" | "accepted";
 type InvocationSource = MasilInvocationSource;
 type InspectorTab = MasilInspectorTab;
@@ -343,12 +370,155 @@ const INITIAL_SESSION: DemoSession = {
   handoff: null,
 };
 
-const SUPPORT_EXAMPLE = {
-  summary:
-    "지난주부터 오던 반찬 배달이 끊겼는데, 어디에 물어봐야 할지 모르겠어요.",
-  desiredOutcome:
-    "주민센터에 직접 가지 않고 먼저 전화로 담당 창구와 다음 단계를 확인하고 싶어요.",
+const SUPPORT_EXAMPLE: Record<
+  Language,
+  Pick<SupportDraft, "summary" | "desiredOutcome">
+> = {
+  ko: {
+    summary:
+      "지난주부터 오던 반찬 배달이 끊겼는데, 어디에 물어봐야 할지 모르겠어요.",
+    desiredOutcome:
+      "주민센터에 직접 가지 않고 먼저 전화로 담당 창구와 다음 단계를 확인하고 싶어요.",
+  },
+  en: {
+    summary:
+      "The side-dish delivery that had been coming each week stopped, and I do not know whom to ask.",
+    desiredOutcome:
+      "I want to call first and confirm the right community-center desk and next step without making an unnecessary visit.",
+  },
 };
+
+const MINIMUM_DISCLOSURE_EXAMPLE: Record<Language, string> = {
+  ko: "반찬 배달이 중단되어 주민센터 담당 창구와 다음 단계를 전화로 확인하고 싶습니다.",
+  en: "My side-dish delivery stopped, and I would like to confirm the right community-center desk and next step by phone.",
+};
+
+const SYSTEM_CAPTION_PAIRS = [
+  {
+    ko: "오늘은 무엇을 같이 해볼까요?",
+    en: "What would you like to do together?",
+  },
+  { ko: "어떤 글자를 써볼까요?", en: "What shall we write?" },
+  {
+    ko: "좋아요. 장기판을 같이 볼게요.",
+    en: "Great. Let's look at the Janggi board together.",
+  },
+  {
+    ko: "카메라 권한을 확인하고 있어요.",
+    en: "Checking camera permission…",
+  },
+  {
+    ko: "주먹을 쥔 채 공중에 천천히 써보세요.",
+    en: "Close your hand and write slowly in the air.",
+  },
+  {
+    ko: "카메라를 껐어요. 화면을 누른 채 이어서 써보세요.",
+    en: "Camera off. Press and draw directly on the screen to continue.",
+  },
+  {
+    ko: "카메라를 껐어요. 화면에 직접 이어서 써보세요.",
+    en: "Camera off. Continue by drawing directly on the screen.",
+  },
+  {
+    ko: "손을 인식하지 못했어요. 화면을 누른 채 써보세요.",
+    en: "We couldn't find your hand. Press and draw directly on the screen.",
+  },
+  {
+    ko: "붓 자국만 지웠어요. 글자본은 그대로 두었어요.",
+    en: "The brush marks are cleared. The reference stays in place.",
+  },
+  {
+    ko: "장기판을 처음 상태로 되돌렸어요.",
+    en: "The Janggi board is back at its starting position.",
+  },
+  {
+    ko: "한 수 쉬었어요. 이제 제가 둘게요.",
+    en: "You passed. I'll make the next move.",
+  },
+  {
+    ko: "저도 한 수 쉬었어요. 이제 어르신 차례예요.",
+    en: "I passed too. It's your turn now.",
+  },
+  {
+    ko: "화면 움직임을 확인하지 못해 수를 두기 전 상태로 되돌렸어요.",
+    en: "The move animation could not be confirmed, so the board returned to its previous position.",
+  },
+  {
+    ko: "말씀하신 내용을 먼저 어르신에게만 보이는 메모로 정리했어요.",
+    en: "I organized what you shared into a note only you can see first.",
+  },
+  {
+    ko: "보낼 내용과 다음 행동을 하나씩 확인해 주세요.",
+    en: "Review what will be shared, then confirm the next step.",
+  },
+  {
+    ko: "정리한 내용이 로컬 담당자 화면에 도착했어요.",
+    en: "The confirmed details reached the local staff view.",
+  },
+  {
+    ko: "서예는 그대로 남아 있어요. 이어서 써볼까요?",
+    en: "Your calligraphy is still here. Shall we keep writing?",
+  },
+  {
+    ko: "장기판은 그대로 남아 있어요. 이어서 둘까요?",
+    en: "The Janggi board is still here. Shall we continue?",
+  },
+  {
+    ko: "담당자가 오늘 오후 첫 전화를 맡았어요. 이제 원래 활동으로 돌아가도 돼요.",
+    en: "A staff member took today's first call. You can return to your activity now.",
+  },
+  {
+    ko: "담당자가 확인할 질문 하나를 남겼어요.",
+    en: "The staff member left one question to confirm.",
+  },
+] as const;
+
+function localizeSystemCaption(value: string, language: Language): string {
+  const exact = SYSTEM_CAPTION_PAIRS.find(
+    (pair) => pair.ko === value || pair.en === value,
+  );
+  if (exact) return exact[language];
+
+  if (language === "en") {
+    const choice = value.match(
+      /^(.*?) 좋네요\. 준비되면 공중 쓰기를 시작해보세요\.$/u,
+    );
+    if (choice?.[1]) {
+      const labels: Record<string, string> = {
+        복: "Blessing",
+        봄: "Spring",
+        편안: "Harmony",
+      };
+      return `${labels[choice[1]] ?? choice[1]} looks good. Start air writing when you're ready.`;
+    }
+    const reference = value.match(
+      /^(.*?) 글자본을 만들었어요\. 손으로 따라 써보세요\.$/u,
+    );
+    if (reference?.[1]) {
+      return `Your ${reference[1]} reference is ready. Trace it with your hand.`;
+    }
+  } else {
+    const choice = value.match(
+      /^(Blessing|Spring|Harmony) looks good\. Start air writing when you're ready\.$/u,
+    );
+    if (choice?.[1]) {
+      const labels: Record<string, string> = {
+        Blessing: "복",
+        Spring: "봄",
+        Harmony: "편안",
+      };
+      return `${labels[choice[1]]} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`;
+    }
+    const reference = value.match(
+      /^Your (.*?) reference is ready\. Trace it with your hand\.$/u,
+    );
+    if (reference?.[1]) {
+      return `${reference[1]} 글자본을 만들었어요. 손으로 따라 써보세요.`;
+    }
+  }
+
+  return value;
+}
 
 const TOOL_COPY = MASIL_TOOL_LABELS;
 const TOOL_COPY_EN = MASIL_TOOL_LABELS_EN;
@@ -428,32 +598,57 @@ function makeEventId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-const DEFAULT_CHARACTER_CHOICES: CharacterChoice[] = [
-  {
-    character: "福",
-    label: "복",
-    reading: "복 복",
-    meaning: "좋은 일이 머무는 마음",
-  },
-  {
-    character: "春",
-    label: "봄",
-    reading: "봄 춘",
-    meaning: "새로 시작하는 계절",
-  },
-  {
-    character: "和",
-    label: "편안",
-    reading: "화할 화",
-    meaning: "서로 어울리는 편안함",
-  },
-];
+const DEFAULT_CHARACTER_CHOICES: Record<Language, CharacterChoice[]> = {
+  ko: [
+    {
+      character: "福",
+      label: "복",
+      reading: "복 복",
+      meaning: "좋은 일이 머무는 마음",
+    },
+    {
+      character: "春",
+      label: "봄",
+      reading: "봄 춘",
+      meaning: "새로 시작하는 계절",
+    },
+    {
+      character: "和",
+      label: "편안",
+      reading: "화할 화",
+      meaning: "서로 어울리는 편안함",
+    },
+  ],
+  en: [
+    {
+      character: "福",
+      label: "Blessing",
+      reading: "fortune · blessing",
+      meaning: "A wish for good things to stay",
+    },
+    {
+      character: "春",
+      label: "Spring",
+      reading: "spring",
+      meaning: "The season of new beginnings",
+    },
+    {
+      character: "和",
+      label: "Harmony",
+      reading: "harmony · peace",
+      meaning: "The ease of being together",
+    },
+  ],
+};
 
 const MAX_CALLIGRAPHY_CHARACTERS = 4;
 const PERSON_JANGGI_SIDE = "cho" as const;
 const AGENT_JANGGI_SIDE = "han" as const;
 
-function characterChoices(input: Record<string, unknown>): CharacterChoice[] {
+function characterChoices(
+  input: Record<string, unknown>,
+  language: Language,
+): CharacterChoice[] {
   const supplied = Array.isArray(input.suggestions) ? input.suggestions : [];
   const parsed = supplied.flatMap((candidate) => {
     if (!candidate || typeof candidate !== "object") return [];
@@ -472,7 +667,10 @@ function characterChoices(input: Record<string, unknown>): CharacterChoice[] {
       },
     ];
   });
-  return (parsed.length ? parsed : DEFAULT_CHARACTER_CHOICES).slice(0, 3);
+  return (parsed.length ? parsed : DEFAULT_CHARACTER_CHOICES[language]).slice(
+    0,
+    3,
+  );
 }
 
 export function MasilExperience() {
@@ -535,7 +733,19 @@ export function MasilExperience() {
   useEffect(() => {
     languageRef.current = language;
     document.documentElement.lang = language;
+    document.title =
+      language === "ko"
+        ? "MASIL — 말로 여는 생활 공간"
+        : "MASIL — Everyday, together";
   }, [language]);
+
+  useEffect(() => {
+    const storedLanguage = readStoredLanguage();
+    if (!storedLanguage || storedLanguage === languageRef.current) return;
+    languageRef.current = storedLanguage;
+    document.documentElement.lang = storedLanguage;
+    setLanguage(storedLanguage);
+  }, []);
 
   useEffect(() => {
     presenceRef.current = presence;
@@ -717,16 +927,23 @@ export function MasilExperience() {
       if (pending) {
         pending.resolve({ choice, source: "person-gesture" });
       } else {
+        const activeLanguage = languageRef.current;
         updateSession((state) => ({
           ...state,
           revision: state.revision + 1,
-          caption: `${choice.label} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`,
+          caption:
+            activeLanguage === "ko"
+              ? `${choice.label} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`
+              : `${choice.label} looks good. Start air writing when you're ready.`,
           calligraphy: {
             character: choice.character,
             reading: choice.reading,
             meaning: choice.meaning,
             referenceImageUrl: null,
-            referenceImageAlt: `${choice.character} 서예 글자본`,
+            referenceImageAlt:
+              activeLanguage === "ko"
+                ? `${choice.character} 서예 글자본`
+                : `Calligraphy reference for ${choice.character}`,
             referenceValidation: null,
           },
         }));
@@ -755,7 +972,10 @@ export function MasilExperience() {
         }
         updateSession((current) => ({
           ...current,
-          caption: "주먹을 쥔 채 공중에 천천히 써보세요.",
+          caption:
+            languageRef.current === "ko"
+              ? "주먹을 쥔 채 공중에 천천히 써보세요."
+              : "Close your hand and write slowly in the air.",
         }));
       } else {
         const label =
@@ -772,8 +992,12 @@ export function MasilExperience() {
           ...current,
           caption:
             reason === "person-stopped-camera"
-              ? "카메라를 껐어요. 화면을 누른 채 이어서 써보세요."
-              : "손을 인식하지 못했어요. 화면을 누른 채 써보세요.",
+              ? languageRef.current === "ko"
+                ? "카메라를 껐어요. 화면을 누른 채 이어서 써보세요."
+                : "Camera off. Press and draw directly on the screen to continue."
+              : languageRef.current === "ko"
+                ? "손을 인식하지 못했어요. 화면을 누른 채 써보세요."
+                : "We couldn't find your hand. Press and draw directly on the screen.",
         }));
       }
     },
@@ -969,7 +1193,12 @@ export function MasilExperience() {
           }
           languageRef.current = nextLanguage;
           document.documentElement.lang = nextLanguage;
+          storeLanguage(nextLanguage);
           setLanguage(nextLanguage);
+          updateSession((state) => ({
+            ...state,
+            caption: localizeSystemCaption(state.caption, nextLanguage),
+          }));
           finishEvent(
             eventId,
             "done",
@@ -1063,10 +1292,23 @@ export function MasilExperience() {
           if (activity !== "calligraphy" && activity !== "janggi") {
             throw new Error("INVALID_ACTIVITY");
           }
+          const activeLanguage = languageRef.current;
           const caption =
             activity === "calligraphy"
-              ? textInput(input, "question", "어떤 글자를 써볼까요?")
-              : textInput(input, "caption", "좋아요. 장기판을 같이 볼게요.");
+              ? textInput(
+                  input,
+                  "question",
+                  activeLanguage === "ko"
+                    ? "어떤 글자를 써볼까요?"
+                    : "What shall we write?",
+                )
+              : textInput(
+                  input,
+                  "caption",
+                  activeLanguage === "ko"
+                    ? "좋아요. 장기판을 같이 볼게요."
+                    : "Great. Let's look at the Janggi board together.",
+                );
           let next: DemoSession | null = null;
           const revealActivity = () => {
             if (next) return;
@@ -1105,7 +1347,7 @@ export function MasilExperience() {
             setPresence("awaiting");
             const resolution = await waitForCharacterChoice({
               question: caption,
-              choices: characterChoices(input),
+              choices: characterChoices(input, activeLanguage),
             });
             if (!resolution) {
               setPresence("awaiting");
@@ -1158,16 +1400,23 @@ export function MasilExperience() {
                 },
               );
             }
+            const selectedLanguage = languageRef.current;
             const selected = updateSession((state) => ({
               ...state,
               revision: state.revision + 1,
-              caption: `${choice.label} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`,
+              caption:
+                selectedLanguage === "ko"
+                  ? `${choice.label} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`
+                  : `${choice.label} looks good. Start air writing when you're ready.`,
               calligraphy: {
                 character: choice.character,
                 reading: choice.reading,
                 meaning: choice.meaning,
                 referenceImageUrl: null,
-                referenceImageAlt: `${choice.character} 서예 글자본`,
+                referenceImageAlt:
+                  selectedLanguage === "ko"
+                    ? `${choice.character} 서예 글자본`
+                    : `Calligraphy reference for ${choice.character}`,
                 referenceValidation: null,
               },
             }));
@@ -1249,13 +1498,16 @@ export function MasilExperience() {
           ) {
             throw new Error("CALLIGRAPHY_CHANGED_DURING_IMAGE_VALIDATION");
           }
+          const activeLanguage = languageRef.current;
           const next = updateSession((state) => ({
             ...state,
             revision: state.revision + 1,
             caption: textInput(
               input,
               "caption",
-              `${character} 글자본을 만들었어요. 손으로 따라 써보세요.`,
+              activeLanguage === "ko"
+                ? `${character} 글자본을 만들었어요. 손으로 따라 써보세요.`
+                : `Your ${character} reference is ready. Trace it with your hand.`,
             ),
             calligraphy: {
               character,
@@ -1265,7 +1517,9 @@ export function MasilExperience() {
               referenceImageAlt: textInput(
                 input,
                 "referenceImageAlt",
-                `${character} 서예 글자본`,
+                activeLanguage === "ko"
+                  ? `${character} 서예 글자본`
+                  : `Calligraphy reference for ${character}`,
               ),
               referenceValidation,
             },
@@ -1324,7 +1578,10 @@ export function MasilExperience() {
           const next = updateSession((state) => ({
             ...state,
             revision: state.revision + 1,
-            caption: "카메라 권한을 확인하고 있어요.",
+            caption:
+              languageRef.current === "ko"
+                ? "카메라 권한을 확인하고 있어요."
+                : "Checking camera permission…",
           }));
           finishEvent(eventId, "done", "공중 쓰기 카메라 요청 시작");
           return toolResult("Started the browser-controlled camera request.", {
@@ -1359,7 +1616,10 @@ export function MasilExperience() {
           const next = updateSession((state) => ({
             ...state,
             revision: state.revision + 1,
-            caption: "카메라를 껐어요. 화면에 직접 이어서 써보세요.",
+            caption:
+              languageRef.current === "ko"
+                ? "카메라를 껐어요. 화면에 직접 이어서 써보세요."
+                : "Camera off. Continue by drawing directly on the screen.",
           }));
           finishEvent(eventId, "done", "카메라 끄기 · 직접 쓰기로 전환");
           return toolResult("Stopped camera input and enabled direct drawing.", {
@@ -1387,7 +1647,10 @@ export function MasilExperience() {
           const next = updateSession((state) => ({
             ...state,
             revision: state.revision + 1,
-            caption: "붓 자국만 지웠어요. 글자본은 그대로 두었어요.",
+            caption:
+              languageRef.current === "ko"
+                ? "붓 자국만 지웠어요. 글자본은 그대로 두었어요."
+                : "The brush marks are cleared. The reference stays in place.",
           }));
           finishEvent(eventId, "done", "사람의 확인 뒤 붓 자국 지우기");
           return toolResult("Cleared only the human-authored stroke layer.", {
@@ -1483,7 +1746,10 @@ export function MasilExperience() {
               janggiMove: "idle",
               janggiActiveMove: null,
               janggiGame: createInitialJanggiGame(),
-              caption: "장기판을 처음 상태로 되돌렸어요.",
+              caption:
+                languageRef.current === "ko"
+                  ? "장기판을 처음 상태로 되돌렸어요."
+                  : "The Janggi board is back at its starting position.",
             }));
             setPresence("ready");
             finishEvent(eventId, "done", "장기판을 처음 상태로 복원했어요");
@@ -1516,9 +1782,13 @@ export function MasilExperience() {
               janggiActiveMove: null,
               janggiGame: nextGame,
               caption:
-                actor === "person"
-                  ? "한 수 쉬었어요. 이제 제가 둘게요."
-                  : "저도 한 수 쉬었어요. 이제 어르신 차례예요.",
+                languageRef.current === "ko"
+                  ? actor === "person"
+                    ? "한 수 쉬었어요. 이제 제가 둘게요."
+                    : "저도 한 수 쉬었어요. 이제 어르신 차례예요."
+                  : actor === "person"
+                    ? "You passed. I'll make the next move."
+                    : "I passed too. It's your turn now.",
             }));
             setPresence("ready");
             finishEvent(
@@ -1572,6 +1842,9 @@ export function MasilExperience() {
           const moveLabel = movedPiece
             ? describeJanggiPiece(movedPiece)
             : pieceId;
+          const moveLabelEnglish = movedPiece
+            ? describeJanggiPiece(movedPiece, "en")
+            : pieceId;
           const animationPromise =
             action === "move" && nextGame.lastMove
               ? waitForJanggiAnimation(nextGame.lastMove.id)
@@ -1583,11 +1856,17 @@ export function MasilExperience() {
             janggiActiveMove: action === "move" ? nextGame.lastMove : preview,
             janggiGame: nextGame,
             caption:
-              action === "preview"
-                ? `${moveLabel}의 길을 보여드릴게요.`
-                : actor === "person"
-                  ? `${moveLabel}을 옮겼어요. 이제 제가 둘게요.`
-                  : `${moveLabel}을 두었어요. 이제 어르신 차례예요.`,
+              languageRef.current === "ko"
+                ? action === "preview"
+                  ? `${moveLabel}의 길을 보여드릴게요.`
+                  : actor === "person"
+                    ? `${moveLabel}을 옮겼어요. 이제 제가 둘게요.`
+                    : `${moveLabel}을 두었어요. 이제 어르신 차례예요.`
+                : action === "preview"
+                  ? `I'll show the path for ${moveLabelEnglish}.`
+                  : actor === "person"
+                    ? `You moved ${moveLabelEnglish}. I'll make the next move.`
+                    : `I moved ${moveLabelEnglish}. It's your turn now.`,
           }));
           const animation = animationPromise
             ? await animationPromise
@@ -1600,7 +1879,9 @@ export function MasilExperience() {
               janggiActiveMove: null,
               janggiGame,
               caption:
-                "화면 움직임을 확인하지 못해 수를 두기 전 상태로 되돌렸어요.",
+                languageRef.current === "ko"
+                  ? "화면 움직임을 확인하지 못해 수를 두기 전 상태로 되돌렸어요."
+                  : "The move animation could not be confirmed, so the board returned to its previous position.",
             }));
             setPresence("ready");
             throw new Error(`JANGGI_ANIMATION_NOT_CONFIRMED:${animation}`);
@@ -1670,18 +1951,22 @@ export function MasilExperience() {
           if (input.personExplicitlyAsked !== true) {
             throw new Error("EXPLICIT_REQUEST_REQUIRED");
           }
+          const activeLanguage = languageRef.current;
+          const supportExample = SUPPORT_EXAMPLE[activeLanguage];
           const next = updateSession((state) => ({
             ...state,
             stage: "private",
             revision: state.revision + 1,
             caption:
-              "말씀하신 내용을 먼저 어르신에게만 보이는 메모로 정리했어요.",
+              activeLanguage === "ko"
+                ? "말씀하신 내용을 먼저 어르신에게만 보이는 메모로 정리했어요."
+                : "I organized what you shared into a note only you can see first.",
             support: {
-              summary: textInput(input, "summary", SUPPORT_EXAMPLE.summary),
+              summary: textInput(input, "summary", supportExample.summary),
               desiredOutcome: textInput(
                 input,
                 "desiredOutcome",
-                SUPPORT_EXAMPLE.desiredOutcome,
+                supportExample.desiredOutcome,
               ),
               minimumDisclosure: "",
               disclosureConfirmed: false,
@@ -1702,16 +1987,20 @@ export function MasilExperience() {
           if (current.stage !== "private" || !current.support) {
             throw new Error("PRIVATE_NOTE_NOT_OPEN");
           }
+          const activeLanguage = languageRef.current;
           const minimumDisclosure = textInput(
             input,
             "minimumDisclosure",
-            "반찬 배달이 중단되어 주민센터 담당 창구와 다음 단계를 전화로 확인하고 싶습니다.",
+            MINIMUM_DISCLOSURE_EXAMPLE[activeLanguage],
           );
           const next = updateSession((state) => ({
             ...state,
             stage: "review",
             revision: state.revision + 1,
-            caption: "보낼 내용과 다음 행동을 하나씩 확인해 주세요.",
+            caption:
+              activeLanguage === "ko"
+                ? "보낼 내용과 다음 행동을 하나씩 확인해 주세요."
+                : "Review what will be shared, then confirm the next step.",
             support: state.support
               ? {
                   ...state.support,
@@ -1745,19 +2034,29 @@ export function MasilExperience() {
           if (input.seenRevision !== current.revision) {
             throw new Error(`STALE_REVISION:${current.revision}`);
           }
+          const activeLanguage = languageRef.current;
           const handoff: LocalHandoff = {
             id: `MASIL-${String(1042 + current.revision).padStart(4, "0")}`,
             status: "waiting",
-            owner: "김하늘 생활지원 매니저 · 데모",
-            callbackAt: "오늘 오후 4시 30분",
+            owner:
+              activeLanguage === "ko"
+                ? "김하늘 생활지원 매니저 · 데모"
+                : "Kim Haneul, support manager · demo",
+            callbackAt:
+              activeLanguage === "ko" ? "오늘 오후 4시 30분" : "4:30 PM today",
             firstStep:
-              "상황을 다시 처음부터 묻지 않고, 중단된 반찬 배달부터 확인",
+              activeLanguage === "ko"
+                ? "상황을 다시 처음부터 묻지 않고, 중단된 반찬 배달부터 확인"
+                : "Start with the interrupted delivery without asking the person to repeat everything",
           };
           const next = updateSession((state) => ({
             ...state,
             stage: "handoff",
             revision: state.revision + 1,
-            caption: "정리한 내용이 로컬 담당자 화면에 도착했어요.",
+            caption:
+              activeLanguage === "ko"
+                ? "정리한 내용이 로컬 담당자 화면에 도착했어요."
+                : "The confirmed details reached the local staff view.",
             handoff,
           }));
           setPresence("connected");
@@ -1792,9 +2091,13 @@ export function MasilExperience() {
             stage: "activity",
             revision: state.revision + 1,
             caption:
-              state.activity === "calligraphy"
-                ? "서예는 그대로 남아 있어요. 이어서 써볼까요?"
-                : "장기판은 그대로 남아 있어요. 이어서 둘까요?",
+              languageRef.current === "ko"
+                ? state.activity === "calligraphy"
+                  ? "서예는 그대로 남아 있어요. 이어서 써볼까요?"
+                  : "장기판은 그대로 남아 있어요. 이어서 둘까요?"
+                : state.activity === "calligraphy"
+                  ? "Your calligraphy is still here. Shall we keep writing?"
+                  : "The Janggi board is still here. Shall we continue?",
           }));
           setPresence("ready");
           finishEvent(eventId, "done", "원래 활동으로 돌아왔어요");
@@ -1846,8 +2149,7 @@ export function MasilExperience() {
 
   const prepareReview = () =>
     executeTool("masil_prepare_support_review", {
-      minimumDisclosure:
-        "반찬 배달이 중단되어 주민센터 담당 창구와 다음 단계를 전화로 확인하고 싶습니다.",
+      minimumDisclosure: MINIMUM_DISCLOSURE_EXAMPLE[languageRef.current],
     });
 
   const confirmDisclosure = () => {
@@ -1904,9 +2206,13 @@ export function MasilExperience() {
       ...current,
       revision: current.revision + 1,
       caption:
-        status === "accepted"
-          ? "담당자가 오늘 오후 첫 전화를 맡았어요. 이제 원래 활동으로 돌아가도 돼요."
-          : "담당자가 확인할 질문 하나를 남겼어요.",
+        languageRef.current === "ko"
+          ? status === "accepted"
+            ? "담당자가 오늘 오후 첫 전화를 맡았어요. 이제 원래 활동으로 돌아가도 돼요."
+            : "담당자가 확인할 질문 하나를 남겼어요."
+          : status === "accepted"
+            ? "A staff member took today's first call. You can return to your activity now."
+            : "The staff member left one question to confirm.",
       handoff: current.handoff
         ? { ...current.handoff, status }
         : current.handoff,
@@ -2012,6 +2318,7 @@ export function MasilExperience() {
     : session.activity === "janggi"
       ? "janggi"
       : "ink";
+  const visibleCaption = localizeSystemCaption(session.caption, language);
   return (
     <>
       <main
@@ -2028,6 +2335,7 @@ export function MasilExperience() {
         calligraphyWriting={isCalligraphyWriting}
         connected={isWebMcpConnected}
         form="body"
+        language={language}
         mood={orbMood}
         presence={presence}
         reaction={orbReaction}
@@ -2039,7 +2347,7 @@ export function MasilExperience() {
       {isHome ? (
         <HomeScreen
           language={language}
-          caption={session.caption}
+          caption={visibleCaption}
           onOpenConnectionGuide={() => {
             setWebMcpDrawerView("connection");
             setLogsOpen(true);
@@ -2077,7 +2385,7 @@ export function MasilExperience() {
             !session.calligraphy.character
           ) ? (
             <AgentSceneCaption
-              caption={session.caption}
+              caption={visibleCaption}
               language={language}
               presence={presence}
             />
@@ -2123,11 +2431,17 @@ export function MasilExperience() {
             activity === "calligraphy"
               ? {
                   activity,
-                  question: "어떤 글자를 써볼까요?",
+                  question:
+                    language === "ko"
+                      ? "어떤 글자를 써볼까요?"
+                      : "What shall we write?",
                 }
               : {
                   activity,
-                  caption: "좋아요. 장기판을 같이 볼게요.",
+                  caption:
+                    language === "ko"
+                      ? "좋아요. 장기판을 같이 볼게요."
+                      : "Great. Let's look at the Janggi board together.",
                 },
             "person",
           );
@@ -2756,7 +3070,7 @@ function ActivityWorld({
               language === "ko"
                 ? "어떤 글자를 써볼까요?"
                 : "What shall we write?",
-            choices: DEFAULT_CHARACTER_CHOICES,
+              choices: DEFAULT_CHARACTER_CHOICES[language],
           }
         }
         onChoose={onCharacterChoice}

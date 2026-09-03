@@ -94,6 +94,8 @@ export function createVisualPipeline(
   const label = options.label ?? "air-painting";
   let sourceWidth = options.sourceWidth;
   let sourceHeight = options.sourceHeight;
+  let displayWidth = sourceWidth;
+  let displayHeight = sourceHeight;
   if (!(sourceWidth > 0) || !(sourceHeight > 0)) {
     throw new Error(
       `Frame size must be positive, received ${sourceWidth}x${sourceHeight}.`
@@ -157,8 +159,11 @@ export function createVisualPipeline(
       "landmarks-idle",
       LANDMARK_POINTS_BUFFER_BYTES
     );
-    let frameTexture = own(
+    let analysisFrameTexture = own(
       createFrameTexture(gpu, label, sourceWidth, sourceHeight)
+    );
+    let displayFrameTexture = own(
+      createFrameTexture(gpu, `${label}-display`, sourceWidth, sourceHeight)
     );
     const linearSampler = sampler(gpu, {
       minFilter: "linear",
@@ -218,7 +223,7 @@ export function createVisualPipeline(
           out_size: outSize,
           roi_index: roiIndex,
         },
-        src: frameTexture,
+        src: analysisFrameTexture,
         samp: linearSampler,
         rois,
         out_buf: output,
@@ -270,6 +275,7 @@ export function createVisualPipeline(
         hand.set({
           uniforms: {
             source: [sourceWidth, sourceHeight],
+            display: [displayWidth, displayHeight],
             presence,
             ran,
             dt: dtSeconds,
@@ -321,7 +327,7 @@ export function createVisualPipeline(
         output: Surface | Target,
         options: VisualFrameOptions = {}
       ) {
-        const dpr = Math.min(2, Math.max(1, options.dpr ?? 1));
+        const dpr = Math.min(2, Math.max(0.25, options.dpr ?? 1));
         composite.set({
           uniforms: {
             resolution: output.size,
@@ -333,7 +339,7 @@ export function createVisualPipeline(
           },
           mask,
           brushes,
-          frameTexture,
+          frameTexture: displayFrameTexture,
           frameSampler: linearSampler,
         });
         frame(gpu, (currentFrame) => {
@@ -348,18 +354,36 @@ export function createVisualPipeline(
           );
         }
         gpu.gpu.queue.writeTexture(
-          { texture: frameTexture.gpu },
+          { texture: analysisFrameTexture.gpu },
+          bytes(rgba),
+          { bytesPerRow: sourceWidth * 4, rowsPerImage: sourceHeight },
+          { width: sourceWidth, height: sourceHeight }
+        );
+        gpu.gpu.queue.writeTexture(
+          { texture: displayFrameTexture.gpu },
           bytes(rgba),
           { bytesPerRow: sourceWidth * 4, rowsPerImage: sourceHeight },
           { width: sourceWidth, height: sourceHeight }
         );
       },
-      copyExternalFrame(source: GPUCopyExternalImageSource) {
+      copyAnalysisFrame(source: GPUCopyExternalImageSource) {
         gpu.gpu.queue.copyExternalImageToTexture(
           { source },
-          { texture: frameTexture.gpu },
+          { texture: analysisFrameTexture.gpu },
           { width: sourceWidth, height: sourceHeight }
         );
+      },
+      copyDisplayFrame(source: GPUCopyExternalImageSource) {
+        gpu.gpu.queue.copyExternalImageToTexture(
+          { source },
+          { texture: displayFrameTexture.gpu },
+          { width: sourceWidth, height: sourceHeight }
+        );
+      },
+      resizeDisplay(nextWidth: number, nextHeight: number) {
+        if (!(nextWidth > 0) || !(nextHeight > 0)) return;
+        displayWidth = nextWidth;
+        displayHeight = nextHeight;
       },
       clearMask() {
         mask.write(new Uint8Array(MASK_BYTES));
@@ -368,21 +392,33 @@ export function createVisualPipeline(
       resizeSource(nextWidth: number, nextHeight: number) {
         if (!(nextWidth > 0) || !(nextHeight > 0)) return;
         if (nextWidth === sourceWidth && nextHeight === sourceHeight) return;
-        let nextFrame: Texture | undefined;
+        let nextAnalysisFrame: Texture | undefined;
+        let nextDisplayFrame: Texture | undefined;
         try {
-          nextFrame = own(
+          nextAnalysisFrame = own(
             createFrameTexture(gpu, label, nextWidth, nextHeight)
+          );
+          nextDisplayFrame = own(
+            createFrameTexture(
+              gpu,
+              `${label}-display`,
+              nextWidth,
+              nextHeight
+            )
           );
         } catch (error) {
           try {
-            releaseMany([nextFrame].filter(Boolean) as Owned[]);
+            releaseMany(
+              [nextDisplayFrame, nextAnalysisFrame].filter(Boolean) as Owned[]
+            );
           } catch {}
           throw error;
         }
-        const previous = [frameTexture];
+        const previous = [displayFrameTexture, analysisFrameTexture];
         sourceWidth = nextWidth;
         sourceHeight = nextHeight;
-        frameTexture = nextFrame;
+        analysisFrameTexture = nextAnalysisFrame;
+        displayFrameTexture = nextDisplayFrame;
         releaseMany(previous);
         writeDetectorRoi();
       },
