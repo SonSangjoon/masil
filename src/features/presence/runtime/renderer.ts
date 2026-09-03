@@ -1,7 +1,8 @@
 import type GUI from "lil-gui";
-import type { Draw, Geometry, Gpu, Surface } from "vgpu";
-import { draw, frame, geometry, surface } from "vgpu";
-import { perspectiveCamera, sphere } from "vgpu/scene";
+import type { Draw, Gpu, Surface } from "vgpu";
+import { frame, surface } from "vgpu";
+import { perspectiveCamera } from "vgpu/scene";
+import type { HeroFractalDebugDraws } from "./hero-fractal-debug-draws";
 import { loadHeroGlassAssets, type HeroGlassAssets } from "./hero-glass-assets";
 import {
   createCameraControls,
@@ -15,10 +16,6 @@ import {
   type HeroFloorAo,
   type HeroFractalScene,
 } from "./scene";
-import heroDebugAxesWgsl from "./hero-debug-axes.wgsl";
-import heroGlassEnvironmentDebugWgsl from "./hero-glass-environment-debug.wgsl";
-import heroGlassWireframeWgsl from "./hero-glass-wireframe.wgsl";
-import heroFractalWireframeWgsl from "./hero-fractal-wireframe.wgsl";
 import {
   HERO_FRACTAL_CAMERA,
   HERO_FRACTAL_GLASS,
@@ -99,14 +96,6 @@ interface Renderer {
 }
 
 type DebugView = "final" | "environment" | "reflection";
-
-interface HeroFractalDraws {
-  readonly glassWireframe: Draw;
-  readonly fractalWireframe: Draw;
-  readonly environmentSphere: Draw;
-  readonly worldAxes: Draw;
-  readonly cameraTargetAxes: Draw;
-}
 
 interface MutableHeroFractalMaterial {
   baseColor: [number, number, number];
@@ -300,7 +289,7 @@ export function createRenderer(options: RendererOptions): Renderer {
   const abort = new AbortController();
   let gpu: Gpu | undefined;
   let canvasSurface: Surface | undefined;
-  let draws: HeroFractalDraws | undefined;
+  let draws: HeroFractalDebugDraws | undefined;
   let coreScene: HeroFractalScene | undefined;
   let assets: HeroGlassAssets | undefined;
   let debugGui: GUI | undefined;
@@ -364,8 +353,7 @@ export function createRenderer(options: RendererOptions): Renderer {
     cameraTarget: false,
   };
   const drawHero = () => {
-    if (disposed || !gpu || !canvasSurface || !draws || !coreScene || !assets)
-      return;
+    if (disposed || !gpu || !canvasSurface || !coreScene || !assets) return;
 
     const state = setHeroFractalSceneSettings(
       coreScene,
@@ -393,87 +381,91 @@ export function createRenderer(options: RendererOptions): Renderer {
         reflectionDebug: debug.view === "reflection",
       },
     );
-    const environmentCamera = perspectiveCamera({
-      fov: 45,
-      aspect: canvasSurface.size[0] / Math.max(canvasSurface.size[1], 1),
-      near: 0.05,
-      far: 10,
-      position: ENVIRONMENT_DEBUG_CAMERA_POSITION,
-      target: [0, 0, 0],
-    });
-    draws.glassWireframe.set({
-      params: {
+    const activeDebugDraws = draws;
+    if (activeDebugDraws) {
+      const environmentCamera = perspectiveCamera({
+        fov: 45,
+        aspect: canvasSurface.size[0] / Math.max(canvasSurface.size[1], 1),
+        near: 0.05,
+        far: 10,
+        position: ENVIRONMENT_DEBUG_CAMERA_POSITION,
+        target: [0, 0, 0],
+      });
+      activeDebugDraws.glassWireframe.set({
+        params: {
+          viewProjection: state.viewProjection,
+          model: GLASS_MODEL_MATRIX,
+          meshMin: assets.meshMin,
+          meshMax: assets.meshMax,
+        },
+      });
+      activeDebugDraws.fractalWireframe.set({
+        params: {
+          viewProjection: state.viewProjection,
+          model: state.fractalModel,
+          meshMin: assets.fractalMeshMin,
+          meshMax: assets.fractalMeshMax,
+          sphereMix: state.sphereMix,
+          time: state.time,
+        },
+      });
+      activeDebugDraws.environmentSphere.set({
+        params: {
+          viewProjection: environmentCamera.viewProjectionMatrix,
+          model: ENVIRONMENT_SPHERE_MODEL,
+          cameraPosition: ENVIRONMENT_DEBUG_CAMERA_POSITION,
+          environmentRotation: state.environmentRotation,
+          environmentExposure: glass.environmentExposure,
+        },
+        environmentTexture: assets.environmentView,
+        environmentSampler: coreScene.environmentSampler,
+      });
+      const debugAxesParams = {
         viewProjection: state.viewProjection,
-        model: GLASS_MODEL_MATRIX,
-        meshMin: assets.meshMin,
-        meshMax: assets.meshMax,
-      },
-    });
-    draws.fractalWireframe.set({
-      params: {
-        viewProjection: state.viewProjection,
-        model: state.fractalModel,
-        meshMin: assets.fractalMeshMin,
-        meshMax: assets.fractalMeshMax,
-        sphereMix: state.sphereMix,
-        time: state.time,
-      },
-    });
-    draws.environmentSphere.set({
-      params: {
-        viewProjection: environmentCamera.viewProjectionMatrix,
-        model: ENVIRONMENT_SPHERE_MODEL,
-        cameraPosition: ENVIRONMENT_DEBUG_CAMERA_POSITION,
-        environmentRotation: state.environmentRotation,
-        environmentExposure: glass.environmentExposure,
-      },
-      environmentTexture: assets.environmentView,
-      environmentSampler: coreScene.environmentSampler,
-    });
-    const debugAxesParams = {
-      viewProjection: state.viewProjection,
-      resolution: canvasSurface.size,
-      lineWidth: 2.5,
-      opacity: 0.94,
-    };
-    draws.worldAxes.set({
-      params: {
-        ...debugAxesParams,
-        model: WORLD_AXES_MODEL_MATRIX,
-      },
-    });
-    draws.cameraTargetAxes.set({
-      params: {
-        ...debugAxesParams,
-        model: modelMatrix(CAMERA_TARGET_AXES_SCALE, cameraControls.target),
-        lineWidth: 3.5,
-      },
-    });
+        resolution: canvasSurface.size,
+        lineWidth: 2.5,
+        opacity: 0.94,
+      };
+      activeDebugDraws.worldAxes.set({
+        params: {
+          ...debugAxesParams,
+          model: WORLD_AXES_MODEL_MATRIX,
+        },
+      });
+      activeDebugDraws.cameraTargetAxes.set({
+        params: {
+          ...debugAxesParams,
+          model: modelMatrix(CAMERA_TARGET_AXES_SCALE, cameraControls.target),
+          lineWidth: 3.5,
+        },
+      });
+    }
 
     const currentGpu = gpu;
     const currentSurface = canvasSurface;
-    const currentDraws = draws;
-    if (debug.view === "environment") {
+    if (debug.view === "environment" && activeDebugDraws) {
       frame(currentGpu, (currentFrame) => {
         currentFrame.pass(
           {
             target: currentSurface,
             clear: HERO_LIGHT_CLEAR,
           },
-          (pass) => pass.draw(currentDraws.environmentSphere),
+          (pass) => pass.draw(activeDebugDraws.environmentSphere),
         );
       });
       return;
     }
     const finalDebugDraws: Draw[] = [];
-    if (debug.wireframe) {
+    if (debug.wireframe && activeDebugDraws) {
       finalDebugDraws.push(
-        currentDraws.glassWireframe,
-        currentDraws.fractalWireframe,
+        activeDebugDraws.glassWireframe,
+        activeDebugDraws.fractalWireframe,
       );
     }
-    if (debug.coloredAxes) finalDebugDraws.push(currentDraws.worldAxes);
-    if (debug.cameraTarget) finalDebugDraws.push(currentDraws.cameraTargetAxes);
+    if (debug.coloredAxes && activeDebugDraws)
+      finalDebugDraws.push(activeDebugDraws.worldAxes);
+    if (debug.cameraTarget && activeDebugDraws)
+      finalDebugDraws.push(activeDebugDraws.cameraTargetAxes);
     renderHeroFractalScene(
       currentGpu,
       currentSurface,
@@ -808,15 +800,6 @@ export function createRenderer(options: RendererOptions): Renderer {
     const loadedAssets = await loadHeroGlassAssets(gpu, abort.signal);
     if (disposed) return;
     assets = loadedAssets;
-    const environmentSphereGeometry = geometry(
-      gpu,
-      sphere({
-        radius: 0.82,
-        widthSegments: 48,
-        heightSegments: 24,
-      }),
-    );
-    const debugAxesGeometry = createDebugAxesGeometry(gpu);
     const loadedScene = await createHeroFractalScene(
       gpu,
       canvasSurface,
@@ -825,55 +808,13 @@ export function createRenderer(options: RendererOptions): Renderer {
     );
     if (disposed) return;
     coreScene = loadedScene;
-    draws = {
-      glassWireframe: draw(gpu, {
-        shader: heroGlassWireframeWgsl,
-        geometry: assets.wireframeGeometry,
-        cull: "none",
-        depth: false,
-        blend: "premultiplied",
-        label: "homepage-light-glass-wireframe",
-      }),
-      fractalWireframe: draw(gpu, {
-        shader: heroFractalWireframeWgsl,
-        geometry: assets.fractalWireframeGeometry,
-        instances: 4,
-        cull: "none",
-        depth: false,
-        blend: "premultiplied",
-        label: "homepage-light-fractal-mesh-wireframe",
-      }),
-      environmentSphere: draw(gpu, {
-        shader: heroGlassEnvironmentDebugWgsl,
-        geometry: environmentSphereGeometry,
-        cull: "back",
-        depth: false,
-        label: "homepage-light-glass-environment-debug",
-      }),
-      worldAxes: draw(gpu, {
-        shader: heroDebugAxesWgsl,
-        geometry: debugAxesGeometry,
-        cull: "none",
-        depth: false,
-        blend: "premultiplied",
-        label: "homepage-light-world-axes-debug",
-      }),
-      cameraTargetAxes: draw(gpu, {
-        shader: heroDebugAxesWgsl,
-        geometry: debugAxesGeometry,
-        cull: "none",
-        depth: false,
-        blend: "premultiplied",
-        label: "homepage-light-camera-target-axes-debug",
-      }),
-    };
-    await Promise.all([
-      draws.glassWireframe.compile({ colors: [canvasSurface.format] }),
-      draws.fractalWireframe.compile({ colors: [canvasSurface.format] }),
-      draws.environmentSphere.compile({ colors: [canvasSurface.format] }),
-      draws.worldAxes.compile({ colors: [canvasSurface.format] }),
-      draws.cameraTargetAxes.compile({ colors: [canvasSurface.format] }),
-    ]);
+    if (options.debugControls) {
+      const { createHeroFractalDebugDraws } = await import(
+        "./hero-fractal-debug-draws"
+      );
+      if (disposed) return;
+      draws = await createHeroFractalDebugDraws(gpu, canvasSurface, assets);
+    }
     if (disposed) return;
     observer = new ResizeObserver(requestResize);
     observer.observe(options.canvas);
@@ -923,43 +864,4 @@ export function createRenderer(options: RendererOptions): Renderer {
     react,
     dispose,
   };
-}
-
-function createDebugAxesGeometry(gpu: Gpu): Geometry {
-  const vertices: number[] = [];
-  const corners = [
-    [0, -1],
-    [0, 1],
-    [1, 1],
-    [0, -1],
-    [1, 1],
-    [1, -1],
-  ] as const;
-  const axes = [
-    { end: [1, 0, 0], color: [1, 0.08, 0.05] },
-    { end: [0, 1, 0], color: [0.1, 0.78, 0.18] },
-    { end: [0, 0, 1], color: [0.05, 0.36, 1] },
-  ] as const;
-
-  for (const axis of axes) {
-    for (const corner of corners) {
-      vertices.push(0, 0, 0, ...axis.end, ...axis.color, ...corner);
-    }
-  }
-
-  return geometry(gpu, {
-    label: "homepage-light-debug-axes",
-    buffers: [
-      {
-        data: new Float32Array(vertices),
-        stride: 44,
-        attributes: {
-          line_start: "float32x3",
-          line_end: "float32x3",
-          axis_color: "float32x3",
-          corner: "float32x2",
-        },
-      },
-    ],
-  });
 }

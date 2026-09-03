@@ -4,14 +4,12 @@ import {
   createHeroGlassAssets,
   type HeroGlassAssets,
 } from "./hero-glass-assets-core";
+import {
+  HERO_ENVIRONMENT_URL,
+  HERO_FRACTAL_MESH_URL,
+  HERO_GLASS_MESH_URL,
+} from "./hero-glass-asset-urls";
 export type { HeroGlassAssets } from "./hero-glass-assets-core";
-
-const GLASS_MESH_URL =
-  "/examples/glass-fractal/rounded-tetrahedron.mesh?v=bevel-4";
-const FRACTAL_MESH_URL =
-  "/examples/glass-fractal/fractal-tetrahedron-l7.mesh?v=sphere-anchor-2";
-const ENVIRONMENT_URL =
-  "/examples/glass-fractal/studio-cubemap-prefiltered.png?v=studio-panels-2";
 
 /** Browser asset adapter: fetch + createImageBitmap, with GPU decoding shared with Node. */
 export async function loadHeroGlassAssets(
@@ -20,14 +18,14 @@ export async function loadHeroGlassAssets(
 ): Promise<HeroGlassAssets> {
   const [glassResponse, fractalResponse, environmentResponse] =
     await Promise.all([
-      fetch(GLASS_MESH_URL, { signal }),
-      fetch(FRACTAL_MESH_URL, { signal }),
-      fetch(ENVIRONMENT_URL, { signal }),
+      fetch(HERO_GLASS_MESH_URL, { signal }),
+      fetch(HERO_FRACTAL_MESH_URL, { signal }),
+      fetch(HERO_ENVIRONMENT_URL, { signal }),
     ]);
   for (const [response, url] of [
-    [glassResponse, GLASS_MESH_URL],
-    [fractalResponse, FRACTAL_MESH_URL],
-    [environmentResponse, ENVIRONMENT_URL],
+    [glassResponse, HERO_GLASS_MESH_URL],
+    [fractalResponse, HERO_FRACTAL_MESH_URL],
+    [environmentResponse, HERO_ENVIRONMENT_URL],
   ] as const) {
     if (!response.ok)
       throw new Error(`Failed to load ${url}: HTTP ${response.status}`);

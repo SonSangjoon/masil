@@ -18,6 +18,7 @@ import {
   UserRoundCheck,
   Workflow,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import {
   useCallback,
   useEffect,
@@ -27,15 +28,11 @@ import {
   type RefObject,
 } from "react";
 
-import {
-  AirCalligraphyCanvas,
-  type AirCalligraphyCanvasHandle,
-} from "@/features/calligraphy/components/air-calligraphy-canvas";
+import type { AirCalligraphyCanvasHandle } from "@/features/calligraphy/components/air-calligraphy-canvas";
 import {
   GlassOrbScene,
   type OrbReaction,
 } from "@/features/presence/components/glass-orb-scene";
-import { JanggiBoard } from "@/features/janggi/components/janggi-board";
 import {
   MasilWorldTransition,
   type MasilWorldTransitionHandle,
@@ -114,6 +111,17 @@ import type {
   WebMcpInvocationRecord,
 } from "@/features/webmcp/types";
 import { useMasilWebMcpProvider } from "@/features/webmcp/use-masil-webmcp-provider";
+
+const AirCalligraphyCanvas = dynamic(() =>
+  import("@/features/calligraphy/components/air-calligraphy-canvas").then(
+    (module) => module.AirCalligraphyCanvas,
+  ),
+);
+const JanggiBoard = dynamic(() =>
+  import("@/features/janggi/components/janggi-board").then(
+    (module) => module.JanggiBoard,
+  ),
+);
 
 type Language = MasilLanguage;
 type Activity = MasilActivity;
@@ -2028,6 +2036,7 @@ export function MasilExperience() {
         calligraphyWriting={isCalligraphyWriting}
         connected={isWebMcpConnected}
         form="body"
+        language={language}
         mood={orbMood}
         presence={presence}
         reaction={orbReaction}
