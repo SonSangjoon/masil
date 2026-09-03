@@ -42,6 +42,7 @@ export function AirCalligraphyCanvas({
   language,
   onCameraStateChange,
   onRequestCamera,
+  onWritingStateChange,
   referenceImageAlt,
   referenceImageId,
   referenceImageUrl,
@@ -54,6 +55,7 @@ export function AirCalligraphyCanvas({
     reason?: string,
   ) => void;
   onRequestCamera?: () => void;
+  onWritingStateChange?: (active: boolean) => void;
   referenceImageAlt?: string;
   referenceImageId?: string;
   referenceImageUrl?: string;
@@ -66,6 +68,15 @@ export function AirCalligraphyCanvas({
   );
   const [error, setError] = useState("");
   const [failedReferenceUrl, setFailedReferenceUrl] = useState<string>();
+  const writingActiveRef = useRef(false);
+  const updateWritingState = useCallback(
+    (active: boolean) => {
+      if (writingActiveRef.current === active) return;
+      writingActiveRef.current = active;
+      onWritingStateChange?.(active);
+    },
+    [onWritingStateChange],
+  );
 
   const startPointerRenderer = useCallback(() => {
     const canvas = canvasRef.current;
@@ -90,6 +101,7 @@ export function AirCalligraphyCanvas({
     pointerRendererRef.current = undefined;
     cameraRendererRef.current?.dispose();
     cameraRendererRef.current = undefined;
+    updateWritingState(false);
     queueMicrotask(() => {
       if (active) setError("");
     });
@@ -131,7 +143,11 @@ export function AirCalligraphyCanvas({
           camera.dispose();
           return;
         }
-        const renderer = createCameraRenderer({ canvas, camera });
+        const renderer = createCameraRenderer({
+          canvas,
+          camera,
+          onWritingStateChange: updateWritingState,
+        });
         cameraRendererRef.current = renderer;
         await renderer.ready;
         if (!active) {
@@ -159,14 +175,22 @@ export function AirCalligraphyCanvas({
 
     return () => {
       active = false;
+      updateWritingState(false);
       pointerRendererRef.current?.dispose();
       pointerRendererRef.current = undefined;
       cameraRendererRef.current?.dispose();
       cameraRendererRef.current = undefined;
     };
-  }, [cameraRequest, language, onCameraStateChange, startPointerRenderer]);
+  }, [
+    cameraRequest,
+    language,
+    onCameraStateChange,
+    startPointerRenderer,
+    updateWritingState,
+  ]);
 
   const stopHands = () => {
+    updateWritingState(false);
     cameraRequest?.abort();
     cameraRendererRef.current?.dispose();
     cameraRendererRef.current = undefined;
@@ -181,6 +205,7 @@ export function AirCalligraphyCanvas({
   };
 
   const clear = () => {
+    updateWritingState(false);
     pointerRendererRef.current?.clear();
     cameraRendererRef.current?.clear();
   };
@@ -231,6 +256,7 @@ export function AirCalligraphyCanvas({
           pointerRendererRef.current?.begin(
             normalizedPoint(event.currentTarget, event),
           );
+          updateWritingState(true);
         }}
         onPointerMove={(event) => {
           if (!pointerActive) return;
@@ -244,8 +270,12 @@ export function AirCalligraphyCanvas({
             event.currentTarget.releasePointerCapture(event.pointerId);
           }
           pointerRendererRef.current?.end();
+          updateWritingState(false);
         }}
-        onPointerCancel={() => pointerRendererRef.current?.end()}
+        onPointerCancel={() => {
+          pointerRendererRef.current?.end();
+          updateWritingState(false);
+        }}
       />
 
       <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 p-5 sm:p-7">

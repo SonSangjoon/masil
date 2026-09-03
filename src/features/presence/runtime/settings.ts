@@ -46,11 +46,11 @@ export const HERO_FRACTAL_MATERIAL = {
   ambientStrength: 0.34,
 } satisfies HeroFractalMaterial;
 export const HERO_ORB_MATERIAL = {
-  baseColor: [194 / 255, 83 / 255, 59 / 255],
-  roughness: 0.12,
-  diffuseStrength: 0.76,
-  specularStrength: 1.16,
-  ambientStrength: 0.34,
+  baseColor: [174 / 255, 61 / 255, 38 / 255],
+  roughness: 0.09,
+  diffuseStrength: 0.67,
+  specularStrength: 1.32,
+  ambientStrength: 0.25,
 } satisfies HeroFractalMaterial;
 export const HERO_FRACTAL_GLASS = {
   fractalScale: 0.72,

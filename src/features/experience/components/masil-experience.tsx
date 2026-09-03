@@ -21,7 +21,10 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AirCalligraphyCanvas } from "@/features/calligraphy/components/air-calligraphy-canvas";
-import { GlassOrbScene } from "@/features/presence/components/glass-orb-scene";
+import {
+  GlassOrbScene,
+  type OrbReaction,
+} from "@/features/presence/components/glass-orb-scene";
 import { JanggiBoard } from "@/features/janggi/components/janggi-board";
 import {
   MasilWorldTransition,
@@ -492,6 +495,9 @@ export function MasilExperience() {
   const [presence, setPresence] = useState<Presence>("ready");
   const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>("checking");
   const [transitionProgress, setTransitionProgress] = useState(0);
+  const [orbTransitionOrigin, setOrbTransitionOrigin] = useState<
+    "home" | "activity" | null
+  >(null);
   const [events, setEvents] = useState<DemoEvent[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
   const [webMcpDrawerView, setWebMcpDrawerView] =
@@ -500,6 +506,8 @@ export function MasilExperience() {
     useState<CharacterChoiceRequest | null>(null);
   const [cameraRequest, setCameraRequest] =
     useState<PendingCameraRequest | null>(null);
+  const [calligraphyWritingActive, setCalligraphyWritingActive] =
+    useState(false);
   const sessionRef = useRef(session);
   const worldTransitionRef = useRef<MasilWorldTransitionHandle | null>(null);
   const cameraRequestRef = useRef<PendingCameraRequest | null>(null);
@@ -941,6 +949,9 @@ export function MasilExperience() {
           };
           const transition = worldTransitionRef.current;
           if (transition) {
+            setOrbTransitionOrigin(
+              current.stage === "home" ? "home" : "activity",
+            );
             await transition.play(activity, revealActivity);
           } else {
             revealActivity();
@@ -1879,11 +1890,14 @@ export function MasilExperience() {
 
   const reset = () => {
     worldTransitionRef.current?.cancel();
+    setOrbTransitionOrigin(null);
+    setTransitionProgress(0);
     cancelPendingJanggiAnimation();
     cancelPendingPersonJanggiMove();
     cameraRequestRef.current?.abort();
     cameraRequestRef.current = null;
     setCameraRequest(null);
+    setCalligraphyWritingActive(false);
     pendingCharacterChoiceRef.current?.reject(
       new Error("CHARACTER_CHOICE_CANCELLED"),
     );
@@ -1921,6 +1935,7 @@ export function MasilExperience() {
   const handleTransitionProgress = useCallback((progress: number) => {
     if (progress >= 1) {
       setTransitionProgress(0);
+      setOrbTransitionOrigin(null);
       return;
     }
     setTransitionProgress(Math.min(1, Math.max(0, progress)));
@@ -1929,8 +1944,41 @@ export function MasilExperience() {
   const isHome = session.stage === "home";
   const isWebMcpConnected = webMcpStatus === "connected";
   const isFluidTransition = transitionProgress > 0;
-  const keepsAgentSeed = session.stage === "activity" && !isFluidTransition;
-  const showHeroOrb = isHome || isFluidTransition;
+  const isHomeToActivityTransition =
+    isFluidTransition && (isHome || orbTransitionOrigin === "home");
+  const orbIsHero = isHome || isHomeToActivityTransition;
+  const isCalligraphyChoice =
+    session.activity === "calligraphy" && !session.calligraphy.character;
+  const isCalligraphyWriting =
+    session.stage === "activity" &&
+    session.activity === "calligraphy" &&
+    Boolean(session.calligraphy.character) &&
+    calligraphyWritingActive;
+  const orbRestingMode = isCalligraphyChoice
+    ? "calligraphy-choice"
+    : "prompt";
+  const capturedMove =
+    session.activity === "janggi" &&
+    session.janggiMove === "moved" &&
+    session.janggiActiveMove?.capturedPieceId
+      ? session.janggiActiveMove
+      : null;
+  const orbReaction: OrbReaction | null = capturedMove
+    ? {
+        id: `${session.revision}:${capturedMove.id}`,
+        // Cho belongs to the person. A Cho capture removes an Agent piece;
+        // a Han capture removes a person piece.
+        kind: capturedMove.side === "cho" ? "recoil" : "celebrate",
+        // Meet the capture on contact instead of reacting as the piece starts
+        // moving across the board.
+        delayMs: 1050,
+      }
+    : null;
+  const orbMood = orbIsHero
+    ? "idle"
+    : session.activity === "janggi"
+      ? "janggi"
+      : "ink";
   return (
     <>
       <main
@@ -1943,23 +1991,17 @@ export function MasilExperience() {
         ref={worldTransitionRef}
         onProgress={handleTransitionProgress}
       />
-      {showHeroOrb ? (
-        <GlassOrbScene
-          connected={isWebMcpConnected}
-          mood="idle"
-          presence={presence}
-          mode="hero"
-          transitionProgress={isFluidTransition ? transitionProgress : 0}
-        />
-      ) : null}
-      {keepsAgentSeed ? (
-        <GlassOrbScene
-          connected={isWebMcpConnected}
-          mood={session.activity === "janggi" ? "janggi" : "ink"}
-          presence={presence}
-          mode="prompt"
-        />
-      ) : null}
+      <GlassOrbScene
+        calligraphyWriting={isCalligraphyWriting}
+        connected={isWebMcpConnected}
+        form="body"
+        mood={orbMood}
+        presence={presence}
+        reaction={orbReaction}
+        mode={orbIsHero ? "hero" : orbRestingMode}
+        transitionTargetMode={orbRestingMode}
+        transitionProgress={isFluidTransition ? transitionProgress : 0}
+      />
 
       {isHome ? (
         <HomeScreen
@@ -1984,6 +2026,7 @@ export function MasilExperience() {
             language={language}
             session={session}
             onCharacterChoice={chooseCharacter}
+            onCalligraphyWritingStateChange={setCalligraphyWritingActive}
             onCameraStateChange={handleCameraStateChange}
             onJanggiMoveAnimationComplete={completeJanggiAnimation}
             onJanggiPersonMove={moveJanggiByPersonGesture}
@@ -2551,7 +2594,7 @@ function HomeScreen({
 
   return (
     <section className="relative z-10 min-h-[100svh] px-5 pt-20 text-center sm:px-8">
-      <div className="masil-copy-enter absolute inset-x-5 top-[62.5%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
+      <div className="masil-home-copy masil-copy-enter absolute inset-x-5 mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
         <p
           className={
             MASIL_HOME_CONTEXT_CLASS +
@@ -2589,6 +2632,7 @@ function ActivityWorld({
   characterRequest,
   language,
   session,
+  onCalligraphyWritingStateChange,
   onCameraStateChange,
   onCharacterChoice,
   onJanggiMoveAnimationComplete,
@@ -2600,6 +2644,7 @@ function ActivityWorld({
   characterRequest: CharacterChoiceRequest | null;
   language: Language;
   session: DemoSession;
+  onCalligraphyWritingStateChange: (active: boolean) => void;
   onCameraStateChange: (
     state: "requesting" | "hand" | "fallback",
     reason?: string,
@@ -2649,6 +2694,7 @@ function ActivityWorld({
       cameraRequest={cameraRequest}
       character={session.calligraphy.character}
       language={language}
+      onWritingStateChange={onCalligraphyWritingStateChange}
       onCameraStateChange={onCameraStateChange}
       onRequestCamera={onRequestCamera}
       referenceImageAlt={session.calligraphy.referenceImageAlt}

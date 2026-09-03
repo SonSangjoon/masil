@@ -59,6 +59,7 @@ export interface CameraRenderer {
 interface RendererOptions {
   readonly canvas: HTMLCanvasElement;
   readonly camera: CameraSource;
+  readonly onWritingStateChange?: (active: boolean) => void;
 }
 
 interface RenderSize {
@@ -70,6 +71,7 @@ interface RenderSize {
 export function createCameraRenderer({
   canvas,
   camera,
+  onWritingStateChange,
 }: RendererOptions): CameraRenderer {
   let disposed = false;
   let shared: SharedDeviceSession | undefined;
@@ -99,6 +101,11 @@ export function createCameraRenderer({
     rejectClosed = reject;
   });
   const anchors = ssdAnchors();
+  const setPainting = (active: boolean) => {
+    if (painting === active) return;
+    painting = active;
+    onWritingStateChange?.(active);
+  };
 
   const applyResize = () => {
     resizeFrame = 0;
@@ -269,7 +276,7 @@ export function createCameraRenderer({
         });
         pipeline!.consumeHandLandmarks(consumed, dt, { reset });
       });
-      painting = tracker.activeSlots().length > 0;
+      setPainting(tracker.activeSlots().length > 0);
     } finally {
       for (const tensor of outputs) tensor?.dispose();
     }
@@ -375,6 +382,7 @@ export function createCameraRenderer({
 
     if (disposed) return { failed, failure };
     disposed = true;
+    setPainting(false);
     attempt(() => {
       if (displayFrame) cancelAnimationFrame(displayFrame);
     });
