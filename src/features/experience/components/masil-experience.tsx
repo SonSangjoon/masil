@@ -161,26 +161,115 @@ type CharacterChoiceResolution = {
   source: "person-gesture" | "agent-reference";
 };
 
-const AGENT_PROMPTS: Record<Language, readonly string[]> = {
+type AgentPrompt = {
+  announcement: string;
+  fragment: string;
+};
+
+type CalligraphyPromptFragments = {
+  words: readonly string[];
+  styles: readonly string[];
+};
+
+const AGENT_PROMPTS: Record<Language, readonly AgentPrompt[]> = {
   ko: [
-    "에이전트에게 “서예 해보고 싶어요”라고 요청해보세요",
-    "에이전트에게 “장기 한 판 두고 싶어요”라고 요청해보세요",
-    "에이전트에게 “추석을 한자로 만들어줘”라고 요청해보세요",
-    "에이전트에게 “왼쪽 차를 위로 움직여줘”라고 요청해보세요",
-    "에이전트에게 “새해 복 많이 받으세요를 써보고 싶어”라고 요청해보세요",
-    "에이전트에게 “반찬 배달이 멈췄어. 도움을 알아봐줘”라고 말해보세요",
+    {
+      announcement: "에이전트에게 서예를 시작해 줄 수 있는지 물어보세요.",
+      fragment: "“서예를 시작해 줄래?”",
+    },
+    {
+      announcement: "에이전트에게 장기 한 판 둘 수 있는지 물어보세요.",
+      fragment: "“장기 한 판 둘래?”",
+    },
+    {
+      announcement: "에이전트에게 추석을 한자로 써 달라고 물어보세요.",
+      fragment: "“추석을 한자로 써 줄래?”",
+    },
+    {
+      announcement: "에이전트에게 왼쪽 차를 움직여 달라고 물어보세요.",
+      fragment: "“왼쪽 차를 움직여 줄래?”",
+    },
+    {
+      announcement: "에이전트에게 새해 인사를 써 달라고 물어보세요.",
+      fragment: "“새해 인사를 써 줄래?”",
+    },
   ],
   en: [
-    "Ask your Agent: “I’d like to practice calligraphy.”",
-    "Ask your Agent: “I’d like to play a game of Janggi.”",
-    "Ask your Agent: “Create Chuseok in Hanja for me.”",
-    "Ask your Agent: “Move the left chariot forward.”",
-    "Ask your Agent: “I want to write a New Year greeting.”",
-    "Ask your Agent: “My meal delivery stopped. Help me find support.”",
+    {
+      announcement: "Ask your Agent to start a calligraphy session.",
+      fragment: "start calligraphy",
+    },
+    {
+      announcement: "Ask your Agent to play a game of Janggi.",
+      fragment: "play a game of Janggi",
+    },
+    {
+      announcement: "Ask your Agent to write Chuseok in Hanja.",
+      fragment: "write Chuseok in Hanja",
+    },
+    {
+      announcement: "Ask your Agent to move the left chariot.",
+      fragment: "move the left chariot",
+    },
+    {
+      announcement: "Ask your Agent to write a New Year greeting.",
+      fragment: "write a New Year greeting",
+    },
   ],
 };
 
-const AGENT_PROMPT_INTERVAL_MS = 3200;
+const AGENT_PROMPT_INTERVAL_MS = 2800;
+const CALLIGRAPHY_PROMPT_INTERVALS = {
+  word: 2800,
+  style: 4300,
+} as const;
+const CALLIGRAPHY_PROMPT_FRAGMENTS: Record<
+  Language,
+  CalligraphyPromptFragments
+> = {
+  ko: {
+    words: [
+      "추석을",
+      "福을",
+      "사랑을",
+      "平安을",
+      "봄을",
+      "春을",
+      "가족을",
+      "한가위를",
+      "和를",
+    ],
+    styles: [
+      "힘찬 붓결로",
+      "고요한 흘림체로",
+      "부드러운 붓글씨로",
+      "단정한 정자체로",
+      "거친 마른붓으로",
+      "여백이 넉넉하게",
+    ],
+  },
+  en: {
+    words: [
+      "Chuseok",
+      "福",
+      "love",
+      "平安",
+      "spring",
+      "春",
+      "family",
+      "harvest moon",
+      "和",
+    ],
+    styles: [
+      "with bold brushwork",
+      "in a calm flowing hand",
+      "with soft flowing strokes",
+      "in a poised square hand",
+      "with dry-brush texture",
+      "with breathing room",
+    ],
+  },
+};
 const WEBMCP_CONNECTION_TIMEOUT_MS = 7000;
 const CHROME_WEBMCP_FLAG_URL = "chrome://flags/#enable-webmcp-testing";
 const WEBMCP_GUIDE_URL: Record<Language, string> = {
@@ -237,36 +326,35 @@ const SUPPORT_EXAMPLE = {
 };
 
 const TOOL_COPY: Record<ToolName, string> = {
-  masil_get_capabilities: "이 웹이 Agent에게 제공하는 능력 읽기",
-  masil_get_session_state: "현재 화면·상태·가능한 다음 행동 읽기",
+  masil_get_capabilities: "MASIL에서 함께 할 수 있는 일 확인",
+  masil_get_session_state: "현재 화면과 가능한 다음 단계 확인",
   masil_project_agent_presence: "Agent의 대화 상태를 Orb와 화면에 투영",
-  masil_open_activity: "활동을 열고 사람의 선택 기다리기",
-  masil_set_calligraphy_reference: "생성한 서예 글자본을 화면에 배치",
-  masil_get_janggi_state: "현재 장기판과 모든 합법 수 읽기",
-  masil_wait_for_person_janggi_move: "어르신이 장기판에서 둘 한 수 기다리기",
-  masil_move_janggi_piece: "확인한 장기 수를 규칙에 맞게 실행",
-  masil_open_support_note: "명시적 요청 뒤 비공개 도움 메모 열기",
-  masil_prepare_support_review: "사람에게 보일 최소 내용과 현재 창구 준비",
-  masil_create_local_handoff: "두 번 확인한 로컬 데모 작업 카드 만들기",
-  masil_get_handoff_status: "담당자·상태·다음 단계 다시 읽기",
-  masil_return_to_activity: "작업 결과를 남기고 원래 활동으로 복귀",
+  masil_open_activity: "활동을 열고 사용자의 선택 기다리기",
+  masil_set_calligraphy_reference: "만든 서예 글자본을 화면에 놓기",
+  masil_get_janggi_state: "현재 장기판과 둘 수 있는 자리 확인",
+  masil_wait_for_person_janggi_move: "사용자가 직접 둘 한 수 기다리기",
+  masil_move_janggi_piece: "선택한 장기 수를 확인하고 실행",
+  masil_open_support_note: "요청받은 뒤 비공개 도움 메모 열기",
+  masil_prepare_support_review: "보낼 내용과 도움받을 곳 준비",
+  masil_create_local_handoff: "확인을 마친 로컬 데모 카드 만들기",
+  masil_get_handoff_status: "담당자와 다음 단계 확인",
+  masil_return_to_activity: "하던 활동으로 돌아가기",
 };
 
 const TOOL_COPY_EN: Record<ToolName, string> = {
-  masil_get_capabilities: "Read what MASIL offers the Agent",
-  masil_get_session_state: "Read the current screen and valid next actions",
+  masil_get_capabilities: "See what you can do together in MASIL",
+  masil_get_session_state: "Check the current screen and available next steps",
   masil_project_agent_presence: "Project the Agent state into the Orb and page",
-  masil_open_activity: "Open an activity and wait for the person",
-  masil_set_calligraphy_reference: "Place a generated calligraphy reference",
-  masil_get_janggi_state: "Read the board and every legal move",
-  masil_wait_for_person_janggi_move: "Wait for the person to make one move",
-  masil_move_janggi_piece: "Validate and animate a Janggi move",
-  masil_open_support_note: "Open a private note after an explicit request",
-  masil_prepare_support_review:
-    "Prepare the minimum support details for review",
-  masil_create_local_handoff: "Create a confirmed local demo handoff",
-  masil_get_handoff_status: "Read the owner, status, and next step",
-  masil_return_to_activity: "Return to the preserved creative activity",
+  masil_open_activity: "Open an activity and wait for your choice",
+  masil_set_calligraphy_reference: "Place a prepared calligraphy reference",
+  masil_get_janggi_state: "Check the board and available moves",
+  masil_wait_for_person_janggi_move: "Wait for you to make one move",
+  masil_move_janggi_piece: "Confirm and make the selected Janggi move",
+  masil_open_support_note: "Open a private help note after your request",
+  masil_prepare_support_review: "Prepare what to share and where to get help",
+  masil_create_local_handoff: "Create a confirmed local demo card",
+  masil_get_handoff_status: "Check the owner and next step",
+  masil_return_to_activity: "Return to the activity you were doing",
 };
 
 const SINGLE_AGENT_BOUNDARY = {
@@ -599,7 +687,7 @@ export function MasilExperience() {
         updateSession((state) => ({
           ...state,
           revision: state.revision + 1,
-          caption: `${choice.label} 좋네요. 카메라를 열고 손을 찾을게요.`,
+          caption: `${choice.label} 글자를 골랐어요. 손을 찾으면 바로 시작할게요.`,
           calligraphy: {
             character: choice.character,
             reading: choice.reading,
@@ -639,7 +727,7 @@ export function MasilExperience() {
         }
         updateSession((current) => ({
           ...current,
-          caption: "손을 들어 공중에 천천히 써보세요.",
+          caption: "주먹을 쥔 채 공중에 천천히 써보세요.",
         }));
       } else {
         const label =
@@ -656,8 +744,8 @@ export function MasilExperience() {
           ...current,
           caption:
             reason === "person-stopped-camera"
-              ? "카메라를 껐어요. 화면에 직접 이어서 써보세요."
-              : "카메라를 열 수 없어 화면에 직접 쓸 수 있게 바꿨어요.",
+              ? "카메라를 껐어요. 화면을 누른 채 이어서 써보세요."
+              : "손을 인식하지 못했어요. 화면을 누른 채 써보세요.",
         }));
       }
     },
@@ -913,7 +1001,7 @@ export function MasilExperience() {
             const selected = updateSession((state) => ({
               ...state,
               revision: state.revision + 1,
-              caption: `${choice.label} 좋네요. 카메라를 열고 손을 찾을게요.`,
+              caption: `${choice.label} 글자를 골랐어요. 손을 찾으면 바로 시작할게요.`,
               calligraphy: {
                 character: choice.character,
                 reading: choice.reading,
@@ -1327,7 +1415,7 @@ export function MasilExperience() {
             ...state,
             stage: "review",
             revision: state.revision + 1,
-            caption: "보일 문장과 실제 행동을 따로 확인해 주세요.",
+            caption: "보낼 내용과 다음 행동을 하나씩 확인해 주세요.",
             support: state.support
               ? {
                   ...state.support,
@@ -1840,17 +1928,17 @@ export function MasilExperience() {
 
   const isHome = session.stage === "home";
   const isWebMcpConnected = webMcpStatus === "connected";
-  const isWebMcpChecking = webMcpStatus === "checking";
   const isFluidTransition = transitionProgress > 0;
   const keepsAgentSeed = session.stage === "activity" && !isFluidTransition;
   const showHeroOrb = isHome || isFluidTransition;
   return (
-    <main
-      className="masil-shell relative min-h-[100svh] overflow-hidden bg-[#f7f4ed] text-[#171513]"
-      data-testid="masil-flow-demo"
-      data-stage={session.stage}
-      data-activity={session.activity ?? "none"}
-    >
+    <>
+      <main
+        className="masil-shell relative min-h-[100svh] overflow-hidden bg-[#f7f4ed] text-[#171513]"
+        data-testid="masil-flow-demo"
+        data-stage={session.stage}
+        data-activity={session.activity ?? "none"}
+      >
       <MasilWorldTransition
         ref={worldTransitionRef}
         onProgress={handleTransitionProgress}
@@ -1873,94 +1961,6 @@ export function MasilExperience() {
         />
       ) : null}
 
-      <header
-        className="pointer-events-none absolute inset-x-0 top-0 z-[110] flex h-[76px] items-center justify-between px-6 sm:px-10 lg:px-12"
-        onPointerDown={(event) => event.stopPropagation()}
-      >
-        <button
-          type="button"
-          className="pointer-events-auto text-[0.8rem] font-semibold tracking-[0.42em] text-[#b85f47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25 focus-visible:ring-offset-4"
-          onClick={reset}
-          aria-label={language === "ko" ? "MASIL 처음 화면" : "MASIL home"}
-        >
-          MASIL
-        </button>
-
-        <div className="pointer-events-auto flex items-center gap-3 sm:gap-4">
-          <ToggleGroup
-            value={[language]}
-            onValueChange={(value) => {
-              const nextLanguage = value[0];
-              if (nextLanguage === "ko" || nextLanguage === "en") {
-                setLanguage(nextLanguage);
-              }
-            }}
-            variant="outline"
-            size="sm"
-            spacing={0}
-            aria-label={language === "ko" ? "언어 선택" : "Choose language"}
-            className="h-9 border border-black/[0.045] bg-white/24 p-0.5 text-[0.7rem] backdrop-blur-sm"
-          >
-            <ToggleGroupItem
-              value="ko"
-              aria-label="한국어"
-              className="h-8 min-w-0 rounded-md border-0 px-3 text-[0.7rem] text-[#8a837c] data-[state=on]:bg-[#fffdfa]/88 data-[state=on]:font-semibold data-[state=on]:text-[#211e1b] data-[state=on]:shadow-[0_1px_5px_rgba(64,43,32,0.08)]"
-            >
-              한국어
-            </ToggleGroupItem>
-            <ToggleGroupItem
-              value="en"
-              aria-label="English"
-              className="h-8 min-w-0 rounded-md border-0 px-3 text-[0.7rem] text-[#8a837c] data-[state=on]:bg-[#fffdfa]/88 data-[state=on]:font-semibold data-[state=on]:text-[#211e1b] data-[state=on]:shadow-[0_1px_5px_rgba(64,43,32,0.08)]"
-            >
-              English
-            </ToggleGroupItem>
-          </ToggleGroup>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="h-9 gap-2 border-black/[0.045] bg-white/24 px-3 text-[0.7rem] font-medium tracking-[0.02em] text-[#5f5852] backdrop-blur-sm hover:border-black/[0.08] hover:bg-white/42 hover:text-[#211e1b]"
-            onClick={() => {
-              if (logsOpen) {
-                setLogsOpen(false);
-                return;
-              }
-              setWebMcpDrawerView("overview");
-              setLogsOpen(true);
-            }}
-            aria-expanded={logsOpen}
-            aria-controls="webmcp-panel"
-            aria-label={
-              language === "ko"
-                ? `WebMCP ${isWebMcpConnected ? "연결됨" : isWebMcpChecking ? "연결 확인 중" : "연결되지 않음"}. 패널 ${logsOpen ? "닫기" : "열기"}`
-                : `WebMCP ${isWebMcpConnected ? "connected" : isWebMcpChecking ? "connecting" : "not connected"}. ${logsOpen ? "Close" : "Open"} panel`
-            }
-            data-testid="open-event-log"
-          >
-            <span>WebMCP</span>
-            <span
-              aria-hidden="true"
-              className={`size-1.5 rounded-full ${
-                isWebMcpConnected
-                  ? "bg-[#3b8a62] shadow-[0_0_0_3px_rgba(59,138,98,0.12)]"
-                  : isWebMcpChecking
-                    ? "animate-pulse bg-[#b65f49] shadow-[0_0_0_3px_rgba(182,95,73,0.11)]"
-                    : "bg-[#c34f45] shadow-[0_0_0_3px_rgba(195,79,69,0.1)]"
-              }`}
-            />
-            <span className="text-[0.62rem] font-semibold tracking-[0.08em] text-[#716963] uppercase">
-              {isWebMcpConnected
-                ? "CONNECTED"
-                : isWebMcpChecking
-                  ? "CONNECTING"
-                  : "UNCONNECTED"}
-            </span>
-          </Button>
-        </div>
-      </header>
-
       {isHome ? (
         <HomeScreen
           language={language}
@@ -1974,7 +1974,7 @@ export function MasilExperience() {
         />
       ) : (
         <section
-          className="masil-world-enter relative z-10 h-[100svh] pt-[76px]"
+          className="masil-world-enter relative z-10 h-[100svh] pt-20"
           data-testid={`stage-${session.stage}`}
         >
           <ActivityWorld
@@ -1992,7 +1992,11 @@ export function MasilExperience() {
 
           {session.stage === "activity" &&
           session.activity !== "janggi" &&
-          !characterRequest ? (
+          !characterRequest &&
+          !(
+            session.activity === "calligraphy" &&
+            !session.calligraphy.character
+          ) ? (
             <AgentSceneCaption
               caption={session.caption}
               language={language}
@@ -2045,12 +2049,143 @@ export function MasilExperience() {
         toolCount={toolDescriptors.length}
         view={webMcpDrawerView}
       />
-    </main>
+      </main>
+
+      <header
+        className="masil-topbar pointer-events-none fixed inset-x-0 top-0 z-[200] flex h-20 items-center justify-between px-4 sm:px-8 lg:px-10"
+        onPointerDown={(event) => event.stopPropagation()}
+      >
+        <button
+          type="button"
+          className="group pointer-events-auto -ml-2 flex h-11 items-center gap-3 rounded-xl px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25 focus-visible:ring-offset-2"
+          onClick={reset}
+          aria-label={language === "ko" ? "MASIL 처음 화면" : "MASIL home"}
+        >
+          <span className="text-[0.92rem] font-semibold tracking-[0.32em] text-[#ad5541] transition-colors group-hover:text-[#914431]">
+            MASIL
+          </span>
+          <span
+            aria-hidden="true"
+            className="hidden border-l border-black/[0.08] pl-3 text-[0.7rem] leading-none font-medium tracking-[-0.01em] text-[#776f68] md:inline"
+          >
+            {language === "ko" ? "함께 여는 생활" : "Everyday, together"}
+          </span>
+        </button>
+
+        <MasilHeaderControls
+          language={language}
+          onLanguageChange={setLanguage}
+          onOpenPanel={() => {
+            setWebMcpDrawerView("overview");
+            setLogsOpen(true);
+          }}
+          open={logsOpen}
+          status={webMcpStatus}
+          testId="open-event-log"
+        />
+      </header>
+    </>
   );
 }
 
-const MASIL_PRIMARY_PROMPT_CLASS =
-  "text-[clamp(1.5rem,2.35vw,2.25rem)] leading-none font-medium tracking-[-0.055em]";
+function MasilHeaderControls({
+  language,
+  onLanguageChange,
+  onOpenPanel,
+  open,
+  status,
+  testId,
+}: {
+  language: Language;
+  onLanguageChange: (language: Language) => void;
+  onOpenPanel: () => void;
+  open: boolean;
+  status: WebMcpStatus;
+  testId: string;
+}) {
+  const connected = status === "connected";
+  const checking = status === "checking";
+
+  return (
+    <div className="pointer-events-auto flex items-center gap-2 sm:gap-3">
+      <Button
+        type="button"
+        variant="outline"
+        size="default"
+        className="h-10 shrink-0 justify-center gap-2 rounded-xl border-black/[0.06] bg-white/44 px-3 text-[0.76rem] font-semibold tracking-[-0.005em] text-[#514b46] shadow-[0_8px_26px_rgba(74,54,42,0.045)] backdrop-blur-md hover:border-black/[0.1] hover:bg-white/70 hover:text-[#211e1b] sm:px-3.5"
+        onClick={onOpenPanel}
+        aria-expanded={open}
+        aria-controls="webmcp-panel"
+        aria-label={
+          language === "ko"
+            ? `WebMCP ${connected ? "연결됨" : checking ? "연결 확인 중" : "연결되지 않음"}. 패널 ${open ? "열림" : "열기"}`
+            : `WebMCP ${connected ? "connected" : checking ? "connecting" : "not connected"}. ${open ? "Panel open" : "Open panel"}`
+        }
+        data-testid={testId}
+      >
+        <span>WebMCP</span>
+        <span
+          aria-hidden="true"
+          className={`size-2 rounded-full ${
+            connected
+              ? "bg-[#3b8a62] shadow-[0_0_0_3px_rgba(59,138,98,0.12)]"
+              : checking
+                ? "animate-pulse bg-[#b65f49] shadow-[0_0_0_3px_rgba(182,95,73,0.11)]"
+                : "bg-[#c34f45] shadow-[0_0_0_3px_rgba(195,79,69,0.1)]"
+          }`}
+        />
+        <span className="hidden whitespace-nowrap text-left text-[0.68rem] font-medium tracking-[0.01em] text-[#716963] md:inline">
+          {connected
+            ? language === "ko"
+              ? "연결됨"
+              : "Connected"
+            : checking
+              ? language === "ko"
+                ? "확인 중"
+                : "Checking"
+              : language === "ko"
+                ? "연결 필요"
+                : "Connect"}
+        </span>
+      </Button>
+
+      <ToggleGroup
+        value={[language]}
+        onValueChange={(value) => {
+          const nextLanguage = value[0];
+          if (nextLanguage === "ko" || nextLanguage === "en") {
+            onLanguageChange(nextLanguage);
+          }
+        }}
+        variant="outline"
+        size="default"
+        spacing={0}
+        aria-label={language === "ko" ? "언어 선택" : "Choose language"}
+        className="h-10 rounded-xl border border-black/[0.06] bg-white/44 p-1 shadow-[0_8px_26px_rgba(74,54,42,0.045)] backdrop-blur-md"
+      >
+        <ToggleGroupItem
+          value="ko"
+          aria-label="한국어"
+          className="h-8 min-w-10 rounded-lg border-0 px-2.5 text-[0.76rem] text-[#7f7770] data-[state=on]:bg-[#fffdfa]/95 data-[state=on]:font-semibold data-[state=on]:text-[#211e1b] data-[state=on]:shadow-[0_2px_8px_rgba(64,43,32,0.08)] sm:min-w-[3.75rem] sm:px-3"
+        >
+          <span className="sm:hidden">KO</span>
+          <span className="hidden sm:inline">한국어</span>
+        </ToggleGroupItem>
+        <ToggleGroupItem
+          value="en"
+          aria-label="English"
+          className="h-8 min-w-10 rounded-lg border-0 px-2.5 text-[0.76rem] text-[#7f7770] data-[state=on]:bg-[#fffdfa]/95 data-[state=on]:font-semibold data-[state=on]:text-[#211e1b] data-[state=on]:shadow-[0_2px_8px_rgba(64,43,32,0.08)] sm:min-w-[4.25rem] sm:px-3"
+        >
+          <span className="sm:hidden">EN</span>
+          <span className="hidden sm:inline">English</span>
+        </ToggleGroupItem>
+      </ToggleGroup>
+    </div>
+  );
+}
+
+const MASIL_HOME_CONTEXT_CLASS =
+  "text-[clamp(1.05rem,2vw,1.25rem)] leading-[1.35] font-medium tracking-[-0.035em]";
 
 function ConnectionGuideLink({
   language,
@@ -2066,11 +2201,11 @@ function ConnectionGuideLink({
       type="button"
       variant="link"
       size="sm"
-      className="h-auto px-0 text-muted-foreground"
+      className="h-auto px-0 text-[0.84rem] font-medium text-[#6f6761]"
       onClick={onClick}
       data-testid={testId}
     >
-      {language === "ko" ? "연결 방법 보기" : "View connection steps"}
+      {language === "ko" ? "에이전트 연결하기" : "Connect your Agent"}
       <ArrowUpRight
         aria-hidden="true"
         data-icon="inline-end"
@@ -2119,12 +2254,14 @@ function ConnectionGuidePanel({
           </Button>
           <div className="min-w-0 flex-1">
             <SheetTitle>
-              {language === "ko" ? "에이전트 연결" : "Connect your Agent"}
+              {language === "ko"
+                ? "에이전트와 MASIL 연결하기"
+                : "Connect your Agent to MASIL"}
             </SheetTitle>
             <SheetDescription>
               {language === "ko"
-                ? "지금 MASIL을 연 곳을 선택하세요."
-                : "Choose where you opened MASIL."}
+                ? "지금 보고 있는 브라우저를 선택하면 필요한 단계만 안내해 드려요."
+                : "Choose the browser you are using and follow only the steps you need."}
             </SheetDescription>
           </div>
         </div>
@@ -2159,16 +2296,16 @@ function ConnectionGuidePanel({
                 <ItemContent>
                   <ItemTitle>
                     {language === "ko"
-                      ? "별도 설정 없이 연결돼요"
-                      : "No additional setup needed"}
+                      ? "열기만 하면 준비돼요"
+                      : "Open it and you’re ready"}
                     <Badge variant="secondary" className="font-normal">
                       {language === "ko" ? "추천" : "Recommended"}
                     </Badge>
                   </ItemTitle>
                   <ItemDescription className="line-clamp-none">
                     {language === "ko"
-                      ? "ChatGPT의 인앱 브라우저에서 MASIL 링크를 열면 사이트 도구가 자동으로 연결됩니다."
-                      : "Open the MASIL link in ChatGPT's in-app browser and site tools connect automatically."}
+                      ? "ChatGPT 안에서 MASIL 링크를 열면 에이전트가 이 화면과 바로 연결됩니다."
+                      : "Open the MASIL link inside ChatGPT and your Agent connects to this screen automatically."}
                   </ItemDescription>
                 </ItemContent>
               </Item>
@@ -2178,26 +2315,26 @@ function ConnectionGuidePanel({
                   number="1"
                   title={
                     language === "ko"
-                      ? "ChatGPT 안에서 MASIL 열기"
-                      : "Open MASIL inside ChatGPT"
+                      ? "ChatGPT 대화에서 MASIL 열기"
+                      : "Open MASIL from your ChatGPT conversation"
                   }
                   description={
                     language === "ko"
-                      ? "이 페이지의 라이브 URL을 ChatGPT 대화에서 여세요."
-                      : "Open this page's live URL from a ChatGPT conversation."
+                      ? "대화 안에서 MASIL 링크를 누르면 새 화면으로 열려요."
+                      : "Select the MASIL link in the conversation to open this screen."
                   }
                 />
                 <ConnectionStep
                   number="2"
                   title={
                     language === "ko"
-                      ? "CONNECTED 확인"
-                      : "Check for CONNECTED"
+                      ? "연결 상태 확인하기"
+                      : "Check the connection"
                   }
                   description={
                     language === "ko"
-                      ? "상단 상태가 초록색으로 바뀌면 바로 에이전트에게 요청할 수 있어요."
-                      : "When the status above turns green, you can ask your Agent right away."
+                      ? "상단에 ‘연결됨’이 보이면 에이전트에게 바로 말해 보세요."
+                      : "When the top bar says ‘Connected,’ you can start asking your Agent."
                   }
                   last
                 />
@@ -2215,13 +2352,13 @@ function ConnectionGuidePanel({
                 <ItemContent>
                   <ItemTitle>
                     {language === "ko"
-                      ? "처음 한 번만 설정해요"
-                      : "Set it up just once"}
+                      ? "처음 한 번만 켜 주세요"
+                      : "Enable it once"}
                   </ItemTitle>
                   <ItemDescription className="line-clamp-none">
                     {language === "ko"
-                      ? "WebMCP를 켜고 Chrome을 다시 시작하면 다음부터 자동으로 연결됩니다."
-                      : "Enable WebMCP and relaunch Chrome; it will connect automatically next time."}
+                      ? "Chrome에서 WebMCP를 켜면 다음부터 MASIL이 자동으로 연결됩니다."
+                      : "Enable WebMCP in Chrome once and MASIL will connect automatically next time."}
                   </ItemDescription>
                 </ItemContent>
               </Item>
@@ -2276,9 +2413,9 @@ function ConnectionGuidePanel({
                     language === "ko" ? "Chrome 다시 시작" : "Relaunch Chrome"
                   }
                   description={
-                    language === "ko"
-                      ? "MASIL로 돌아와 상단 상태가 초록색인지 확인하세요."
-                      : "Return to MASIL and check that the status above is green."
+                      language === "ko"
+                      ? "MASIL로 돌아와 상단에 ‘연결됨’이 보이는지 확인하세요."
+                      : "Return to MASIL and check that the top bar says ‘Connected.’"
                   }
                   last
                 />
@@ -2298,8 +2435,8 @@ function ConnectionGuidePanel({
                 <ItemContent>
                   <ItemTitle className="text-xs text-[#2f6f50]">
                     {language === "ko"
-                      ? "CONNECTED가 보이면 준비 완료"
-                      : "You're ready when CONNECTED appears"}
+                      ? "‘연결됨’이 보이면 준비가 끝났어요"
+                      : "You’re ready when ‘Connected’ appears"}
                   </ItemTitle>
                 </ItemContent>
               </Item>
@@ -2400,12 +2537,12 @@ function HomeScreen({
     caption === "오늘은 무엇을\n같이 해볼까요?";
   const headline = checking
     ? language === "ko"
-      ? "사이트 도구를 확인하고 있어요"
-      : "Checking site tools"
+      ? "연결을 확인하고 있어요"
+      : "Checking the connection"
     : !connected
       ? language === "ko"
-        ? "에이전트와 연결해 시작하세요"
-        : "Connect your Agent to get started"
+        ? "에이전트와 MASIL을 연결해 주세요"
+        : "Connect your Agent to MASIL"
     : isDefaultHeadline
       ? language === "ko"
         ? INITIAL_SESSION.caption
@@ -2413,36 +2550,35 @@ function HomeScreen({
       : caption;
 
   return (
-    <section className="relative z-10 min-h-[100svh] px-5 pt-[76px] text-center sm:px-8">
-      <div className="masil-copy-enter absolute inset-x-5 top-[60%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
-        <h1
+    <section className="relative z-10 min-h-[100svh] px-5 pt-20 text-center sm:px-8">
+      <div className="masil-copy-enter absolute inset-x-5 top-[62.5%] mx-auto flex -translate-y-1/2 flex-col items-center sm:inset-x-8">
+        <p
           className={
-            MASIL_PRIMARY_PROMPT_CLASS +
-            " masil-balance max-w-[23rem] text-[#4f4944] sm:max-w-none sm:whitespace-nowrap"
+            MASIL_HOME_CONTEXT_CLASS +
+            " masil-balance max-w-[34rem] text-[#655d57] sm:max-w-none sm:whitespace-nowrap"
           }
         >
           {headline}
-        </h1>
+        </p>
         {connected ? (
           <AgentProjection hero language={language} presence={presence} />
         ) : !checking ? (
-          <p className="masil-balance mt-4 max-w-[31rem] text-sm leading-6 text-muted-foreground">
-            {language === "ko"
-              ? "ChatGPT에서는 바로 연결됩니다. Chrome에서는 WebMCP를 한 번 켜주세요."
-              : "ChatGPT connects automatically. In Chrome, enable WebMCP once."}
-          </p>
+          <>
+            <p className="masil-balance mt-4 max-w-[32rem] text-[0.9rem] leading-6 tracking-[-0.015em] text-[#746c66] sm:text-[0.96rem]">
+              {language === "ko"
+                ? "ChatGPT에서는 링크만 열면 되고, Chrome은 처음 한 번만 설정하면 돼요."
+                : "Open the link in ChatGPT, or complete a one-time setup in Chrome."}
+            </p>
+            <div className="mt-5">
+              <ConnectionGuideLink
+                language={language}
+                onClick={onOpenConnectionGuide}
+                testId="home-connection-guide"
+              />
+            </div>
+          </>
         ) : null}
       </div>
-
-      {!connected && !checking ? (
-        <div className="absolute inset-x-0 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-20 flex justify-center px-5 sm:bottom-8">
-          <ConnectionGuideLink
-            language={language}
-            onClick={onOpenConnectionGuide}
-            testId="home-connection-guide"
-          />
-        </div>
-      ) : null}
     </section>
   );
 }
@@ -2524,7 +2660,6 @@ function ActivityWorld({
 function CalligraphyCharacterPrompt({
   language,
   request,
-  onChoose,
 }: {
   language: Language;
   request: CharacterChoiceRequest;
@@ -2533,51 +2668,124 @@ function CalligraphyCharacterPrompt({
   return (
     <div className="relative grid h-full min-h-[calc(100svh-76px)] place-items-center overflow-hidden bg-transparent px-5 pb-10 text-center sm:px-8">
       <div className="masil-copy-enter relative z-10 mt-[4.5rem] flex w-full max-w-5xl flex-col items-center sm:mt-[5.25rem]">
-        <h2
-          className={MASIL_PRIMARY_PROMPT_CLASS + " masil-balance max-w-none whitespace-nowrap text-[#191715]"}
+        <p
+          className="masil-balance max-w-none whitespace-nowrap text-[clamp(1.2rem,2.5vw,1.7rem)] leading-[1.3] font-medium tracking-[-0.04em] text-[#5f5751]"
         >
           {request.question}
-        </h2>
+        </p>
 
-        <div className="mt-12 flex w-full items-start justify-center gap-10 sm:mt-16 sm:gap-20">
-          {request.choices.map((choice) => (
-            <Button
-              key={`${choice.character}-${choice.label}`}
-              type="button"
-              variant="ghost"
-              className="group h-auto min-w-[4.75rem] flex-col items-center rounded-lg p-1.5 text-center text-foreground hover:bg-transparent hover:text-foreground focus-visible:ring-[#b65f49]/25"
-              onClick={() => onChoose(choice)}
-              data-testid={`choose-character-${choice.character}`}
-              aria-label={`${choice.character} ${choice.label}${choice.meaning ? `, ${choice.meaning}` : ""}`}
-            >
-              <span
-                className="text-[clamp(3.75rem,7.2vw,6.75rem)] leading-none text-[#9f4c38] transition duration-500 group-hover:-translate-y-1 group-hover:text-[#7f392b]"
-                style={{
-                  fontFamily:
-                    "STKaiti, KaiTi, Kaiti SC, Noto Serif CJK KR, Noto Serif KR, serif",
-                }}
-              >
-                {choice.character}
-              </span>
-              <span className="mt-5 border-t border-[#9f4c38]/18 pt-3">
-                <span className="block text-[0.78rem] font-medium tracking-[-0.01em] text-[#6f6761] sm:text-[0.88rem]">
-                  {choice.label}
-                </span>
-              </span>
-            </Button>
-          ))}
-        </div>
+        <CalligraphyRequestProjection language={language} />
+      </div>
+    </div>
+  );
+}
 
-        <AgentProjection
-          language={language}
-          presence="awaiting"
-          readyCopy={
+function useRotatingPromptIndex(itemCount: number, intervalMs: number) {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (itemCount < 2) return;
+    const timer = window.setInterval(() => {
+      setIndex((current) => (current + 1) % itemCount);
+    }, intervalMs);
+
+    return () => window.clearInterval(timer);
+  }, [intervalMs, itemCount]);
+
+  return index % itemCount;
+}
+
+function CalligraphyPromptSlot({
+  animationDurationMs,
+  testId,
+  toneClassName,
+  value,
+  widthClassName,
+}: {
+  animationDurationMs: number;
+  testId: string;
+  toneClassName: string;
+  value: string;
+  widthClassName: string;
+}) {
+  return (
+    <span
+      className={`relative inline-grid h-8 shrink-0 place-items-center overflow-hidden [perspective:500px] ${widthClassName}`}
+      data-testid={testId}
+    >
+      <span
+        key={value}
+        className={`masil-calligraphy-slot-spin absolute inset-0 grid place-items-center whitespace-nowrap font-semibold ${toneClassName}`}
+        style={{ animationDuration: `${animationDurationMs}ms` }}
+      >
+        {value}
+      </span>
+    </span>
+  );
+}
+
+function CalligraphyRequestProjection({ language }: { language: Language }) {
+  const fragments = CALLIGRAPHY_PROMPT_FRAGMENTS[language];
+  const wordIndex = useRotatingPromptIndex(
+    fragments.words.length,
+    CALLIGRAPHY_PROMPT_INTERVALS.word,
+  );
+  const styleIndex = useRotatingPromptIndex(
+    fragments.styles.length,
+    CALLIGRAPHY_PROMPT_INTERVALS.style,
+  );
+  const word = fragments.words[wordIndex];
+  const style = fragments.styles[styleIndex];
+  const announcement =
+    language === "ko"
+      ? `에이전트에게 ${word} ${style} 써 달라고 말해보세요.`
+      : `Ask your Agent to write ${word} ${style}.`;
+
+  return (
+    <div
+      className={`mt-11 inline-flex min-h-[5.25rem] w-[calc(100vw-2rem)] items-center justify-center gap-3 rounded-[1.75rem] border border-black/[0.055] bg-white/64 px-4 py-3 text-[#2b2724] shadow-[0_18px_52px_rgba(76,52,39,0.1)] backdrop-blur-md sm:mt-14 sm:rounded-full sm:px-5 ${language === "ko" ? "sm:max-w-[44rem]" : "sm:max-w-[40rem]"}`}
+      role="heading"
+      aria-level={1}
+      aria-label={announcement}
+    >
+      <span
+        aria-hidden="true"
+        className="masil-mic-active grid size-12 shrink-0 place-items-center rounded-xl border border-[#b65f49]/10 bg-[#b65f49]/[0.08] text-[#a44f3b] sm:size-14 sm:rounded-full"
+      >
+        <Mic className="size-6 sm:size-7" strokeWidth={1.8} />
+      </span>
+
+      <span
+        aria-hidden="true"
+        className="flex min-w-0 flex-1 flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 text-[clamp(0.96rem,2vw,1.16rem)] leading-8 font-medium tracking-[-0.035em]"
+      >
+        <span className="shrink-0 whitespace-nowrap text-[#5f5751]">
+          {language === "ko" ? "에이전트에게" : "Ask your Agent to write"}
+        </span>
+        <CalligraphyPromptSlot
+          animationDurationMs={440}
+          testId="calligraphy-prompt-word"
+          toneClassName="text-[#a34e3a]"
+          value={word}
+          widthClassName={
             language === "ko"
-              ? "다른 글자는 에이전트에게 말씀하세요"
-              : "Tell your Agent if you want another character"
+              ? "w-[5.75rem] sm:w-[7rem]"
+              : "w-[6.5rem] sm:w-[8rem]"
           }
         />
-      </div>
+        <CalligraphyPromptSlot
+          animationDurationMs={560}
+          testId="calligraphy-prompt-style"
+          toneClassName="text-[#433e3a]"
+          value={style}
+          widthClassName="w-[8.75rem] sm:w-[10.5rem]"
+        />
+        {language === "ko" ? (
+          <span className="shrink-0 whitespace-nowrap text-[#5f5751]">
+            써 달라고 말해보세요
+          </span>
+        ) : null}
+      </span>
     </div>
   );
 }
@@ -2612,35 +2820,68 @@ function AgentProjection({
     return () => window.clearInterval(timer);
   }, [caption, language, presence, readyCopy]);
 
-  const copy = caption || readyCopy || AGENT_PROMPTS[language][promptIndex];
   const isRotatingPrompt = !caption && !readyCopy && presence === "ready";
+  const prompt = AGENT_PROMPTS[language][promptIndex];
+  const copy = caption || readyCopy || prompt.announcement;
+  const promptPrefix = language === "ko" ? "에이전트에게" : "Ask your Agent to";
+  const promptSuffix = language === "ko" ? "라고 물어보세요" : "";
 
   return (
     <div
-      className={`${compact ? "mt-0" : hero ? "mt-3 sm:mt-3.5" : "mt-10 sm:mt-12"} inline-flex items-center justify-center text-[#756d67] ${hero ? "max-w-[calc(100vw-3rem)] gap-3.5" : "max-w-[36rem] gap-3"}`}
-      role="status"
+      className={`${compact ? "mt-0" : hero ? "mt-4 sm:mt-5" : "mt-10 sm:mt-12"} inline-flex max-w-[calc(100vw-2rem)] items-center justify-center border border-black/[0.055] text-[#756d67] backdrop-blur-md ${hero ? `w-[calc(100vw-2rem)] gap-3 rounded-[1.75rem] bg-white/64 px-4 py-3 shadow-[0_18px_52px_rgba(76,52,39,0.1)] transition-[max-width] duration-500 ease-out sm:rounded-full sm:px-5 ${language === "ko" ? "sm:max-w-[44rem]" : "sm:max-w-[38rem]"}` : "max-w-[36rem] gap-2.5 rounded-2xl bg-white/48 p-2 pr-3.5 shadow-[0_14px_42px_rgba(76,52,39,0.07)] sm:rounded-full sm:pr-5"}`}
+      role={hero ? "heading" : "status"}
+      aria-level={hero ? 1 : undefined}
       aria-live={isRotatingPrompt ? "off" : "polite"}
+      aria-label={copy}
     >
       <span
-        className={`relative block max-w-[calc(100vw-4rem)] overflow-hidden ${
+        aria-hidden="true"
+        className={`grid shrink-0 place-items-center rounded-xl border border-[#b65f49]/10 bg-[#b65f49]/[0.08] text-[#a44f3b] sm:rounded-full ${hero ? "size-12 sm:size-14" : "size-8"} ${active ? "masil-mic-active" : ""}`}
+      >
+        <Mic
+          className={hero ? "size-6 sm:size-7" : "size-[1.05rem]"}
+          strokeWidth={1.8}
+        />
+      </span>
+      <span
+        aria-hidden="true"
+        className={`relative block min-w-0 overflow-hidden ${
           hero
-            ? "h-[1.42em] text-[min(3rem,2.55vw)] leading-[1.28] font-medium tracking-[-0.045em] text-[#211e1b]"
-            : "h-[1.52em] text-[clamp(0.76rem,1.7vw,0.96rem)] leading-[1.38] tracking-[-0.015em]"
+            ? "text-[clamp(1.12rem,2.9vw,1.55rem)] leading-[1.28] font-medium tracking-[-0.04em] text-[#2b2724]"
+            : "text-[clamp(0.76rem,1.7vw,0.92rem)] leading-5 tracking-[-0.015em]"
         }`}
       >
-        <span
-          key={`${language}-${copy}`}
-          className="masil-prompt-cycle flex max-w-full items-center justify-center gap-3 overflow-hidden pt-[0.04em] pb-[0.14em]"
-        >
-          <Mic
-            aria-hidden="true"
-            className={`${hero ? "size-[1.2rem]" : "size-[1.05rem]"} shrink-0 text-[#b65f49] ${active ? "animate-pulse" : "opacity-75"}`}
-            strokeWidth={1.65}
-          />
-          <span className="masil-balance min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+        {isRotatingPrompt ? (
+          <span className="flex min-w-0 flex-col items-center justify-center gap-0.5 sm:flex-row sm:gap-2">
+            <span className="shrink-0 whitespace-nowrap text-[#5f5751]">
+              {promptPrefix}
+            </span>
+            <span
+              className={`relative grid h-7 shrink-0 place-items-center overflow-hidden sm:h-8 ${
+                language === "ko"
+                  ? "w-[min(17.5rem,calc(100vw-8.5rem))] sm:w-[17.5rem]"
+                  : "w-[min(16rem,calc(100vw-8.5rem))] sm:w-[18rem]"
+              }`}
+              data-testid="agent-prompt-fragment"
+            >
+              <span
+                key={`${language}-${prompt.fragment}`}
+                className="masil-prompt-swap absolute inset-x-0 whitespace-nowrap text-center font-semibold text-[#a34e3a]"
+              >
+                {prompt.fragment}
+              </span>
+            </span>
+            {promptSuffix ? (
+              <span className="shrink-0 whitespace-nowrap text-[#5f5751]">
+                {promptSuffix}
+              </span>
+            ) : null}
+          </span>
+        ) : (
+          <span className="masil-balance block max-w-[calc(100vw-6.5rem)] overflow-hidden text-ellipsis whitespace-nowrap">
             {copy}
           </span>
-        </span>
+        )}
       </span>
     </div>
   );
@@ -2711,7 +2952,7 @@ function EventLogDrawer({
           bottom: 0,
           height: "100%",
         }}
-        className="w-[min(94vw,28rem)] border-black/[0.05] pt-[76px] sm:max-w-md"
+        className="w-[min(94vw,29rem)] border-black/[0.06] bg-[#fbf9f4]/96 pt-20 shadow-[-24px_0_70px_rgba(50,35,27,0.11)] backdrop-blur-xl sm:max-w-[29rem]"
         onOverlayClick={onClose}
       >
         {view === "connection" ? (
@@ -2723,15 +2964,15 @@ function EventLogDrawer({
           <SheetDescription>
             {status === "connected"
               ? language === "ko"
-                ? "이 페이지에서 에이전트가 사용한 도구와 상태입니다."
-                : "Tools and activity shared with the Agent on this page."
+                ? "에이전트와 함께 사용한 기능과 진행 과정을 확인할 수 있어요."
+                : "See what you and your Agent have done together on this page."
               : status === "checking"
                 ? language === "ko"
-                  ? "이 페이지의 사이트 도구를 확인하고 있어요."
-                  : "Checking this page for site tools."
+                  ? "에이전트가 사용할 기능을 확인하고 있어요."
+                  : "Checking which features your Agent can use."
                 : language === "ko"
-                  ? "연결되면 아래 사이트 도구를 에이전트가 직접 사용할 수 있어요."
-                  : "Once connected, your Agent can use the site tools below."}
+                  ? "연결하면 에이전트가 아래 기능을 이 화면에서 바로 사용할 수 있어요."
+                  : "Connect your Agent to use these features directly on this screen."}
           </SheetDescription>
             </SheetHeader>
 
@@ -2740,8 +2981,8 @@ function EventLogDrawer({
             <TabsTrigger value="history">
               {status === "connected"
                 ? language === "ko"
-                  ? "실행 기록"
-                  : "History"
+                  ? "함께한 기록"
+                  : "Activity"
                 : language === "ko"
                   ? "화면 둘러보기"
                   : "Explore"}
@@ -2773,8 +3014,8 @@ function EventLogDrawer({
                       </ItemTitle>
                       <ItemDescription>
                         {language === "ko"
-                          ? "공중에 글자를 써보세요"
-                          : "Write a character in the air"}
+                          ? "원하는 글자를 손동작으로 따라 써보세요"
+                          : "Trace a character with your hand"}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
@@ -2800,8 +3041,8 @@ function EventLogDrawer({
                       </ItemTitle>
                       <ItemDescription>
                         {language === "ko"
-                          ? "장기판을 직접 둘러보세요"
-                          : "Explore the Janggi board"}
+                          ? "말을 고르고 직접 한 수 두어보세요"
+                          : "Choose a piece and make a move"}
                       </ItemDescription>
                     </ItemContent>
                     <ItemActions>
@@ -2840,12 +3081,14 @@ function EventLogDrawer({
                 <Item className="mt-2">
                   <ItemContent>
                     <ItemTitle>
-                      {language === "ko" ? "실행 기록 없음" : "No activity yet"}
+                      {language === "ko"
+                        ? "아직 함께한 활동이 없어요"
+                        : "Nothing here yet"}
                     </ItemTitle>
                     <ItemDescription>
                       {language === "ko"
-                        ? "WebMCP 도구가 실행되면 여기에 표시됩니다."
-                        : "WebMCP calls will appear here."}
+                        ? "에이전트와 활동을 시작하면 진행 과정이 여기에 남아요."
+                        : "Start an activity with your Agent and the progress will appear here."}
                     </ItemDescription>
                   </ItemContent>
                 </Item>
@@ -2886,8 +3129,8 @@ function EventLogDrawer({
               data-testid="drawer-connection-guide"
             >
               {language === "ko"
-                ? "에이전트 연결 방법"
-                : "How to connect your Agent"}
+                ? "에이전트 연결하기"
+                : "Connect your Agent"}
               <ArrowRight aria-hidden="true" data-icon="inline-end" />
             </Button>
               </SheetFooter>
@@ -2927,7 +3170,7 @@ function SupportOverlay({
   const wide = session.stage === "handoff";
 
   return (
-    <div className="absolute inset-x-0 bottom-0 top-[72px] z-50 flex items-end justify-center bg-[#2e241e]/16 p-3 pb-24 backdrop-blur-[4px] sm:items-center sm:p-6 sm:pb-24">
+    <div className="absolute inset-x-0 bottom-0 top-20 z-50 flex items-end justify-center bg-[#2e241e]/16 p-3 pb-24 backdrop-blur-[4px] sm:items-center sm:p-6 sm:pb-24">
       <aside
         className={`masil-support-panel max-h-[calc(100svh-178px)] w-full overflow-y-auto rounded-[1.8rem] border border-white/70 bg-[#fbf9f4]/96 shadow-[0_32px_110px_rgba(40,28,21,0.24)] backdrop-blur-2xl ${
           wide ? "max-w-[1040px]" : "max-w-[610px]"
@@ -2942,13 +3185,13 @@ function SupportOverlay({
             />
             <h2 className="mt-5 text-2xl font-medium tracking-[-0.045em] sm:text-3xl">
               {language === "ko"
-                ? "제가 이렇게 이해했어요. 맞나요?"
-                : "Here is what I understood. Is it right?"}
+                ? "이렇게 이해했어요. 맞을까요?"
+                : "Here’s what I understood. Did I get it right?"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-[#716963]">
               {language === "ko"
-                ? "평소 대화에서 몰래 뽑아낸 정보가 아닙니다. 방금 어르신이 도움을 요청해서 열린 메모예요."
-                : "This was not inferred secretly. It opened only after your explicit request for help."}
+                ? "방금 말씀하신 도움 요청만 정리했어요. 확인하기 전에는 누구에게도 보내지 않아요."
+                : "This note contains only the help you just asked for. Nothing is shared before you confirm it."}
             </p>
 
             <div className="mt-6 space-y-3">
@@ -2970,7 +3213,7 @@ function SupportOverlay({
                 onClick={onClose}
               >
                 <ArrowLeft aria-hidden="true" className="size-4" />
-                {language === "ko" ? "그냥 더 이야기할래" : "Just keep talking"}
+                {language === "ko" ? "조금 더 이야기할게요" : "Keep talking"}
               </Button>
               <Button
                 type="button"
@@ -2979,8 +3222,8 @@ function SupportOverlay({
                 data-testid="prepare-review"
               >
                 {language === "ko"
-                  ? "사람 도움을 알아봐줘"
-                  : "Show me human help"}
+                  ? "도움받을 곳 보기"
+                  : "See available help"}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
             </div>
@@ -2995,8 +3238,8 @@ function SupportOverlay({
             />
             <h2 className="mt-5 text-2xl font-medium tracking-[-0.045em] sm:text-3xl">
               {language === "ko"
-                ? "보일 말과 실제 행동을 따로 확인해요."
-                : "Confirm the words and the action separately."}
+                ? "보낼 내용과 다음 행동을 하나씩 확인해 주세요."
+                : "Review what will be shared, then confirm the next step."}
             </h2>
 
             <div className="mt-6 grid gap-3 sm:grid-cols-[0.9fr_1.1fr]">
@@ -3027,7 +3270,7 @@ function SupportOverlay({
 
               <label className="rounded-2xl border border-black/[0.07] bg-white/55 p-4">
                 <span className="text-[0.64rem] font-semibold tracking-[0.12em] text-[#92503f] uppercase">
-                  {language === "ko" ? "보이는 문장 전부" : "Everything shared"}
+                  {language === "ko" ? "보낼 문장" : "What will be shared"}
                 </span>
                 <Textarea
                   className="mt-3 min-h-28 w-full resize-none rounded-xl border border-black/[0.08] bg-[#fbf9f4] p-3 text-sm leading-6 outline-none transition focus:border-[#b65f49]/40 focus:ring-2 focus:ring-[#b65f49]/12"
@@ -3041,8 +3284,8 @@ function SupportOverlay({
                 />
                 <span className="mt-2 block text-xs leading-5 text-[#7b736d]">
                   {language === "ko"
-                    ? "수정하면 이전 확인은 자동으로 취소됩니다."
-                    : "Editing invalidates earlier confirmations."}
+                    ? "문장을 고치면 다시 확인할 수 있어요."
+                    : "If you edit this sentence, you’ll be asked to confirm it again."}
                 </span>
               </label>
             </div>
@@ -3058,7 +3301,7 @@ function SupportOverlay({
                     : "You may share only this sentence"
                 }
                 description={
-                  language === "ko" ? "공개 내용 확인" : "Confirm words"
+                  language === "ko" ? "보낼 내용 확인" : "Confirm what is shared"
                 }
               />
               <ConfirmationRow
@@ -3072,7 +3315,7 @@ function SupportOverlay({
                     ? "로컬 담당자 작업 카드를 만들어 주세요"
                     : "Create a local staff work card"
                 }
-                description={language === "ko" ? "행동 확인" : "Confirm action"}
+                description={language === "ko" ? "다음 행동 확인" : "Confirm the next step"}
               />
             </div>
 
@@ -3084,7 +3327,7 @@ function SupportOverlay({
                 onClick={onClose}
               >
                 <ArrowLeft aria-hidden="true" className="size-4" />
-                {language === "ko" ? "아무것도 만들지 않기" : "Create nothing"}
+                {language === "ko" ? "돌아가기" : "Go back"}
               </Button>
               <Button
                 type="button"
@@ -3096,8 +3339,8 @@ function SupportOverlay({
                 data-testid="create-handoff"
               >
                 {language === "ko"
-                  ? "확인한 내용으로 연결"
-                  : "Connect with confirmed details"}
+                  ? "확인하고 연결하기"
+                  : "Confirm and connect"}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Button>
             </div>

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import "@fontsource/pretendard/400.css";
-import "@fontsource/pretendard/500.css";
-import "@fontsource/pretendard/600.css";
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +12,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full font-sans">{children}</body>
     </html>
   );
 }
