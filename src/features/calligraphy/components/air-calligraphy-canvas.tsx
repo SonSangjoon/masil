@@ -218,7 +218,7 @@ export function AirCalligraphyCanvas({
       <canvas
         ref={canvasRef}
         className={`relative z-0 block h-full min-h-[520px] w-full touch-none lg:min-h-[660px] ${
-          pointerActive ? "cursor-crosshair" : "cursor-default"
+          pointerActive ? "cursor-none" : "cursor-default"
         }`}
         aria-label={
           language === "ko"
@@ -263,15 +263,15 @@ export function AirCalligraphyCanvas({
               : mode === "requesting"
               ? "카메라를 여는 중"
               : mode === "hand"
-                ? "주먹을 쥐면 붓 들기"
-                : "화면에 직접 쓰는 중"
+                ? "주먹은 1시로 닿기 · 손바닥은 2시로 들기"
+                : "누르면 1시로 닿기 · 놓으면 2시로 들기"
             : mode === "idle"
               ? "Ready for air writing"
               : mode === "requesting"
               ? "Opening camera"
               : mode === "hand"
-                ? "Fist to lift the brush"
-                : "Drawing on screen"}
+                ? "Fist touches at one · open palm lifts to two"
+                : "Press to touch at one · release to lift at two"}
         </div>
 
         <div className="flex items-center gap-2">

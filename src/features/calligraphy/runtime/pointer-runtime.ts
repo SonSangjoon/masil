@@ -24,6 +24,11 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
   let animationFrame = 0;
   let resizeFrame = 0;
   let active = false;
+  let pointerSeen = false;
+  let visualOpenness = 1;
+  let targetOpenness = 1;
+  let opennessVelocity = 0;
+  let lastFrameMs = 0;
   let previous: PaintPoint = { x: 0.5, y: 0.5 };
 
   const resize = () => {
@@ -41,9 +46,45 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
     if (!resizeFrame) resizeFrame = requestAnimationFrame(resize);
   };
 
-  const draw = () => {
+  const draw = (now: number) => {
     animationFrame = 0;
     if (disposed || !pipeline || !output) return;
+    const dt =
+      lastFrameMs > 0
+        ? Math.min(0.034, (now - lastFrameMs) / 1000)
+        : 1 / 60;
+    lastFrameMs = now;
+    if (pointerSeen) {
+      // A near-critically-damped spring gives press/release a deliberate settle
+      // without the robotic constant-rate turn of a linear interpolation.
+      const spring = 190;
+      const damping = 25;
+      const acceleration =
+        (targetOpenness - visualOpenness) * spring -
+        opennessVelocity * damping;
+      opennessVelocity += acceleration * dt;
+      let nextOpenness = Math.min(
+        1,
+        Math.max(0, visualOpenness + opennessVelocity * dt),
+      );
+      if (
+        Math.abs(targetOpenness - nextOpenness) < 0.0005 &&
+        Math.abs(opennessVelocity) < 0.006
+      ) {
+        nextOpenness = targetOpenness;
+        opennessVelocity = 0;
+      }
+      if (Math.abs(nextOpenness - visualOpenness) > 0.0001) {
+        visualOpenness = nextOpenness;
+        pipeline.paintPointer(
+          previous,
+          previous,
+          false,
+          active,
+          visualOpenness,
+        );
+      }
+    }
     pipeline.renderVisualFrame(output, {
       dpr: Math.min(2, Math.max(1, window.devicePixelRatio || 1)),
       showCursor: true,
@@ -80,19 +121,39 @@ export function createPointerRenderer(canvas: HTMLCanvasElement): PointerRendere
     clear() {
       pipeline?.clearMask();
       active = false;
+      pointerSeen = false;
+      visualOpenness = 1;
+      targetOpenness = 1;
+      opennessVelocity = 0;
     },
     begin(point) {
       previous = point;
       active = true;
-      pipeline?.paintPointer(point, point, false);
+      pointerSeen = true;
+      targetOpenness = 0.22;
+      pipeline?.paintPointer(point, point, false, true, visualOpenness);
     },
     move(point) {
-      pipeline?.paintPointer(previous, point, active);
+      pointerSeen = true;
+      pipeline?.paintPointer(
+        previous,
+        point,
+        active,
+        active,
+        visualOpenness,
+      );
       previous = point;
     },
     end() {
-      pipeline?.paintPointer(previous, previous, false);
       active = false;
+      targetOpenness = 1;
+      pipeline?.paintPointer(
+        previous,
+        previous,
+        false,
+        false,
+        visualOpenness,
+      );
     },
     dispose() {
       if (disposed) return;
