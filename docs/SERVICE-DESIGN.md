@@ -1,201 +1,165 @@
-# MASIL service design
+# Creative service design
 
-> **Status: complete challenge demo.** The finished journey includes
-> calligraphy, Janggi, WebMCP projection and execution logging, and a reviewable
-> local handoff whose consent and no-transmission boundary is visible.
+> **MASIL is not a voice layer placed on top of a conventional website. It is one continuing
+> creative activity shared by a Korean elder, their Agent, and a live Web UI through WebMCP.**
 
-## Product hierarchy
+This document describes the current calligraphy and Janggi service journeys. Institutional
+connection, welfare intake, and human-support routing are outside the current service and belong
+only in [Long-term vision](VISION.md).
 
-MASIL has one primary outcome and one secondary public outcome.
+## The service outcome
 
-1. **Primary — reconnect creative life.** A digitally excluded older adult
-   living alone should be able to return to creative activity through the web
-   without first learning menus, modes, service vocabulary, or interaction
-   conventions.
-   WebMCP makes the provider's exact capabilities usable through the person's
-   own Agent while the person keeps the visible result and final say.
-2. **Secondary — preserve a path to human help.** If the person explicitly
-   chooses to seek help, MASIL can turn only the approved part of the
-   conversation into a correctable local handoff. It does not replace human
-   assessment or public authority.
+The service succeeds when a Korean elder can begin from familiar language, receive an Agent
+contribution inside a real activity, shape or continue it directly, and let that action influence
+what the Agent does next. The outcome is creative participation, not successful interface
+operation.
 
-MASIL is therefore not a government intake form wrapped in an activity. The
-activities must be worthwhile even if the help window is never opened.
+## One experience, three channels
 
-## Where this document begins
+| Channel | Carries | Does not carry |
+| --- | --- | --- |
+| Agent conversation | Language, context, interpretation, generation, and explanation | Provider truth, visible authorship, or direct spatial action |
+| Live Web UI | Canvas, board, layers, relationships, visible outcomes, and direct human action | Private conversational context or open-ended reasoning |
+| WebMCP | Semantic tools, structured state, validation results, and the return path from human action to Agent | Human intention, model judgment, or visual experience on its own |
 
-The [README](../README.md) explains the main creative experience, and
-[Product definition](PRODUCT.md) describes calligraphy and Janggi in detail.
-This document focuses on the secondary path: what happens only when the person
-explicitly asks MASIL to help prepare something for another human.
+The elder does not choose between “using the Agent” and “using the website.” Conversation and direct
+interaction are two ways of participating in the same provider-owned state.
 
-## The person-first journey
+## Entry journey
 
-```mermaid
-flowchart TD
-    A[Quiet Orb] --> B{Ordinary speech}
-    B -->|“Let's write”| C[Generative calligraphy]
-    B -->|“Let's play Janggi”| D[Shared Janggi board]
-    C --> E[Ongoing conversation and visible co-creation]
-    D --> E
-    E --> F{Person mentions a life difficulty}
-    F -->|Just sharing| G[Keep listening; no case and no disclosure]
-    F -->|Explicitly asks for help| H[Open private help work]
-    H --> I[Agent reads current MASIL provider capabilities]
-    I --> J[Person-corrected minimum disclosure]
-    J --> K{Separate disclosure and action confirmation}
-    K -->|Cancel| L[Return to the exact preserved activity]
-    K -->|Confirm| M[Consent-safe local handoff]
-    M --> L
+### Starting moment
+
+The elder wants to practice calligraphy or play Janggi. They do not need to locate the correct page,
+select a mode, configure controls, or learn a command vocabulary.
+
+### Flow
+
+1. The elder tells their Agent what they want to do.
+2. The Agent discovers MASIL's current capabilities and state through WebMCP.
+3. The Agent opens the requested activity semantically.
+4. MASIL visibly changes into the corresponding creative space.
+5. The elder continues in familiar language or acts directly in the activity.
+
+### Design requirement
+
+The first meaningful result must be the activity itself, not an explanation of the interface.
+
+## Journey 1 — calligraphy
+
+### Why the journey exists
+
+A new phrase can require a new reference and brush style. In an offline class, a teacher may prepare
+that starting point. A fixed online library cannot anticipate every phrase, occasion, or aesthetic
+choice.
+
+### Service blueprint
+
+| Moment | Korean elder | Agent | WebMCP and provider | Visible Web UI |
+| --- | --- | --- | --- | --- |
+| Express | Asks for a phrase such as `추석` and describes the desired style | Understands the request and determines that a new reference is needed | Returns the current activity state and reference contract | Shows the calligraphy space without requiring menu navigation |
+| Create | Waits for a usable starting point | Generates one complete transparent calligraphy reference | Validates text, image URL, and accessible description | Shows a clear creating state rather than a fake finished result |
+| Place | Sees the requested phrase appear | Calls the semantic reference tool | Places the image on the Agent-authored reference layer and advances the revision | Fits the full reference on the live canvas |
+| Continue | Begins air writing or direct drawing | Remains available without taking over the work | Keeps reference and human-stroke layers independent | Preserves every human stroke as the elder's contribution |
+| Revise | Requests another phrase or style when desired | Generates a new starting point | Replaces only the reference layer | Keeps human work intact |
+
+### Essential experience
+
+The Agent does not simply show an image. It makes a new creative starting point available inside the
+activity. The elder continues from it, changes it through their own marks, and remains the author.
+
+### Failure and recovery
+
+- If the generated image is unreadable, malformed, or inaccessible to the page, MASIL rejects it
+  without changing the current canvas.
+- If camera permission is denied or tracking fails, direct drawing remains available.
+- If the elder requests a new reference, existing human strokes must not disappear.
+- A visible failure should lead to correction or retry, not a silent fallback to unrelated sample
+  content.
+
+## Journey 2 — Janggi
+
+### Why the journey exists
+
+An experienced Janggi player understands pieces through their relationships on the board and speaks
+in the shorthand used during real play. Conventional web games ask that person to adopt coordinates,
+piece IDs, menus, and unfamiliar control grammar before the first move.
+
+### Service blueprint
+
+| Moment | Korean elder | Agent | WebMCP and provider | Visible Web UI |
+| --- | --- | --- | --- | --- |
+| Begin | Says they want to play Janggi | Opens the activity and reads the live position | Returns turn, orientation, pieces, history, and legal moves | Presents the real board rather than setup controls |
+| Describe a move | Uses familiar language such as `포 사용해서 위쪽 차 먹어줘` | Resolves the expression against the current board | Supplies exact provider state and validates the selected move | Highlights or animates only a legal result |
+| Agent turn | Watches the match continue | Takes the opposing side and selects a response | Applies the same rules and advances the authoritative state | Animates the Agent move on the same board |
+| Direct move | Selects or drags a piece to a legal destination | Waits rather than competing with the human action | Receives the completed move and returns the updated position | Shows direct control and the resulting turn change |
+| Continue | Responds in words or directly on the board | Re-reads the changed state and continues | Preserves one history and one rules engine | Keeps the same match coherent across both input paths |
+
+### Essential experience
+
+The Agent is not a one-command translator. It understands how the elder speaks, takes the other
+side, and continues from the exact board the elder can also change directly.
+
+### Failure and recovery
+
+- If a phrase maps to more than one legal move, the Agent asks for clarification.
+- If no legal move matches, MASIL leaves the board unchanged and returns a recoverable explanation.
+- If the turn changes before execution, stale input must not alter the board.
+- If a direct-move wait times out or is cancelled, the existing position remains intact.
+- Spoken, selected, and dragged moves must never create different rules outcomes.
+
+## The bidirectional moment
+
+The most important WebMCP-native moment is not the Agent changing the page. It is the page returning
+a meaningful human action to the same waiting Agent:
+
+```text
+Agent changes the live activity
+→ elder sees and acts in that activity
+→ MASIL validates the human action
+→ WebMCP returns the changed state
+→ Agent re-judges what to do next
 ```
 
-The activity is never treated as a risk sensor. A pause, mistake, losing a
-game, camera motion, tone, or creative subject cannot open a support case.
+Without this return path, the Web UI is only an output surface. With it, the elder and Agent
+genuinely share the activity.
 
-## Verified public-service context
+## Human participation and control
 
-The government-side workflow is a secondary design constraint, not the hero
-experience. The full claim-by-claim source ledger and its limits are kept in
-[Evidence and Korean context](EVIDENCE.md).
+MASIL preserves control through the structure of the activity rather than by adding approval
+dialogs to every step.
 
-The 2026 Korean customized care service for older adults
-(`노인맞춤돌봄서비스`) includes safety checks, social participation,
-daily-living education, daily-life support, specialized support, and resource
-linkage. The
-official sequence is application receipt by the local administrative welfare
-center, selection survey and counseling by a commissioned local provider,
-service-plan preparation, municipal decision, service delivery, reassessment,
-termination, and follow-up. See the
-[Ministry of Health and Welfare policy page](https://www.mohw.go.kr/menu.es?mid=a10712010400).
+- The elder chooses the phrase, style, move, correction, and stopping point.
+- Human brushstrokes remain independent from Agent-generated reference material.
+- The elder can act directly on the live Janggi board.
+- Provider validation prevents the Agent from inventing legal truth.
+- A person-visible result always follows a successful mutation.
+- Recoverable failure leaves the previous meaningful state intact.
 
-The official 2026 operating guide makes the human work more concrete:
+## Experience principles
 
-- the local center finds potential recipients and receives applications;
-- a dedicated social worker contacts the applicant, coordinates a home visit,
-  performs the selection survey, and conducts the service counseling;
-- counseling is face-to-face, requires listening, summarizing back, recording
-  the person's words, resolving differences in understanding, and sometimes
-  one or two additional visits;
-- the social worker turns the result into service content, method, frequency,
-  and a frontline care worker (`생활지원사`) assignment, then requests municipal
-  approval;
-- that frontline care worker provides the approved service, records delivery,
-  monitors changes, and reports exceptions;
-- one frontline care worker is planned around an average of 15 service users,
-  subject to local adjustment; and
-- reassessment can use service records plus phone or visit monitoring, while
-  official eligibility, plans, and decisions remain human and institutional
-  responsibilities.
+1. **Do not make navigation the first task.** Begin from the desired activity.
+2. **Do not replace a rich activity with a simplified imitation.** Preserve the full calligraphy
+   practice and full Janggi rules.
+3. **Do not require machine language.** Accept familiar Korean and ground it in provider state.
+4. **Do not make the Agent invisible.** Its contribution must become legible in the shared space.
+5. **Do not make the person passive.** Their marks and moves must remain consequential.
+6. **Do not make direct interaction mandatory.** It is an additional language, not an entrance exam.
+7. **Do not confuse access with outcome.** Success is creative participation, not tool invocation.
 
-Source: [2026 customized care service operating guide](https://www.1661-2129.or.kr/download/2026%EB%85%84%20%EB%85%B8%EC%9D%B8%EB%A7%9E%EC%B6%A4%EB%8F%8C%EB%B4%84%EC%84%9C%EB%B9%84%EC%8A%A4%20%EC%82%AC%EC%97%85%EC%95%88%EB%82%B4.pdf).
+## Target-user research questions
 
-The wider local welfare-delivery system also assigns local centers initial
-counseling, case discovery, integrated case management, resource linkage, and
-follow-up. Complex cases move through needs assessment, case meetings,
-selection, service planning, delivery, monitoring, closure, and follow-up. See
-the [Ministry's current welfare-delivery overview](https://www.mohw.go.kr/menu.es?mid=a10708040100).
+The technical success criteria are owned by [Evaluation](EVALUATION.md). They do not establish
+accessibility success. A later pilot must ask:
 
-This evidence supports a narrow claim: a meaningful amount of necessary staff
-time is spent hearing, clarifying, recording, routing, coordinating, notifying,
-and monitoring. It does not prove a measured MASIL time saving.
+- Can an elder begin without being taught where controls are?
+- Can they tell what the Agent added and what remains theirs?
+- Can they correct an unwanted reference or move?
+- Does familiar Korean reduce explanation compared with a conventional interface?
+- Can they resume after interruption without starting over?
+- Does the experience feel like calligraphy or Janggi rather than a simplified accessibility demo?
 
-## What the demo handles—and what remains human
+## Current boundary
 
-| Person's difficulty | What the completed demo handles | What remains human or institutional |
-| --- | --- | --- |
-| The person does not know the right service name | The Agent turns ordinary language into a private, tentative summary | Staff decides whether any real service is appropriate |
-| The story is difficult to repeat or correct | MASIL shows a short draft the person can revise before approving it | Professional listening and assessment remain human |
-| The person is unsure what will be shared | MASIL separates disclosure confirmation from action confirmation | Any official record or disclosure requires a real authorized provider |
-| A support story must remain coherent and recoverable | MASIL returns a clearly labeled local handoff, preserves its next step, and restores the activity | Eligibility, capacity, contact, and every official decision remain human or institutional |
-
-MASIL does not automate eligibility, medical or emergency judgment, involuntary
-risk scoring, official benefit decisions, mandatory reporting, or an in-person
-survey required by an authorized service.
-
-## Secondary support flow
-
-### 1. Private listening
-
-Ordinary activity conversation stays with the Agent host. MASIL receives no raw
-audio, full transcript, or private Agent memory. The Agent can continue the
-conversation or offer a choice:
-
-> “Should I only keep listening, explain possible options, or help you prepare
-> this for a person?”
-
-No action is the default.
-
-### 2. What MASIL can truthfully offer
-
-Only after the person chooses help does MASIL expose the support operations
-that are actually available. The completed demo can:
-
-- open a private draft after an explicit request;
-- prepare the minimum disclosure for the person's review;
-- require separate disclosure and action confirmations;
-- create and read a clearly labeled local handoff card; and
-- return to the exact preserved creative activity.
-
-MASIL never claims that an external government website already exposes
-WebMCP. The challenge provider is MASIL and its bounded navigator workflow.
-
-### 3. One shared support draft
-
-The person and Agent edit a page-owned `support_work` containing only:
-
-- the person's own short statement;
-- the Agent's tentative interpretation;
-- the result the person wants now;
-- the intended recipient;
-- the minimum approved facts;
-- unanswered provider questions;
-- the current revision and confirmation receipts;
-- the provider status, owner, next step, and valid recovery actions.
-
-The object excludes raw audio, the full activity conversation, hidden mood or
-risk scores, unapproved identifiers, creative content, and Agent memory.
-
-Operator responses, scheduling, and community-center integration are expansion
-horizons described in [Long-term vision](VISION.md).
-
-## Technical handoff
-
-The exact tools, state rules, confirmations, and error behavior are documented
-in [WebMCP design contract](WEBMCP.md). The service rule is simple: the Agent
-may prepare only what the person explicitly requested, and the page must show
-the same draft, revision, confirmation, and result that the provider accepts.
-
-## Three-minute demo story
-
-The demo should lead with the person's new digital capability, not with a
-government dashboard.
-
-| Time | Visible story | What the judge must understand |
-| --- | --- | --- |
-| 0:00–0:15 | Quiet Orb; the person says, “I want to write Chuseok in Hanja.” | No menu knowledge is required |
-| 0:15–0:45 | Agent generates a reference; MASIL becomes a calligraphy space; the person draws | Agent generation enters a live WebMCP-owned activity |
-| 0:45–1:15 | “Let's play Janggi instead.” MASIL preserves the work and becomes a real board; Agent and person exchange moves | One conversational interface can operate different rich web grammars |
-| 1:15–1:40 | During play, the person says travel to the center is difficult and asks whom to contact | Ordinary life can remain ordinary conversation |
-| 1:40–1:55 | Agent asks whether to keep listening or prepare the issue for a person; the person chooses preparation | No hidden intake or surveillance |
-| 1:55–2:20 | MASIL shows one concise support object; the person corrects “cleaning” to “grocery accompaniment” and approves the exact disclosure | The person, not the Agent, owns meaning and disclosure |
-| 2:20–2:40 | MASIL creates a clearly labeled local handoff card and shows that no external institution was contacted | The boundary is intentional, visible, and person-controlled |
-| 2:40–3:00 | Agent reads the local status and MASIL returns to the exact Janggi position | Recovery and preserved creative continuity |
-
-## Challenge product boundary
-
-The completed challenge demo demonstrates:
-
-- two visible activities only: calligraphy and Janggi;
-- voice owned by the Agent host and visual state owned by MASIL;
-- a real, inspectable Janggi position, legal-move engine, and move history;
-- a generated arbitrary calligraphy reference kept separate from human strokes;
-- one explicit transition from an activity to private support work;
-- one person correction that changes the provider payload and valid action;
-- a consent-safe local MASIL handoff, clearly distinguished from a real provider
-  queue;
-- exact status readback and return to the preserved activity; and
-- no external transmission, government submission, automatic risk detection,
-  or official decision.
-
-The next step beyond this completed boundary is described in
-[Long-term vision](VISION.md).
+This service design ends with creative activity. It does not include welfare detection, institutional
+routing, case creation, or care coordination. Any future bridge must earn trust through the current
+experience first and meet the separate conditions in [Long-term vision](VISION.md).

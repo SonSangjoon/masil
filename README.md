@@ -1,155 +1,130 @@
-# MASIL
+# MASIL — Reconnecting Korean Elders to Creative Life
 
-[**Open MASIL →**](https://masil-webmcp.vercel.app)
+> **Korean elders living alone can lose access to the places that sustained their creative lives.
+> The web may be the only path left, yet its interface can become a second closed door.**
 
-> **When the community center is out of reach and the web is impossible to
-> navigate, where does creative life go?**
+**MASIL uses WebMCP to turn Agent access into human participation. Korean elders can return to
+meaningful creative activity—and expand what is possible—without first mastering the web
+interface.**
 
-> **MASIL reconnects digitally excluded older Koreans living alone with the
-> creative activities that once shaped their everyday lives—from calligraphy
-> to Janggi—through their own Agent and WebMCP.**
+**Live demo:** [Open MASIL →](https://masil-webmcp.vercel.app) · **3-minute video:** pending final cut
 
-`MASIL` (마실) is a Korean word for casually stepping out into the
-neighborhood. We built it for people for whom that small trip is no longer
-easy—and for whom the web has never been a real alternative.
+[**Quick start**](#quick-start)
 
-## WebMCP: The New Accessibility Standard
+`MASIL` (마실) means casually stepping out into the neighborhood—a small trip that is no longer easy
+for the people this project serves.
 
-> **The person brings the intent. Their Agent understands it. WebMCP turns it
-> into something they can see, shape, and control.**
+## The problem
 
-MASIL lets an older adult use a rich creative web experience without needing
-to know how the web works. Korea's
-[2025 national digital-divide survey](https://www.nia.or.kr/site/nia_kor/ex/bbs/View.do?bcIdx=29168&cbIdx=81623)
-shows why this matters: with the general population indexed to 100, older
-adults scored `95.4` for digital access but only `56.2` for digital capability.
-MASIL targets that missing layer between access and agency—the ability to
-achieve, inspect, correct, and control an outcome without first learning the
-interface. The evidence and its limits are documented in
-[Evidence and Korean context](docs/EVIDENCE.md).
+Korean elders represented **20.3% of the population** in 2025, according to the
+[Ministry of Data and Statistics](https://www.mods.go.kr/board.es?act=view&bid=10820&list_no=438832&mid=a10301010000),
+and the [2024 census](https://www.kostat.go.kr/boardDownload.es?bid=203&list_no=437767&seq=3) counted
+**2.289 million one-person households** in that age group. Yet the [2025 Digital Divide Survey](https://www.nia.or.kr/site/nia_kor/ex/bbs/View.do?bcIdx=29168&cbIdx=81623)
+scored the older-adult group at **95.4 for digital access but only 56.2 for digital capability**.
+A device can be within reach while the activity remains out of reach.
 
-- The **Agent understands the person first**—their ordinary words, phrasing,
-  and conversational context—then acts as a creative assistant by generating a
-  calligraphy reference, responding in Janggi, or helping them continue.
-- **WebMCP makes MASIL usable through that Agent.** It exposes the exact canvas,
-  board, rules, available actions, permissions, and recovery paths, so the
-  person does not have to learn menus or web conventions first.
-- The **web interface is the creative space itself—not a control panel.** It is
-  where references, brushstrokes, Janggi positions, and direct gestures remain
-  visible across turns. The Agent can understand intent; the shared web space
-  is where the person and Agent make something together.
+For a homebound Korean elder, the exclusion can happen twice: the physical place that sustained
+creative and social life becomes unreachable, while the web alternative introduces unfamiliar
+menus, modes, coordinates, and controls.
 
-The person keeps the intent, authorship, and final say. The Agent and
-WebMCP carry the burden of understanding and operating the interface.
+### Why calligraphy and Janggi?
 
-| Approach | What it enables—and where it stops |
-| --- | --- |
-| Generic voice assistant | It can talk about calligraphy and Janggi, but on its own it provides no live writing space, persistent brushstrokes, visible board, or shared moves. If an older adult cannot open and operate another app, voice alone still leaves them excluded. |
-| Fixed accessible UI | It can enlarge controls, but the person must still learn each activity's controls and remain inside predetermined content and flows. |
-| **MASIL (Agent + WebMCP)** | The Agent understands and supports the person's creative intent; WebMCP lets it operate MASIL's exact live creative space. The person can make, continue, and control the activity without first learning the interface. |
+They are two forms of living Korean heritage sustained through practice and shared place.
 
-The completed challenge experience carries one Agent relationship from
-generative calligraphy to conversational Janggi and, only by explicit choice,
-through a consent-safe local handoff and back to the preserved activity.
+- **Calligraphy** appears in national [senior-welfare guidance](https://www.kcpass.or.kr/fileDownload?fileDownType=C&fileId=2&paramMenuId=MENU002030702000000&titleId=tAlhPvqA4H)
+  and across multiple centers in a [2025 local program guide](https://health.saha.go.kr/edu/Downfiles/sahaedu_info_202509.pdf).
+  Each new phrase and style can require a reference traditionally prepared by a teacher.
+- **Janggi** has long served as social infrastructure as well as a game. At Seoul's Tapgol Park,
+  a [30-year tradition](https://v.daum.net/v/20250825200046781) gathered play, debate, and
+  conversation; [later reporting](https://www.hankookilbo.com/news/article/A2026011018500002067)
+  described the community dispersing after the boards were removed.
 
-## When Creative Life Loses Its Place
+## What MASIL makes possible
 
-> **The problem is not that older adults lack creative lives. It is that the
-> places supporting those lives can become unreachable.**
+> **The Agent expands what is possible. WebMCP turns that capability into a live activity the
+> elder can enter and continue without first learning the interface.**
 
-For many older Koreans, creative life has familiar places: a calligraphy table
-at a neighborhood welfare center or a Janggi board surrounded by people who
-watch, challenge, and talk. Korea's 2025 senior-welfare guidance lists both
-among the hobby and cultural activities offered through senior welfare centers.
+MASIL is a live creative space where the elder begins with familiar language, receives an Agent
+contribution through WebMCP, and continues the same activity directly.
 
-That access is fragile. Stairs, public transit, or distance can put a community
-program beyond reach. In 2025, Janggi was prohibited and every board was
-removed from Seoul's Tapgol Park, ending a free gathering scene reported as a
-30-year tradition. For an older adult living alone, losing the place can mean
-losing both the activity and a recurring point of human contact.
+| Approach | What it provides | Where it stops |
+| --- | --- | --- |
+| Voice Agent alone | Language understanding and generation | It can answer or create an asset, but the result remains outside a live activity. |
+| Fixed accessible UI alone | Visible state and human-operable controls | The elder must still learn its controls and remain within predetermined content. |
+| **Agent + WebMCP + live Web UI** | Generation, interpretation, provider-owned state, and bidirectional interaction | Agent access becomes participation in one visible, continuing activity. |
 
-The web should open another route. But for someone who cannot navigate menus,
-modes, and controls, a conventional website becomes a second locked door. The
-physical place is out of reach, and its digital alternative is impossible to
-enter.
+### Calligraphy: imagination beyond a fixed library
 
-MASIL opens that second door through the person's Agent. “추석을 한자로 쓰고
-싶어” becomes an Agent-generated `秋夕` reference inside a live air-writing
-canvas. “왼쪽 차 위로 쭉” becomes a move on the exact visible Janggi board and
-a response from the Agent. WebMCP turns ordinary speech into continued access
-to a shared creative space, while the person remains its author and
-decision-maker.
+**Need:** A fixed library cannot anticipate every phrase or brush style, and the teacher who once
+prepared a reference may no longer be within reach.
 
-MASIL does not claim that a website replaces a community. It preserves access
-to a chosen part of creative life when the community cannot be reached.
+**Experience:** The Agent creates the requested reference; WebMCP places it on the live canvas as a
+separate layer; the elder writes over it. Every request can become a new starting point, so the
+activity is no longer confined to material someone prepared in advance.
 
-Sources: [2025 senior-welfare program guidance](https://www.kcpass.or.kr/fileDownload?fileDownType=C&fileId=3&paramMenuId=MENU002030702000000&titleId=9vRotzVdm8),
-[Tapgol Park reporting](https://v.daum.net/v/20250825200046781), and
-[mobility analysis based on the 2023 National Survey of Older Persons](https://repository.kihasa.re.kr/bitstream/201002/46105/1/2024.11.No.337.06.pdf).
+### Janggi: familiar language becomes a complete match
 
-## Why MASIL Belongs in the WebMCP Challenge
+**Need:** Decades of Janggi experience do not teach coordinates, piece IDs, or web-game controls.
 
-| [Judging criterion](https://webmcp.devpost.com/rules) | MASIL's answer |
-| --- | --- |
-| **WebMCP Leverage** | The Agent understands the person's words; MASIL's WebMCP tools place generated work, read the exact Janggi position, and change the live creative state. Without that semantic bridge, the Agent can discuss the activity but cannot reliably enter and continue the exact shared state. |
-| **Execution** | The completed demo carries one Agent relationship across calligraphy and Janggi. Agent tool calls and direct touch update the same visible state, so the person can see, continue, and control the experience. |
-| **Potential Impact** | MASIL addresses a specific double exclusion facing older Koreans living alone: familiar creative spaces can become physically unreachable while conventional web alternatives remain digitally inaccessible. Through WebMCP, their own Agent provides a person-controlled route back into those activities. |
-| **Creativity & Ambition** | MASIL demonstrates an agent-mediated accessibility layer: instead of requiring interface literacy, it lets the person use a provider-declared creative space through their own Agent while keeping the visible outcome under human control. |
+**Experience:** WebMCP supplies the live position, turn, and legal moves; the Agent resolves the
+elder's familiar shorthand; MASIL validates the move. The Agent takes the other side, and the
+elder's direct move returns to it so the same match continues.
 
-## Beyond the Creative Space
+## Why WebMCP is necessary
 
-MASIL begins with creativity, not welfare intake. But if the person explicitly
-asks for human help, the same person-controlled channel can keep their story
-from disappearing between a conversation and a public-service workflow.
+```text
+elder's words
+→ Agent interpretation or generation
+→ WebMCP tool
+→ MASIL validation and visible state
+→ elder's direct action
+→ waiting Agent continues from the changed state
+```
 
-The public-service constraint is finite human time. As of August 2025, Korea's
-customized-care system reported about
-[550,000 vulnerable older adults, 2,600 dedicated social workers, and 35,000
-frontline care workers](https://www.1661-2129.or.kr/sub05/sub01/sub01.php).
-The [2026 operating guidance](https://www.1661-2129.or.kr/download/2026%EB%85%84%20%EB%85%B8%EC%9D%B8%EB%A7%9E%EC%B6%A4%EB%8F%8C%EB%B4%84%EC%84%9C%EB%B9%84%EC%8A%A4%20%EC%82%AC%EC%97%85%EC%95%88%EB%82%B4.pdf)
-requires staff to receive applications, arrange visits, listen and clarify,
-record needs, plan services, monitor delivery, and reassess. These figures do
-not by themselves prove a nationwide staffing shortage. They do show why
-repeated intake, transcription, and missing-information follow-up consume
-finite time that should be protected for judgment and care.
+An Agent alone does not own MASIL's canvas, board, rules, turn order, or valid actions. Computer Use
+can click visible controls, but it must infer meaning and state from a human-facing interface. A
+fixed UI can hold state, but it cannot generate every creative starting point or understand evolving
+human language.
 
-A [2025 peer-reviewed case](https://www.kihasa.re.kr/hswr/assets/pdf/1560/journal-45-2-78.pdf)
-shows how a blind spot can remain even after the need is understood. An
-80-year-old man living alone documented his assets and living situation with
-help, and a village care manager delivered the signed statement because travel
-was difficult. The local office still required him to appear in person; he
-hesitated, and the support linkage stopped.
+WebMCP lets the Agent turn the elder's familiar words and newly generated ideas into a live web
+activity, then continue from what happens on the page. The elder no longer has to learn the
+interface before creating or playing; the activity can begin in familiar language and keep
+expanding through the Agent.
 
-MASIL cannot decide eligibility, override an agency's attendance requirement,
-or infer a welfare need from silence or inactivity. It can preserve the
-person's own words, turn only approved details into a correctable support
-draft, show what is still missing, and return a visible next step. Together,
-the Agent and WebMCP preserve continuity; human staff keep professional
-assessment, exceptions, official decisions, and the human care the system
-exists to provide.
+## Verification status
 
-The challenge demo completes this flow end to end. Its designed endpoint is a
-clearly labeled local handoff: the person can review, confirm, receive a result,
-and return to the preserved activity, while no external institution is
-contacted. Partner-operated community-center connections and measured service
-outcomes are separate expansion horizons in [Long-term vision](docs/VISION.md).
-The complete consent, safety, and service boundary is documented in
-[Person-first service design](docs/SERVICE-DESIGN.md).
+The creative journeys are being evaluated against a frozen task set. The evaluation measures
+whether the requested activity succeeds—not merely whether a tool was called.
+No final success rate, accessibility outcome, institutional adoption, or reduction in social
+isolation is claimed before the corresponding evidence is frozen.
+
+See [Evaluation](docs/EVALUATION.md) for the method and publication gate and [WebMCP design](docs/WEBMCP.md)
+for the technical contract.
+
+## Built for one continuing experience
+
+MASIL uses the elder's existing Agent rather than embedding a second conversational model. It
+registers semantic tools with `document.modelContext.registerTool()` and returns structured state
+after each operation. The application uses Next.js, React, and TypeScript; WebGPU and Vercel Labs'
+`vGPU` render the creative spaces, while ONNX Runtime Web supports local hand tracking.
 
 ## Documentation
 
-- [Product definition](docs/PRODUCT.md) — the person, product hierarchy,
-  creative journey, authority, and non-goals
-- [Evidence and Korean context](docs/EVIDENCE.md) — source ledger and evidence
-  limits
-- [Person-first service design](docs/SERVICE-DESIGN.md) — the optional
-  human-support flow and public-service boundary
-- [WebMCP design contract](docs/WEBMCP.md) — tool catalog, shared state,
-  calligraphy asset contract, Janggi turns, confirmations, and recovery
-- [Long-term vision](docs/VISION.md) — how MASIL could extend this new
-  accessibility layer without becoming surveillance
+- [Documentation guide](docs/README.md) — choose the right document by question
+- [Product definition](docs/PRODUCT.md) — audience, capability, principles, and non-goals
+- [Creative service design](docs/SERVICE-DESIGN.md) — calligraphy and Janggi journeys
+- [WebMCP design](docs/WEBMCP.md) — tools, state, validation, and bidirectional interaction
+- [Evaluation](docs/EVALUATION.md) — frozen tasks, iterations, results, and evidence gate
+- [Evidence and Korean context](docs/EVIDENCE.md) — sources, interpretations, and claim ceilings
+- [Long-term vision](docs/VISION.md) — conditional social and institutional hypotheses
 
-## Development
+## Long-term direction
+
+MASIL begins with creative life because it must be valuable before it asks for trust. Only after
+that experience proves useful could it become a voluntary path to human support. This is not a
+current feature; its requirements are isolated in [Long-term vision](docs/VISION.md).
+
+## Quick start
 
 MASIL uses Node.js 24, npm, Next.js App Router, TypeScript, and ESLint.
 
@@ -158,7 +133,8 @@ npm install
 npm run dev
 ```
 
-Before opening a pull request, run the same checks used by CI:
+Open the local URL in an Agent host with WebMCP support. Before opening a pull request, run the
+same checks used by CI:
 
 ```bash
 npm run lint
@@ -166,13 +142,11 @@ npm run typecheck
 npm run build
 ```
 
-Deployment uses Vercel's Git integration. Pull requests create Preview
-deployments, and `main` deploys to
-[masil-webmcp.vercel.app](https://masil-webmcp.vercel.app). No Vercel
-deployment token is stored in this repository.
+Deployment uses Vercel's Git integration. Pull requests create Preview deployments, and `main`
+deploys to [masil-webmcp.vercel.app](https://masil-webmcp.vercel.app). No Vercel deployment token
+is stored in this repository.
 
 ## License
 
-MASIL is licensed under the [MIT License](LICENSE). Third-party software,
-fonts, and media retain their own licenses. Notices are included only for
-materials actually distributed in this repository.
+MASIL is licensed under the [MIT License](LICENSE). Third-party software, fonts, and media retain
+their own licenses.
