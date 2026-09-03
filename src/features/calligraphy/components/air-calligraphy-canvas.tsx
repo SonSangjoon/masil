@@ -85,6 +85,8 @@ export const AirCalligraphyCanvas = forwardRef<
   ref,
 ) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const referenceStageRef = useRef<HTMLDivElement>(null);
+  const referenceInputRef = useRef({ character, referenceImageUrl });
   const pointerRendererRef = useRef<PointerRenderer | undefined>(undefined);
   const cameraRendererRef = useRef<CameraRenderer | undefined>(undefined);
   const [mode, setMode] = useState<InputMode>(
@@ -172,6 +174,10 @@ export const AirCalligraphyCanvas = forwardRef<
           camera,
           onWritingStateChange: updateWritingState,
         });
+        renderer.setReferenceMask({
+          ...referenceInputRef.current,
+          stage: referenceStageRef.current,
+        });
         cameraRendererRef.current = renderer;
         await renderer.ready;
         if (!active) {
@@ -213,6 +219,15 @@ export const AirCalligraphyCanvas = forwardRef<
     updateWritingState,
   ]);
 
+  useEffect(() => {
+    referenceInputRef.current = { character, referenceImageUrl };
+    cameraRendererRef.current?.setReferenceMask({
+      character,
+      referenceImageUrl,
+      stage: referenceStageRef.current,
+    });
+  }, [character, referenceImageUrl]);
+
   const stopHands = useCallback(() => {
     updateWritingState(false);
     cameraRequest?.abort();
@@ -251,6 +266,7 @@ export const AirCalligraphyCanvas = forwardRef<
   return (
     <div className="relative isolate h-full min-h-0 overflow-hidden bg-[#f8f4ed]">
       <div
+        ref={referenceStageRef}
         className="pointer-events-none absolute inset-x-[6%] top-[5.75rem] bottom-[8.25rem] z-0 grid place-items-center overflow-hidden [container-type:size] sm:inset-x-[7%] sm:top-[6.25rem] sm:bottom-[8.75rem]"
         data-testid="calligraphy-reference-stage"
       >

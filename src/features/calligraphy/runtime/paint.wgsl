@@ -20,6 +20,8 @@ struct BrushState {
   radius: f32,
   prev_radius: f32,
   openness: f32,
+  engaged: f32,
+  pressure: f32,
 };
 
 // Binding array lengths must be literals for vgpu reflection.
@@ -87,7 +89,9 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
   var coverage = 0.0;
   for (var i = 0u; i < BRUSH_COUNT; i = i + 1u) {
     let brush = brushes[i];
-    if (brush.stroke < 0.5) {
+    // Stroke continuity and the visible contact pose share the same explicit
+    // engagement bit written by hand.wgsl. Never stamp ink from a lifted brush.
+    if (brush.stroke < 0.5 || brush.engaged < 0.5) {
       continue;
     }
     coverage = max(coverage, capsule_coverage(texel, brush));

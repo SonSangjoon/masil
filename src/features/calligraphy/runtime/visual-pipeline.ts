@@ -17,6 +17,8 @@ import {
   LANDMARK_POINTS_BUFFER_BYTES,
   LANDMARK_SIZE,
   MAX_HANDS,
+  PRESENCE_ENTER,
+  PRESENCE_STAY,
 } from "./hand-model-contract";
 import type { HandRoi } from "./hand-pipeline";
 import compositeWgsl from "./composite.wgsl";
@@ -28,8 +30,8 @@ export const MASK_WIDTH = 960;
 export const MASK_HEIGHT = 540;
 export const MASK_TEXELS = MASK_WIDTH * MASK_HEIGHT;
 export const MASK_BYTES = MASK_TEXELS * 4;
-// Keep this in lockstep with the 12-float BrushState shared by the WGSL stages.
-export const BRUSH_BUFFER_BYTES = 48 * MAX_HANDS;
+// Keep this in lockstep with the 14-float BrushState shared by the WGSL stages.
+export const BRUSH_BUFFER_BYTES = 56 * MAX_HANDS;
 const ROI_SLOT_COUNT = MAX_HANDS + 1;
 const ROI_STRIDE_FLOATS = 4;
 export const ROI_BYTES = ROI_SLOT_COUNT * ROI_STRIDE_FLOATS * 4;
@@ -52,6 +54,13 @@ interface VisualFrameOptions {
 export interface PaintPoint {
   readonly x: number;
   readonly y: number;
+}
+
+export interface ReferenceBounds {
+  readonly left: number;
+  readonly top: number;
+  readonly right: number;
+  readonly bottom: number;
 }
 
 type Owned = {
@@ -165,6 +174,23 @@ export function createVisualPipeline(
     let displayFrameTexture = own(
       createFrameTexture(gpu, `${label}-display`, sourceWidth, sourceHeight)
     );
+    let referenceTexture = own(
+      createFrameTexture(gpu, `${label}-reference`, 1, 1)
+    );
+    let referenceAspect = 1.5;
+    let referenceVisible = false;
+    let referenceBounds: ReferenceBounds = {
+      left: 0,
+      top: 0,
+      right: 1,
+      bottom: 1,
+    };
+    gpu.gpu.queue.writeTexture(
+      { texture: referenceTexture.gpu },
+      new Uint8Array(4),
+      { bytesPerRow: 4, rowsPerImage: 1 },
+      { width: 1, height: 1 }
+    );
     const linearSampler = sampler(gpu, {
       minFilter: "linear",
       magFilter: "linear",
@@ -180,7 +206,7 @@ export function createVisualPipeline(
     const roiScratch = new Float32Array(ROI_STRIDE_FLOATS);
     const pointerBrushes = new Float32Array(BRUSH_BUFFER_BYTES / 4);
 
-    const dispatchPaint = (radius = 18) => {
+    const dispatchPaint = (radius = 13) => {
       paint.set({
         uniforms: {
           mask_size: [MASK_WIDTH, MASK_HEIGHT],
@@ -279,8 +305,8 @@ export function createVisualPipeline(
             presence,
             ran,
             dt: dtSeconds,
-            enter_confidence: 0.45,
-            stay_confidence: 0.3,
+            enter_confidence: PRESENCE_ENTER,
+            stay_confidence: PRESENCE_STAY,
             ema_tau: 0.075,
             max_jump: 0.18 * Math.SQRT2,
             reset: options.reset ? 1 : 0,
@@ -293,14 +319,14 @@ export function createVisualPipeline(
           brushes,
         });
         hand.dispatch(1);
-        dispatchPaint(14);
+        dispatchPaint(13);
       },
       paintPointer(
         previous: PaintPoint,
         current: PaintPoint,
         stroke: boolean,
         engaged = true,
-        openness = engaged ? 0.22 : 1
+        openness = engaged ? 0.08 : 1
       ) {
         pointerBrushes.fill(0);
         pointerBrushes.set(
@@ -317,6 +343,8 @@ export function createVisualPipeline(
             13,
             13,
             openness,
+            engaged ? 1 : 0,
+            engaged ? 1 : 0,
           ],
           0
         );
@@ -332,15 +360,20 @@ export function createVisualPipeline(
           uniforms: {
             resolution: output.size,
             mask_size: [MASK_WIDTH, MASK_HEIGHT],
+            reference_min: [referenceBounds.left, referenceBounds.top],
+            reference_max: [referenceBounds.right, referenceBounds.bottom],
             show_cursor: options.showCursor === false ? 0 : 1,
             show_camera: options.showCamera === true ? 1 : 0,
             cursor_radius: 23,
             grain_cell: 4 * dpr,
+            reference_aspect: referenceAspect,
+            reference_visible: referenceVisible ? 1 : 0,
           },
           mask,
           brushes,
           frameTexture: displayFrameTexture,
           frameSampler: linearSampler,
+          referenceTexture,
         });
         frame(gpu, (currentFrame) => {
           currentFrame.pass({ target: output }, (pass) => pass.draw(composite));
@@ -384,6 +417,43 @@ export function createVisualPipeline(
         if (!(nextWidth > 0) || !(nextHeight > 0)) return;
         displayWidth = nextWidth;
         displayHeight = nextHeight;
+      },
+      setReferenceBounds(nextBounds: ReferenceBounds) {
+        referenceBounds = {
+          left: Math.min(1, Math.max(0, nextBounds.left)),
+          top: Math.min(1, Math.max(0, nextBounds.top)),
+          right: Math.min(1, Math.max(0, nextBounds.right)),
+          bottom: Math.min(1, Math.max(0, nextBounds.bottom)),
+        };
+      },
+      setReferenceMask(
+        source: GPUCopyExternalImageSource,
+        width: number,
+        height: number
+      ) {
+        if (!(width > 0) || !(height > 0)) return;
+        let nextTexture: Texture | undefined;
+        try {
+          nextTexture = own(
+            createFrameTexture(gpu, `${label}-reference`, width, height)
+          );
+          gpu.gpu.queue.copyExternalImageToTexture(
+            { source },
+            { texture: nextTexture.gpu },
+            { width, height }
+          );
+        } catch (error) {
+          if (nextTexture) release(nextTexture);
+          throw error;
+        }
+        const previous = referenceTexture;
+        referenceTexture = nextTexture;
+        referenceAspect = width / height;
+        referenceVisible = true;
+        release(previous);
+      },
+      clearReferenceMask() {
+        referenceVisible = false;
       },
       clearMask() {
         mask.write(new Uint8Array(MASK_BYTES));

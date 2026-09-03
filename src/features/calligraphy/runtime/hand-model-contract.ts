@@ -36,7 +36,7 @@ export const LANDMARK_POINTS_BUFFER_BYTES = 256;
 export const ANCHOR_NUM_LAYERS = 4;
 export const ANCHOR_STRIDES = [8, 16, 16, 16] as const;
 export const ANCHOR_OFFSET = 0.5;
-export const DETECTOR_SCORE_THRESHOLD = 0.5;
+export const DETECTOR_SCORE_THRESHOLD = 0.47;
 export const NMS_IOU_THRESHOLD = 0.3;
 
 export const ROI_ROTATION_START_KEYPOINT = 0;
@@ -46,9 +46,9 @@ export const ROI_SCALE = 2.6;
 export const ROI_SHIFT_Y = -0.5;
 export const MCP_LANDMARKS = [5, 9, 13, 17] as const;
 
-export const PRESENCE_ENTER = 0.45;
-export const PRESENCE_STAY = 0.3;
-export const TRACK_LOST_RESULTS = 2;
+export const PRESENCE_ENTER = 0.42;
+export const PRESENCE_STAY = 0.28;
+export const TRACK_LOST_RESULTS = 3;
 export const ROI_MIN_FRACTION = 0.02;
 export const ROI_MAX_FRACTION = 2.5;
 export const MAX_HANDS = 2;

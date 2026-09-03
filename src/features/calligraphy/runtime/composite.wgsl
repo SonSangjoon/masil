@@ -5,10 +5,14 @@
 struct Uniforms {
   resolution: vec2f,
   mask_size: vec2f,
+  reference_min: vec2f,
+  reference_max: vec2f,
   show_cursor: f32,
   show_camera: f32,
   cursor_radius: f32,
   grain_cell: f32,
+  reference_aspect: f32,
+  reference_visible: f32,
 };
 
 struct BrushState {
@@ -22,6 +26,8 @@ struct BrushState {
   radius: f32,
   prev_radius: f32,
   openness: f32,
+  engaged: f32,
+  pressure: f32,
 };
 
 const BRUSH_COUNT: u32 = 2u;
@@ -31,6 +37,7 @@ const BRUSH_COUNT: u32 = 2u;
 @group(0) @binding(2) var<storage, read> brushes: array<BrushState, 2>;
 @group(0) @binding(3) var frameTexture: texture_2d<f32>;
 @group(0) @binding(4) var frameSampler: sampler;
+@group(0) @binding(5) var referenceTexture: texture_2d<f32>;
 
 fn mask_texel(t: vec2i) -> f32 {
   let size = vec2i(uniforms.mask_size);
@@ -126,14 +133,15 @@ fn composite_brush(base: vec3f, point: vec2f, brush: BrushState) -> vec3f {
   // While writing, the handle reaches toward one o'clock so the bristle tip
   // leads at seven. When lifted, it only relaxes to a two-to-eight diagonal;
   // the tip also floats away from the contact point instead of rotating flat.
-  // The pose, shape, placement and fade deliberately use staggered easing.
-  // On release the brush relaxes before becoming a ghost; on engagement the
-  // ghost gains presence and finds the contact point before loading its hair.
-  let pose_lift = smootherstep_range(brush.openness, 0.22, 0.96);
-  let lift = smootherstep_range(brush.openness, 0.30, 0.90);
-  let placement_lift = smootherstep_range(brush.openness, 0.46, 0.98);
-  let fade_lift = smootherstep_range(brush.openness, 0.54, 0.98);
-  let pressure = 1.0 - lift;
+  // hand.wgsl owns the hysteresis decision. Contact, pose and ink all consume
+  // that exact bit; pressure remains continuous inside the engaged range so
+  // the bristles still breathe with the fist without lagging behind the mark.
+  let engaged = clamp(brush.engaged, 0.0, 1.0);
+  let pressure = clamp(brush.pressure, 0.0, 1.0) * engaged;
+  let pose_lift = 1.0 - engaged;
+  let lift = 1.0 - pressure;
+  let placement_lift = 1.0 - engaged;
+  let fade_lift = 1.0 - engaged;
   let resting_axis = vec2f(0.8660254, -0.5);
   let angle = mix(-1.04719755, -0.52359878, pose_lift);
   let axis = vec2f(cos(angle), sin(angle));
@@ -468,7 +476,7 @@ fn camera_sample(uv: vec2f, resolution: vec2f) -> vec3f {
   // hand remain legible as a silhouette without competing with the guide.
   // Four bilinear taps retain the frosted Air Painting feel at less than half
   // the texture-fetch cost of the previous full-resolution 3x3 kernel.
-  let blur = texel * 5.5;
+  let blur = texel * 7.25;
   let taps = array<vec2f, 4>(
     vec2f(-1.0, -1.0),
     vec2f(1.0, -1.0),
@@ -483,6 +491,37 @@ fn camera_sample(uv: vec2f, resolution: vec2f) -> vec3f {
   return color * 0.25;
 }
 
+// Maps the same object-contain rectangle used by the DOM reference layer. The
+// guide's real alpha—not its rectangular asset bounds—is the focus aperture.
+fn reference_alpha(uv: vec2f) -> f32 {
+  if (uniforms.reference_visible < 0.5) {
+    return 0.0;
+  }
+
+  let bounds_size = max(
+    uniforms.reference_max - uniforms.reference_min,
+    vec2f(1e-5)
+  );
+  let bounds_aspect = bounds_size.x / bounds_size.y;
+  let image_aspect = max(uniforms.reference_aspect, 1e-5);
+  var content_size = bounds_size;
+  if (bounds_aspect > image_aspect) {
+    content_size.x = bounds_size.y * image_aspect;
+  } else {
+    content_size.y = bounds_size.x / image_aspect;
+  }
+  let content_min = uniforms.reference_min + (bounds_size - content_size) * 0.5;
+  let reference_uv = (uv - content_min) / max(content_size, vec2f(1e-5));
+  let inside = all(reference_uv >= vec2f(0.0)) && all(reference_uv <= vec2f(1.0));
+  let sampled = textureSampleLevel(
+    referenceTexture,
+    frameSampler,
+    clamp(reference_uv, vec2f(0.0), vec2f(1.0)),
+    0.0
+  ).a;
+  return sampled * select(0.0, 1.0, inside);
+}
+
 @fragment
 fn fs_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
   let uv = position.xy / uniforms.resolution;
@@ -495,9 +534,22 @@ fn fs_main(@builtin(position) position: vec4f) -> @location(0) vec4f {
 
   var base = paper;
   if (uniforms.show_camera > 0.5) {
-    let camera = camera_sample(uv, uniforms.resolution);
+    var camera = camera_sample(uv, uniforms.resolution);
+    let guide_alpha = reference_alpha(uv);
+    if (guide_alpha > 0.01) {
+      let sharp_camera = textureSampleLevel(
+        frameTexture,
+        frameSampler,
+        clamp(camera_uv(uv, uniforms.resolution), vec2f(0.0), vec2f(1.0)),
+        0.0
+      ).rgb;
+      // Preserve antialiased brush edges while keeping every pixel beyond the
+      // actual glyph alpha fully frosted.
+      let focus = smoothstep(0.025, 0.22, guide_alpha);
+      camera = mix(camera, sharp_camera, focus);
+    }
     // Keep the person recognisable while making the image feel like a soft
-    // private window behind the crisp-edged translucent reference.
+    // private window, with focus only through the calligraphy silhouette.
     let softened = mix(camera, vec3f(0.976, 0.959, 0.925), 0.10);
     base = softened * vec3f(1.025, 1.0, 0.975) + vec3f(paper_grain);
   }

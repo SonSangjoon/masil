@@ -61,10 +61,11 @@ export async function requestCamera(signal: AbortSignal) {
     video: {
       facingMode: "user",
       // The models immediately reduce this to 256px and 224px crops. A 540p
-      // source preserves hand detail without competing with inference at 60fps.
+      // source preserves hand detail while 60fps keeps the tracked brush close
+      // to the hand. The coalescing scheduler prevents inference piling.
       width: { ideal: 960 },
       height: { ideal: 540 },
-      frameRate: { ideal: 30, max: 30 },
+      frameRate: { ideal: 60, max: 60 },
     },
   });
   let stream: MediaStream;

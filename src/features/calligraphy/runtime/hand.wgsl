@@ -27,6 +27,8 @@ struct BrushState {
   radius: f32,
   prev_radius: f32,
   openness: f32,
+  engaged: f32,
+  pressure: f32,
 };
 
 struct Roi {
@@ -46,12 +48,13 @@ const TAU: f32 = 6.283185307179586;
 /// Wrist and middle-finger MCP: the landmark model's own hand axis.
 const AXIS_START: u32 = 0u;
 const AXIS_END: u32 = 9u;
-// Only a nearly flat palm lifts the brush. The smaller regrip threshold adds
-// a narrow hysteresis band so the tip does not chatter at the paper boundary.
-const OPEN_PALM_LIFT_THRESHOLD: f32 = 0.88;
-const HAND_REGRIP_THRESHOLD: f32 = 0.78;
-const MIN_BRUSH_RADIUS: f32 = 5.0;
-const MAX_BRUSH_RADIUS: f32 = 24.0;
+// Painting starts only once the four fingers are almost fully curled. A wider
+// release threshold keeps that deliberate fist stable without letting a
+// casual finger bend touch the paper.
+const HAND_ENGAGE_THRESHOLD: f32 = 0.20;
+const HAND_RELEASE_THRESHOLD: f32 = 0.34;
+const MIN_BRUSH_RADIUS: f32 = 3.5;
+const MAX_BRUSH_RADIUS: f32 = 12.5;
 const BRUSH_TIP_OFFSET_SCALE: f32 = 1.15;
 const MIN_BRUSH_TIP_OFFSET: f32 = 42.0;
 const MAX_BRUSH_TIP_OFFSET: f32 = 120.0;
@@ -173,11 +176,13 @@ fn hand_openness(slot: u32) -> f32 {
   ) * 0.25;
 }
 
-// A closed fist presses the broadest part of the virtual brush into the paper.
-// Opening the hand progressively releases that pressure until a flat palm
-// lifts the brush completely.
-fn brush_radius(openness: f32) -> f32 {
-  let pressure = 1.0 - smoothstep(0.08, OPEN_PALM_LIFT_THRESHOLD, openness);
+// Pressure varies only through the intentional near-fist range. This keeps a
+// half-curled hand from producing an unexpectedly broad mark.
+fn brush_pressure(openness: f32) -> f32 {
+  return 1.0 - smoothstep(0.02, HAND_RELEASE_THRESHOLD, openness);
+}
+
+fn brush_radius(pressure: f32) -> f32 {
   return mix(MIN_BRUSH_RADIUS, MAX_BRUSH_RADIUS, pressure);
 }
 
@@ -185,6 +190,7 @@ fn update_brush(
   state_in: BrushState,
   measured: vec2f,
   measured_radius: f32,
+  measured_pressure: f32,
   openness: f32,
   score: f32,
   valid_in: bool
@@ -195,6 +201,8 @@ fn update_brush(
     state.has_prev = 0.0;
     state.radius = 0.0;
     state.prev_radius = 0.0;
+    state.engaged = 0.0;
+    state.pressure = 0.0;
   }
   state.stroke = 0.0;
 
@@ -209,6 +217,8 @@ fn update_brush(
       // Break continuity before reacquiring elsewhere.
       state.tracking = 0.0;
       state.has_prev = 0.0;
+      state.engaged = 0.0;
+      state.pressure = 0.0;
     }
     return state;
   }
@@ -216,16 +226,34 @@ fn update_brush(
   state.invalid = 0.0;
   state.confidence = score;
 
-  // Time-aware smoothing stays stable across inference rates.
-  let alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / max(uniforms.ema_tau, 1e-4));
-  let radius_alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / 0.14);
-  let pose_alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / 0.09);
+  // Keep a calm resting hand stable, but reduce filter latency as soon as the
+  // hand or gesture moves. A fixed slow EMA made the visible brush trail the
+  // camera hand even when inference itself was current.
+  let dt = clamp(uniforms.dt, 0.0, MAX_DT);
+  let movement = select(0.0, distance(state.current, measured), state.tracking > 0.5);
+  let position_tau = mix(
+    max(uniforms.ema_tau, 1e-4),
+    0.018,
+    smoothstep(0.006, 0.075, movement)
+  );
+  let pose_delta = abs(state.openness - openness);
+  let pose_tau = mix(0.055, 0.020, smoothstep(0.025, 0.32, pose_delta));
+  let pressure_delta = abs(state.pressure - measured_pressure);
+  let pressure_tau = mix(0.065, 0.024, smoothstep(0.02, 0.42, pressure_delta));
+  let alpha = 1.0 - exp(-dt / position_tau);
+  let radius_alpha = 1.0 - exp(-dt / pressure_tau);
+  let pose_alpha = 1.0 - exp(-dt / pose_tau);
   state.openness = select(
     mix(state.openness, openness, pose_alpha),
     openness,
     state.tracking < 0.5
   );
   let previous_radius = state.radius;
+  state.pressure = select(
+    mix(state.pressure, measured_pressure, radius_alpha),
+    measured_pressure,
+    state.radius <= 0.0
+  );
   state.radius = select(
     mix(state.radius, measured_radius, radius_alpha),
     measured_radius,
@@ -236,15 +264,18 @@ fn update_brush(
     smoothed = mix(state.current, measured, alpha);
   }
 
-  // A fully opened palm lifts the brush. Closing it again below the nearby
-  // regrip threshold starts a fresh stroke without reconnecting the gap.
-  let was_engaged = state.has_prev > 0.5;
+  // This is the single authoritative contact state. The paint and compositor
+  // consume it directly, so the visible bristles touch the paper on the exact
+  // same inference result that can produce ink.
+  let was_engaged = state.engaged > 0.5;
   let gesture_threshold = select(
-    HAND_REGRIP_THRESHOLD,
-    OPEN_PALM_LIFT_THRESHOLD,
+    HAND_ENGAGE_THRESHOLD,
+    HAND_RELEASE_THRESHOLD,
     was_engaged
   );
-  if (openness >= gesture_threshold) {
+  let engaged = openness < gesture_threshold;
+  state.engaged = select(0.0, 1.0, engaged);
+  if (!engaged) {
     state.prev = smoothed;
     state.current = smoothed;
     state.prev_radius = state.radius;
@@ -296,6 +327,7 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
 
   var measured = vec2f(0.0);
   var measured_radius = 20.0;
+  var measured_pressure = 0.0;
   var openness = 0.0;
   var valid = false;
   var hand_valid = false;
@@ -303,7 +335,8 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
     let source_norm = mcp_centroid(slot) / max(uniforms.source, vec2f(1.0));
     hand_valid = in_unit(source_norm);
     openness = hand_openness(slot);
-    measured_radius = brush_radius(openness);
+    measured_pressure = brush_pressure(openness);
+    measured_radius = brush_radius(measured_pressure);
     measured = brush_tip(slot);
     valid = hand_valid && in_unit(measured);
 
@@ -322,6 +355,7 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
     brushes[slot],
     measured,
     measured_radius,
+    measured_pressure,
     openness,
     presence,
     valid
