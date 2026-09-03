@@ -28,7 +28,8 @@ export const MASK_WIDTH = 960;
 export const MASK_HEIGHT = 540;
 export const MASK_TEXELS = MASK_WIDTH * MASK_HEIGHT;
 export const MASK_BYTES = MASK_TEXELS * 4;
-export const BRUSH_BUFFER_BYTES = 40 * MAX_HANDS;
+// Keep this in lockstep with the 12-float BrushState shared by the WGSL stages.
+export const BRUSH_BUFFER_BYTES = 48 * MAX_HANDS;
 const ROI_SLOT_COUNT = MAX_HANDS + 1;
 const ROI_STRIDE_FLOATS = 4;
 export const ROI_BYTES = ROI_SLOT_COUNT * ROI_STRIDE_FLOATS * 4;
@@ -286,9 +287,15 @@ export function createVisualPipeline(
           brushes,
         });
         hand.dispatch(1);
-        dispatchPaint(20);
+        dispatchPaint(14);
       },
-      paintPointer(previous: PaintPoint, current: PaintPoint, stroke: boolean) {
+      paintPointer(
+        previous: PaintPoint,
+        current: PaintPoint,
+        stroke: boolean,
+        engaged = true,
+        openness = engaged ? 0.22 : 1
+      ) {
         pointerBrushes.fill(0);
         pointerBrushes.set(
           [
@@ -299,14 +306,16 @@ export function createVisualPipeline(
             1,
             1,
             0,
-            1,
+            engaged ? 1 : 0,
             stroke ? 1 : 0,
-            16,
+            13,
+            13,
+            openness,
           ],
           0
         );
         brushes.write(bytes(pointerBrushes));
-        dispatchPaint(16);
+        dispatchPaint(13);
       },
       renderVisualFrame(
         output: Surface | Target,

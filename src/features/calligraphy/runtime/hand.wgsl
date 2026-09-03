@@ -24,6 +24,8 @@ struct BrushState {
   has_prev: f32,
   stroke: f32,
   radius: f32,
+  prev_radius: f32,
+  openness: f32,
 };
 
 struct Roi {
@@ -43,14 +45,15 @@ const TAU: f32 = 6.283185307179586;
 /// Wrist and middle-finger MCP: the landmark model's own hand axis.
 const AXIS_START: u32 = 0u;
 const AXIS_END: u32 = 9u;
-const THUMB_TIP: u32 = 4u;
-const INDEX_MCP: u32 = 5u;
-const INDEX_TIP: u32 = 8u;
-const PINKY_MCP: u32 = 17u;
-const FIST_CLOSE_THRESHOLD: f32 = 0.28;
-const HAND_REOPEN_THRESHOLD: f32 = 0.55;
-const MIN_BRUSH_RADIUS: f32 = 9.0;
-const MAX_BRUSH_RADIUS: f32 = 34.0;
+// Only a nearly flat palm lifts the brush. The smaller regrip threshold adds
+// a narrow hysteresis band so the tip does not chatter at the paper boundary.
+const OPEN_PALM_LIFT_THRESHOLD: f32 = 0.88;
+const HAND_REGRIP_THRESHOLD: f32 = 0.78;
+const MIN_BRUSH_RADIUS: f32 = 5.0;
+const MAX_BRUSH_RADIUS: f32 = 24.0;
+const BRUSH_TIP_OFFSET_SCALE: f32 = 1.15;
+const MIN_BRUSH_TIP_OFFSET: f32 = 42.0;
+const MAX_BRUSH_TIP_OFFSET: f32 = 120.0;
 
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
 @group(0) @binding(1) var<storage, read> lm0: array<f32>;
@@ -114,17 +117,21 @@ fn mcp_centroid(slot: u32) -> vec2f {
   return sum * 0.25;
 }
 
-// Thumb-to-index distance produces an intentional, scale-independent brush
-// gesture: pinch for a fine point, open the fingers for a broader brush.
-fn brush_radius(slot: u32) -> f32 {
-  let thumb_tip = crop_to_source(landmark_xy(slot, THUMB_TIP), rois[slot]);
-  let index_tip = crop_to_source(landmark_xy(slot, INDEX_TIP), rois[slot]);
-  let index_mcp = crop_to_source(landmark_xy(slot, INDEX_MCP), rois[slot]);
-  let pinky_mcp = crop_to_source(landmark_xy(slot, PINKY_MCP), rois[slot]);
-  let palm_span = max(distance(index_mcp, pinky_mcp), 1.0);
-  let pinch_ratio = distance(thumb_tip, index_tip) / palm_span;
-  let openness = smoothstep(0.18, 1.15, pinch_ratio);
-  return mix(MIN_BRUSH_RADIUS, MAX_BRUSH_RADIUS, openness);
+// The tracked point is the hand's stable knuckle centroid. Put the working tip
+// above it by roughly one palm length so the composited brush appears held by
+// the person instead of sitting underneath their fist.
+fn brush_tip(slot: u32) -> vec2f {
+  let centroid = mcp_centroid(slot);
+  let wrist = crop_to_source(landmark_xy(slot, AXIS_START), rois[slot]);
+  let palm_length = distance(centroid, wrist);
+  let offset = clamp(
+    palm_length * BRUSH_TIP_OFFSET_SCALE,
+    MIN_BRUSH_TIP_OFFSET,
+    MAX_BRUSH_TIP_OFFSET
+  );
+  let tip_px = centroid + vec2f(0.0, -offset);
+  let source_norm = tip_px / max(uniforms.source, vec2f(1.0));
+  return vec2f(1.0 - source_norm.x, source_norm.y);
 }
 
 // A fingertip moves back toward the wrist when that finger curls into a fist.
@@ -147,6 +154,14 @@ fn hand_openness(slot: u32) -> f32 {
   ) * 0.25;
 }
 
+// A closed fist presses the broadest part of the virtual brush into the paper.
+// Opening the hand progressively releases that pressure until a flat palm
+// lifts the brush completely.
+fn brush_radius(openness: f32) -> f32 {
+  let pressure = 1.0 - smoothstep(0.08, OPEN_PALM_LIFT_THRESHOLD, openness);
+  return mix(MIN_BRUSH_RADIUS, MAX_BRUSH_RADIUS, pressure);
+}
+
 fn update_brush(
   state_in: BrushState,
   measured: vec2f,
@@ -156,11 +171,11 @@ fn update_brush(
   valid_in: bool
 ) -> BrushState {
   var state = state_in;
-  let was_painting = state.stroke > 0.5;
 
   if (uniforms.reset > 0.5) {
     state.has_prev = 0.0;
     state.radius = 0.0;
+    state.prev_radius = 0.0;
   }
   state.stroke = 0.0;
 
@@ -185,6 +200,13 @@ fn update_brush(
   // Time-aware smoothing stays stable across inference rates.
   let alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / max(uniforms.ema_tau, 1e-4));
   let radius_alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / 0.14);
+  let pose_alpha = 1.0 - exp(-clamp(uniforms.dt, 0.0, MAX_DT) / 0.09);
+  state.openness = select(
+    mix(state.openness, openness, pose_alpha),
+    openness,
+    state.tracking < 0.5
+  );
+  let previous_radius = state.radius;
   state.radius = select(
     mix(state.radius, measured_radius, radius_alpha),
     measured_radius,
@@ -195,16 +217,18 @@ fn update_brush(
     smoothed = mix(state.current, measured, alpha);
   }
 
-  // Closing the hand lifts the brush immediately. A higher reopening
-  // threshold prevents a nearly closed hand from rapidly toggling the stroke.
+  // A fully opened palm lifts the brush. Closing it again below the nearby
+  // regrip threshold starts a fresh stroke without reconnecting the gap.
+  let was_engaged = state.has_prev > 0.5;
   let gesture_threshold = select(
-    HAND_REOPEN_THRESHOLD,
-    FIST_CLOSE_THRESHOLD,
-    was_painting
+    HAND_REGRIP_THRESHOLD,
+    OPEN_PALM_LIFT_THRESHOLD,
+    was_engaged
   );
-  if (openness < gesture_threshold) {
+  if (openness >= gesture_threshold) {
     state.prev = smoothed;
     state.current = smoothed;
+    state.prev_radius = state.radius;
     state.tracking = 1.0;
     state.has_prev = 0.0;
     state.stroke = 0.0;
@@ -215,6 +239,7 @@ fn update_brush(
     // Keep the track after an implausible jump, but break the painted line.
     state.prev = measured;
     state.current = measured;
+    state.prev_radius = state.radius;
     state.has_prev = 0.0;
     return state;
   }
@@ -222,6 +247,11 @@ fn update_brush(
   if (state.tracking > 0.5 && state.has_prev > 0.5) {
     state.prev = state.current;
     state.current = smoothed;
+    state.prev_radius = select(
+      state.radius,
+      previous_radius,
+      previous_radius > 0.0
+    );
     state.stroke = 1.0;
     return state;
   }
@@ -229,6 +259,7 @@ fn update_brush(
   // Seed continuity without painting on acquisition.
   state.prev = smoothed;
   state.current = smoothed;
+  state.prev_radius = state.radius;
   state.tracking = 1.0;
   state.has_prev = 1.0;
   return state;
@@ -248,17 +279,17 @@ fn cs_main(@builtin(global_invocation_id) gid: vec3u) {
   var measured_radius = 20.0;
   var openness = 0.0;
   var valid = false;
+  var hand_valid = false;
   if (ran) {
-    let centroid_px = mcp_centroid(slot);
-    measured_radius = brush_radius(slot);
+    let source_norm = mcp_centroid(slot) / max(uniforms.source, vec2f(1.0));
+    hand_valid = in_unit(source_norm);
     openness = hand_openness(slot);
-    let source_norm = centroid_px / max(uniforms.source, vec2f(1.0));
-    // Mirror the raw camera coordinates into brush space.
-    measured = vec2f(1.0 - source_norm.x, source_norm.y);
-    valid = in_unit(source_norm);
+    measured_radius = brush_radius(openness);
+    measured = brush_tip(slot);
+    valid = hand_valid && in_unit(measured);
 
     // Reject a diverged loopback ROI so the detector can reacquire.
-    if (valid && presence >= uniforms.stay_confidence) {
+    if (hand_valid && presence >= uniforms.stay_confidence) {
       let candidate = next_roi(slot);
       let short_side = min(uniforms.source.x, uniforms.source.y);
       let fraction = candidate.size / max(short_side, 1.0);
