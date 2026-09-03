@@ -1,0 +1,153 @@
+{
+  "agent": {
+    "usage": {
+      "input": 17648,
+      "cachedInput": 13337,
+      "output": 468,
+      "reasoning": 88,
+      "total": 18116
+    },
+    "modelLatencyMs": 11799.940543000012,
+    "wallTimeMs": 25068.587042,
+    "turns": 6,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T11:37:24.055Z",
+        "completedAt": "2026-09-03T11:37:36.356Z",
+        "durationMs": 12301.300000190735,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T11:37:40.569Z",
+        "completedAt": "2026-09-03T11:37:41.022Z",
+        "durationMs": 453.30000019073486,
+        "success": false,
+        "errorCode": "REFERENCE_IMAGE_REQUIRES_TRUE_ALPHA",
+        "structuredContent": null
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T11:37:44.931Z",
+        "completedAt": "2026-09-03T11:37:45.379Z",
+        "durationMs": 447.5,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "calligraphy": {
+            "character": "쉼",
+            "reading": "쉼",
+            "meaning": "마음을 잠시 내려놓고 편안히 쉬는 것",
+            "referenceImageAlt": "투명한 배경 위에 검은 먹빛으로 쓴 한글 ‘쉼’",
+            "referenceImagePresent": true,
+            "referenceImageTransport": "data-url",
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "transparentRatio": 0.9201,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "foregroundRatio": 0.0797,
+              "inkBounds": {
+                "widthRatio": 0.3188,
+                "heightRatio": 0.6808
+              },
+              "trueAlpha": true
+            }
+          },
+          "acceptedCharacterCount": 1,
+          "generatedByAgent": true,
+          "imageTransport": "data-url",
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "transparentRatio": 0.9201,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "foregroundRatio": 0.0797,
+            "inkBounds": {
+              "widthRatio": 0.3188,
+              "heightRatio": 0.6808
+            },
+            "trueAlpha": true
+          },
+          "assetContract": {
+            "formats": [
+              "image/png",
+              "image/webp"
+            ],
+            "canvas": {
+              "aspectRatio": "3:2",
+              "recommendedWidth": 1536,
+              "recommendedHeight": 1024,
+              "minimumWidth": 1200,
+              "minimumHeight": 800
+            },
+            "background": "Real transparent alpha (RGBA alpha=0), never white paper or baked checkerboard pixels.",
+            "ink": "Black brush-calligraphy only; no seal, signature, decoration, translation, or extra text.",
+            "composition": {
+              "outerSafeMargin": "At least 8% on every edge.",
+              "inkHeight": "46-84% of canvas height.",
+              "minimumInkWidthByCharacterCount": {
+                "1": 0.24,
+                "2": 0.42,
+                "3": 0.58,
+                "4": 0.68
+              },
+              "maximumInkWidth": "88% of canvas width.",
+              "layout": "Keep the complete 1-4 character phrase on one horizontal canvas."
+            },
+            "transport": "PNG/WebP data URL, same-origin URL, or CORS-readable HTTPS URL available to the MASIL page."
+          },
+          "cameraPermissionRequested": false,
+          "cameraStartTool": "masil_start_calligraphy_camera",
+          "browserPermissionRemainsPersonControlled": true,
+          "humanStrokeLayer": "separate-and-preserved",
+          "visibleOutcome": "reference-ready",
+          "calligraphyInputMode": "idle",
+          "nextInputDecisionOwner": "person",
+          "drawingInputReady": false,
+          "recoveryCompleted": true,
+          "recoveredFrom": "REFERENCE_IMAGE_REQUIRES_TRUE_ALPHA",
+          "personFacingNextStep": "Tell the person that the requested calligraphy.character reference is now visible and ready to use. Mention calligraphy.meaning only when it is non-empty, then ask what they would like to do next. Do not mention the prior defect, validation, alpha or transparency, file format, or alt text."
+        }
+      }
+    ],
+    "totalDurationMs": 13202.10000038147,
+    "timeToVisibleSuccessMs": 23495.348207999996
+  }
+}

@@ -10,7 +10,14 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "next typegen && tsc --noEmit"
+    "typecheck": "next typegen && tsc --noEmit",
+    "test:webmcp": "playwright test",
+    "test:webmcp:contract": "playwright test contract.spec.ts",
+    "eval:webmcp:canary": "tsx evals/runner/run-agent-eval.ts --mode canary",
+    "eval:webmcp:pilot": "tsx evals/runner/run-agent-eval.ts --mode pilot",
+    "eval:webmcp:official": "tsx evals/runner/run-agent-eval.ts --mode official",
+    "eval:webmcp:verify": "tsx evals/runner/verify-artifacts.ts",
+    "eval:webmcp:publish": "tsx evals/runner/verify-artifacts.ts --write-doc"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -28,14 +35,18 @@
     "vgpu": "^0.3.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "ajv": "^8.20.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
+    "openai": "^7.9.0",
     "shadcn": "^4.19.1",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

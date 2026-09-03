@@ -1,0 +1,73 @@
+{
+  "generatedAt": "2026-09-03T10:11:13.145Z",
+  "configurations": {
+    "candidate": {
+      "runs": 30,
+      "passed": 23,
+      "passRate": 0.7666666666666667,
+      "criticalPassRate": 0.9,
+      "firstPassValidRate": 0.6333333333333333,
+      "failedToolCalls": 6,
+      "expectedGuardRejections": 4,
+      "retries": 8,
+      "totalTokens": 565627,
+      "meanTokensPerRun": 18854.233333333334,
+      "meanWallTimeMs": 24453.61470273334,
+      "tokensPerSuccessfulOutcome": 24592.478260869564,
+      "meanTimeToVisibleSuccessMs": 19311.387313347823
+    }
+  },
+  "categories": {
+    "calligraphy": {
+      "candidate": {
+        "runs": 16,
+        "passed": 12,
+        "passRate": 0.75,
+        "criticalPassRate": 0.875,
+        "firstPassValidRate": 0.6875,
+        "failedToolCalls": 3,
+        "expectedGuardRejections": 4,
+        "retries": 5,
+        "totalTokens": 296213,
+        "meanTokensPerRun": 18513.3125,
+        "meanWallTimeMs": 27128.916072937503,
+        "tokensPerSuccessfulOutcome": 24684.416666666668,
+        "meanTimeToVisibleSuccessMs": 23173.585416666665
+      }
+    },
+    "janggi": {
+      "candidate": {
+        "runs": 10,
+        "passed": 8,
+        "passRate": 0.8,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.6,
+        "failedToolCalls": 2,
+        "expectedGuardRejections": 0,
+        "retries": 2,
+        "totalTokens": 182517,
+        "meanTokensPerRun": 18251.7,
+        "meanWallTimeMs": 20281.1712291,
+        "tokensPerSuccessfulOutcome": 22814.625,
+        "meanTimeToVisibleSuccessMs": 13271.176046624998
+      }
+    },
+    "interface": {
+      "candidate": {
+        "runs": 4,
+        "passed": 3,
+        "passRate": 0.75,
+        "criticalPassRate": 1,
+        "firstPassValidRate": 0.5,
+        "failedToolCalls": 1,
+        "expectedGuardRejections": 0,
+        "retries": 1,
+        "totalTokens": 86897,
+        "meanTokensPerRun": 21724.25,
+        "meanWallTimeMs": 24183.517905999997,
+        "tokensPerSuccessfulOutcome": 28965.666666666668,
+        "meanTimeToVisibleSuccessMs": 19969.824944666663
+      }
+    }
+  }
+}

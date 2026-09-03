@@ -12,6 +12,7 @@
 /coverage/
 /playwright-report/
 /test-results/
+/evals/.raw/
 
 # Next.js and production output
 /.next/

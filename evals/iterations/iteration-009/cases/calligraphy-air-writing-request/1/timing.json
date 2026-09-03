@@ -1,0 +1,114 @@
+{
+  "agent": {
+    "usage": {
+      "input": 13823,
+      "cachedInput": 9966,
+      "output": 330,
+      "reasoning": 47,
+      "total": 14153
+    },
+    "modelLatencyMs": 16277.249914999993,
+    "wallTimeMs": 29523.603417,
+    "turns": 5,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T10:07:03.224Z",
+        "completedAt": "2026-09-03T10:07:15.510Z",
+        "durationMs": 12286,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T10:07:18.947Z",
+        "completedAt": "2026-09-03T10:07:19.403Z",
+        "durationMs": 455.59999990463257,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "calligraphy": {
+            "character": "無病長壽",
+            "referenceImagePresent": true,
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "inkBounds": {
+                "widthRatio": 0.7875,
+                "heightRatio": 0.6761
+              },
+              "trueAlpha": true
+            }
+          },
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "inkBounds": {
+              "widthRatio": 0.7875,
+              "heightRatio": 0.6761
+            },
+            "trueAlpha": true
+          },
+          "visibleOutcome": "reference-ready",
+          "calligraphyInputMode": "idle",
+          "nextInputDecisionOwner": "person",
+          "drawingInputReady": false
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_start_calligraphy_camera",
+        "startedAt": "2026-09-03T10:07:21.353Z",
+        "completedAt": "2026-09-03T10:07:21.801Z",
+        "durationMs": 448.1000003814697,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 3,
+          "calligraphyInputMode": "requesting",
+          "explicitPersonRequestReceived": true,
+          "browserPermissionMayPrompt": true,
+          "browserPermissionRemainsPersonControlled": true,
+          "denialFallsBackToDirectDrawing": true
+        }
+      }
+    ],
+    "totalDurationMs": 13189.700000286102,
+    "timeToVisibleSuccessMs": 27933.984167000002
+  }
+}

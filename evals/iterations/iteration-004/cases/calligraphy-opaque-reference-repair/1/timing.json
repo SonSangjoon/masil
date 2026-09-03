@@ -1,0 +1,164 @@
+{
+  "agent": {
+    "usage": {
+      "input": 18781,
+      "cachedInput": 17344,
+      "output": 512,
+      "reasoning": 68,
+      "total": 19293
+    },
+    "modelLatencyMs": 12284.84400000002,
+    "wallTimeMs": 25557.752334000004,
+    "turns": 6,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:29:32.225Z",
+        "completedAt": "2026-09-03T09:29:44.517Z",
+        "durationMs": 12292.400000095367,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_project_agent_presence",
+        "startedAt": "2026-09-03T09:29:46.617Z",
+        "completedAt": "2026-09-03T09:29:46.617Z",
+        "durationMs": 0.09999990463256836,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "phase": "creating",
+          "caption": "‘쉼’을 위한 먹빛 글씨를 준비하고 있어요.",
+          "conversationOwner": "user-agent",
+          "embeddedAgent": false,
+          "audioCapturedByPage": false,
+          "speechSynthesizedByPage": false
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T09:29:49.007Z",
+        "completedAt": "2026-09-03T09:29:49.464Z",
+        "durationMs": 457.40000009536743,
+        "success": false,
+        "errorCode": "REFERENCE_IMAGE_REQUIRES_TRUE_ALPHA",
+        "structuredContent": null
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T09:29:53.258Z",
+        "completedAt": "2026-09-03T09:29:53.708Z",
+        "durationMs": 449.40000009536743,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 3,
+          "calligraphy": {
+            "character": "쉼",
+            "reading": "쉼",
+            "meaning": "마음이 편안해지는 휴식",
+            "referenceImageAlt": "투명한 배경에 검은 먹빛으로 크게 쓴 한글 ‘쉼’ 한 글자.",
+            "referenceImagePresent": true,
+            "referenceImageTransport": "data-url",
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "transparentRatio": 0.9201,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "foregroundRatio": 0.0797,
+              "inkBounds": {
+                "widthRatio": 0.3188,
+                "heightRatio": 0.6808
+              },
+              "trueAlpha": true
+            }
+          },
+          "acceptedCharacterCount": 1,
+          "generatedByAgent": true,
+          "imageTransport": "data-url",
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "transparentRatio": 0.9201,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "foregroundRatio": 0.0797,
+            "inkBounds": {
+              "widthRatio": 0.3188,
+              "heightRatio": 0.6808
+            },
+            "trueAlpha": true
+          },
+          "assetContract": {
+            "formats": [
+              "image/png",
+              "image/webp"
+            ],
+            "canvas": {
+              "aspectRatio": "3:2",
+              "recommendedWidth": 1536,
+              "recommendedHeight": 1024,
+              "minimumWidth": 1200,
+              "minimumHeight": 800
+            },
+            "background": "Real transparent alpha (RGBA alpha=0), never white paper or baked checkerboard pixels.",
+            "ink": "Black brush-calligraphy only; no seal, signature, decoration, translation, or extra text.",
+            "composition": {
+              "outerSafeMargin": "At least 8% on every edge.",
+              "inkHeight": "46-84% of canvas height.",
+              "minimumInkWidthByCharacterCount": {
+                "1": 0.24,
+                "2": 0.42,
+                "3": 0.58,
+                "4": 0.68
+              },
+              "maximumInkWidth": "88% of canvas width.",
+              "layout": "Keep the complete 1-4 character phrase on one horizontal canvas."
+            },
+            "transport": "PNG/WebP data URL, same-origin URL, or CORS-readable HTTPS URL available to the MASIL page."
+          },
+          "cameraPermissionRequested": false,
+          "cameraStartTool": "masil_start_calligraphy_camera",
+          "browserPermissionRemainsPersonControlled": true,
+          "humanStrokeLayer": "separate-and-preserved"
+        }
+      }
+    ],
+    "totalDurationMs": 13199.300000190735,
+    "timeToVisibleSuccessMs": 23792.078416999997
+  }
+}

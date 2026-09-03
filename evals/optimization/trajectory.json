@@ -1,0 +1,708 @@
+{
+  "schemaVersion": "1.0.0",
+  "generatedFrom": "immutable official iteration artifacts",
+  "xAxis": "official iterations, in order",
+  "yAxis": "verified task success rate",
+  "attempts": [
+    {
+      "order": 1,
+      "iteration": "iteration-001",
+      "createdAt": "2026-09-03T09:09:40.001Z",
+      "configuration": "no_webmcp",
+      "decision": "control",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 6,
+        "passRate": 0.2,
+        "criticalPassRate": 0.2,
+        "firstPassValidRate": 0.2,
+        "failedToolCalls": 2,
+        "expectedGuardRejections": 0,
+        "retries": 2,
+        "totalTokens": 647804,
+        "meanTokensPerRun": 21593.466666666667,
+        "meanWallTimeMs": 21090.616434800006,
+        "tokensPerSuccessfulOutcome": 107967.33333333333,
+        "meanTimeToVisibleSuccessMs": 14729.496812333333
+      },
+      "categories": {
+        "calligraphy": 0.125,
+        "janggi": 0.4,
+        "interface": 0
+      }
+    },
+    {
+      "order": 2,
+      "iteration": "iteration-002",
+      "createdAt": "2026-09-03T09:14:07.902Z",
+      "configuration": "candidate",
+      "decision": "accepted",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 18,
+        "passRate": 0.6,
+        "criticalPassRate": 0.7333333333333333,
+        "firstPassValidRate": 0.5333333333333333,
+        "failedToolCalls": 6,
+        "expectedGuardRejections": 3,
+        "retries": 7,
+        "totalTokens": 627705,
+        "meanTokensPerRun": 20923.5,
+        "meanWallTimeMs": 22263.976802766672,
+        "tokensPerSuccessfulOutcome": 34872.5,
+        "meanTimeToVisibleSuccessMs": 18537.45113883333
+      },
+      "categories": {
+        "calligraphy": 0.5,
+        "janggi": 0.7,
+        "interface": 0.75
+      }
+    },
+    {
+      "order": 3,
+      "iteration": "iteration-003",
+      "createdAt": "2026-09-03T09:26:16.438Z",
+      "configuration": "candidate",
+      "decision": "accepted",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 23,
+        "passRate": 0.7666666666666667,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.7,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 616181,
+        "meanTokensPerRun": 20539.366666666665,
+        "meanWallTimeMs": 21557.41872503333,
+        "tokensPerSuccessfulOutcome": 26790.478260869564,
+        "meanTimeToVisibleSuccessMs": 17943.029103347828
+      },
+      "categories": {
+        "calligraphy": 0.6875,
+        "janggi": 0.8,
+        "interface": 1
+      }
+    },
+    {
+      "order": 4,
+      "iteration": "iteration-004",
+      "createdAt": "2026-09-03T09:32:09.471Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 24,
+        "passRate": 0.8,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.7333333333333333,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 3,
+        "retries": 5,
+        "totalTokens": 650269,
+        "meanTokensPerRun": 21675.633333333335,
+        "meanWallTimeMs": 22430.72264036666,
+        "tokensPerSuccessfulOutcome": 27094.541666666668,
+        "meanTimeToVisibleSuccessMs": 18777.82163720833
+      },
+      "categories": {
+        "calligraphy": 0.6875,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 5,
+      "iteration": "iteration-005",
+      "createdAt": "2026-09-03T09:42:06.388Z",
+      "configuration": "candidate",
+      "decision": "accepted",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 24,
+        "passRate": 0.8,
+        "criticalPassRate": 0.8666666666666667,
+        "firstPassValidRate": 0.7333333333333333,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 2,
+        "retries": 4,
+        "totalTokens": 558144,
+        "meanTokensPerRun": 18604.8,
+        "meanWallTimeMs": 21752.380994400002,
+        "tokensPerSuccessfulOutcome": 23256,
+        "meanTimeToVisibleSuccessMs": 17941.903923583337
+      },
+      "categories": {
+        "calligraphy": 0.625,
+        "janggi": 1,
+        "interface": 1
+      }
+    },
+    {
+      "order": 6,
+      "iteration": "iteration-006",
+      "createdAt": "2026-09-03T09:49:18.618Z",
+      "configuration": "candidate",
+      "decision": "accepted",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 27,
+        "passRate": 0.9,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8,
+        "failedToolCalls": 5,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 541338,
+        "meanTokensPerRun": 18044.6,
+        "meanWallTimeMs": 22401.524104300006,
+        "tokensPerSuccessfulOutcome": 20049.555555555555,
+        "meanTimeToVisibleSuccessMs": 19264.781628148146
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 1,
+        "interface": 1
+      }
+    },
+    {
+      "order": 7,
+      "iteration": "iteration-007",
+      "createdAt": "2026-09-03T09:54:25.300Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 24,
+        "passRate": 0.8,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.7,
+        "failedToolCalls": 5,
+        "expectedGuardRejections": 4,
+        "retries": 7,
+        "totalTokens": 538564,
+        "meanTokensPerRun": 17952.133333333335,
+        "meanWallTimeMs": 22112.915088933325,
+        "tokensPerSuccessfulOutcome": 22440.166666666668,
+        "meanTimeToVisibleSuccessMs": 19998.015734333338
+      },
+      "categories": {
+        "calligraphy": 0.6875,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 8,
+      "iteration": "iteration-008",
+      "createdAt": "2026-09-03T10:03:40.568Z",
+      "configuration": "candidate",
+      "decision": "accepted",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 28,
+        "passRate": 0.9333333333333333,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8333333333333334,
+        "failedToolCalls": 5,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 556505,
+        "meanTokensPerRun": 18550.166666666668,
+        "meanWallTimeMs": 21067.454193166668,
+        "tokensPerSuccessfulOutcome": 19875.178571428572,
+        "meanTimeToVisibleSuccessMs": 18240.38697178572
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 1,
+        "interface": 1
+      }
+    },
+    {
+      "order": 9,
+      "iteration": "iteration-009",
+      "createdAt": "2026-09-03T10:11:13.148Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 23,
+        "passRate": 0.7666666666666667,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.6333333333333333,
+        "failedToolCalls": 6,
+        "expectedGuardRejections": 4,
+        "retries": 8,
+        "totalTokens": 565627,
+        "meanTokensPerRun": 18854.233333333334,
+        "meanWallTimeMs": 24453.61470273334,
+        "tokensPerSuccessfulOutcome": 24592.478260869564,
+        "meanTimeToVisibleSuccessMs": 19311.387313347823
+      },
+      "categories": {
+        "calligraphy": 0.75,
+        "janggi": 0.8,
+        "interface": 0.75
+      }
+    },
+    {
+      "order": 10,
+      "iteration": "iteration-010",
+      "createdAt": "2026-09-03T10:16:58.863Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 26,
+        "passRate": 0.8666666666666667,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 576543,
+        "meanTokensPerRun": 19218.1,
+        "meanWallTimeMs": 22338.543072199995,
+        "tokensPerSuccessfulOutcome": 22174.73076923077,
+        "meanTimeToVisibleSuccessMs": 19621.05747592308
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 11,
+      "iteration": "iteration-011",
+      "createdAt": "2026-09-03T10:21:41.678Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 27,
+        "passRate": 0.9,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8333333333333334,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 533154,
+        "meanTokensPerRun": 17771.8,
+        "meanWallTimeMs": 21609.194362533344,
+        "tokensPerSuccessfulOutcome": 19746.444444444445,
+        "meanTimeToVisibleSuccessMs": 18621.66974077778
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 12,
+      "iteration": "iteration-012",
+      "createdAt": "2026-09-03T10:26:59.245Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 25,
+        "passRate": 0.8333333333333334,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.7,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 8,
+        "totalTokens": 541766,
+        "meanTokensPerRun": 18058.866666666665,
+        "meanWallTimeMs": 21341.23349996667,
+        "tokensPerSuccessfulOutcome": 21670.64,
+        "meanTimeToVisibleSuccessMs": 18724.8641116
+      },
+      "categories": {
+        "calligraphy": 0.75,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 13,
+      "iteration": "iteration-013",
+      "createdAt": "2026-09-03T10:33:08.631Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 26,
+        "passRate": 0.8666666666666667,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 558890,
+        "meanTokensPerRun": 18629.666666666668,
+        "meanWallTimeMs": 22029.612230633327,
+        "tokensPerSuccessfulOutcome": 21495.76923076923,
+        "meanTimeToVisibleSuccessMs": 18808.075405538457
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 1,
+        "interface": 0.75
+      }
+    },
+    {
+      "order": 14,
+      "iteration": "iteration-014",
+      "createdAt": "2026-09-03T10:38:03.982Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 25,
+        "passRate": 0.8333333333333334,
+        "criticalPassRate": 0.8666666666666667,
+        "firstPassValidRate": 0.7666666666666667,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 574112,
+        "meanTokensPerRun": 19137.066666666666,
+        "meanWallTimeMs": 24299.4465445,
+        "tokensPerSuccessfulOutcome": 22964.48,
+        "meanTimeToVisibleSuccessMs": 18514.54383
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 0.8,
+        "interface": 1
+      }
+    },
+    {
+      "order": 15,
+      "iteration": "iteration-015",
+      "createdAt": "2026-09-03T10:43:18.128Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 25,
+        "passRate": 0.8333333333333334,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.7666666666666667,
+        "failedToolCalls": 5,
+        "expectedGuardRejections": 4,
+        "retries": 7,
+        "totalTokens": 570566,
+        "meanTokensPerRun": 19018.866666666665,
+        "meanWallTimeMs": 21356.120956933333,
+        "tokensPerSuccessfulOutcome": 22822.64,
+        "meanTimeToVisibleSuccessMs": 18103.829346600003
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 0.8,
+        "interface": 1
+      }
+    },
+    {
+      "order": 16,
+      "iteration": "iteration-016",
+      "createdAt": "2026-09-03T10:48:48.647Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 27,
+        "passRate": 0.9,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.7666666666666667,
+        "failedToolCalls": 6,
+        "expectedGuardRejections": 4,
+        "retries": 8,
+        "totalTokens": 571564,
+        "meanTokensPerRun": 19052.133333333335,
+        "meanWallTimeMs": 22064.87305686667,
+        "tokensPerSuccessfulOutcome": 21169.037037037036,
+        "meanTimeToVisibleSuccessMs": 18872.019415148156
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 1,
+        "interface": 1
+      }
+    },
+    {
+      "order": 17,
+      "iteration": "iteration-017",
+      "createdAt": "2026-09-03T10:53:42.208Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 26,
+        "passRate": 0.8666666666666667,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 570011,
+        "meanTokensPerRun": 19000.366666666665,
+        "meanWallTimeMs": 21727.560833399995,
+        "tokensPerSuccessfulOutcome": 21923.5,
+        "meanTimeToVisibleSuccessMs": 19131.17975165385
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 0.8,
+        "interface": 1
+      }
+    },
+    {
+      "order": 18,
+      "iteration": "iteration-018",
+      "createdAt": "2026-09-03T11:00:44.105Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 27,
+        "passRate": 0.9,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8333333333333334,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 562447,
+        "meanTokensPerRun": 18748.233333333334,
+        "meanWallTimeMs": 23826.280331933325,
+        "tokensPerSuccessfulOutcome": 20831.37037037037,
+        "meanTimeToVisibleSuccessMs": 20165.73888737037
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 19,
+      "iteration": "iteration-019",
+      "createdAt": "2026-09-03T11:06:40.307Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 24,
+        "passRate": 0.8,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.7333333333333333,
+        "failedToolCalls": 5,
+        "expectedGuardRejections": 4,
+        "retries": 7,
+        "totalTokens": 577521,
+        "meanTokensPerRun": 19250.7,
+        "meanWallTimeMs": 22920.52778336666,
+        "tokensPerSuccessfulOutcome": 24063.375,
+        "meanTimeToVisibleSuccessMs": 18479.63930904166
+      },
+      "categories": {
+        "calligraphy": 0.625,
+        "janggi": 1,
+        "interface": 1
+      }
+    },
+    {
+      "order": 20,
+      "iteration": "iteration-020",
+      "createdAt": "2026-09-03T11:12:04.697Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 28,
+        "passRate": 0.9333333333333333,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8666666666666667,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 567013,
+        "meanTokensPerRun": 18900.433333333334,
+        "meanWallTimeMs": 21216.607734733334,
+        "tokensPerSuccessfulOutcome": 20250.464285714286,
+        "meanTimeToVisibleSuccessMs": 18011.58482875
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 1,
+        "interface": 1
+      }
+    },
+    {
+      "order": 21,
+      "iteration": "iteration-021",
+      "createdAt": "2026-09-03T11:18:38.835Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 25,
+        "passRate": 0.8333333333333334,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.7333333333333333,
+        "failedToolCalls": 5,
+        "expectedGuardRejections": 4,
+        "retries": 7,
+        "totalTokens": 559728,
+        "meanTokensPerRun": 18657.6,
+        "meanWallTimeMs": 22382.566888833335,
+        "tokensPerSuccessfulOutcome": 22389.12,
+        "meanTimeToVisibleSuccessMs": 19244.718590040004
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 0.9,
+        "interface": 0.75
+      }
+    },
+    {
+      "order": 22,
+      "iteration": "iteration-022",
+      "createdAt": "2026-09-03T11:25:03.118Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 26,
+        "passRate": 0.8666666666666667,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.8,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 555215,
+        "meanTokensPerRun": 18507.166666666668,
+        "meanWallTimeMs": 21819.746356866664,
+        "tokensPerSuccessfulOutcome": 21354.423076923078,
+        "meanTimeToVisibleSuccessMs": 17908.666940769224
+      },
+      "categories": {
+        "calligraphy": 0.8125,
+        "janggi": 1,
+        "interface": 0.75
+      }
+    },
+    {
+      "order": 23,
+      "iteration": "iteration-023",
+      "createdAt": "2026-09-03T11:33:54.671Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 27,
+        "passRate": 0.9,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.8333333333333334,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 522857,
+        "meanTokensPerRun": 17428.566666666666,
+        "meanWallTimeMs": 21706.745687466664,
+        "tokensPerSuccessfulOutcome": 19365.074074074073,
+        "meanTimeToVisibleSuccessMs": 18897.929519925925
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 24,
+      "iteration": "iteration-024",
+      "createdAt": "2026-09-03T11:39:54.467Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 25,
+        "passRate": 0.8333333333333334,
+        "criticalPassRate": 0.9333333333333333,
+        "firstPassValidRate": 0.7666666666666667,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 528254,
+        "meanTokensPerRun": 17608.466666666667,
+        "meanWallTimeMs": 21465.513229100008,
+        "tokensPerSuccessfulOutcome": 21130.16,
+        "meanTimeToVisibleSuccessMs": 18955.480985200003
+      },
+      "categories": {
+        "calligraphy": 0.75,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    },
+    {
+      "order": 25,
+      "iteration": "iteration-025",
+      "createdAt": "2026-09-03T11:45:47.652Z",
+      "configuration": "candidate",
+      "decision": "rejected",
+      "evalSetHash": "sha256:318938b9487c288a054a506bf41eea6f11fa28e7b90a17c446f893144b10a9de",
+      "metric": {
+        "runs": 30,
+        "passed": 27,
+        "passRate": 0.9,
+        "criticalPassRate": 0.9,
+        "firstPassValidRate": 0.8333333333333334,
+        "failedToolCalls": 4,
+        "expectedGuardRejections": 4,
+        "retries": 6,
+        "totalTokens": 498349,
+        "meanTokensPerRun": 16611.633333333335,
+        "meanWallTimeMs": 21659.144957,
+        "tokensPerSuccessfulOutcome": 18457.37037037037,
+        "meanTimeToVisibleSuccessMs": 18824.238040148142
+      },
+      "categories": {
+        "calligraphy": 0.875,
+        "janggi": 0.9,
+        "interface": 1
+      }
+    }
+  ]
+}

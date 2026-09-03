@@ -1,0 +1,171 @@
+{
+  "agent": {
+    "usage": {
+      "input": 17995,
+      "cachedInput": 14097,
+      "output": 553,
+      "reasoning": 88,
+      "total": 18548
+    },
+    "modelLatencyMs": 12079.158915999986,
+    "wallTimeMs": 25366.514583999997,
+    "turns": 6,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T10:19:11.473Z",
+        "completedAt": "2026-09-03T10:19:23.762Z",
+        "durationMs": 12288.199999809265,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_project_agent_presence",
+        "startedAt": "2026-09-03T10:19:23.764Z",
+        "completedAt": "2026-09-03T10:19:23.764Z",
+        "durationMs": 0.09999990463256836,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "phase": "creating",
+          "caption": "소원성취 한자 작품을 준비하고 있어요.",
+          "conversationOwner": "user-agent",
+          "embeddedAgent": false,
+          "audioCapturedByPage": false,
+          "speechSynthesizedByPage": false
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T10:19:27.593Z",
+        "completedAt": "2026-09-03T10:19:28.039Z",
+        "durationMs": 446.09999990463257,
+        "success": false,
+        "errorCode": "REFERENCE_IMAGE_REQUIRES_3_BY_2",
+        "structuredContent": null
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T10:19:32.389Z",
+        "completedAt": "2026-09-03T10:19:32.841Z",
+        "durationMs": 452.59999990463257,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 3,
+          "calligraphy": {
+            "character": "所願成就",
+            "reading": "소원성취",
+            "meaning": "바라는 일이 이루어짐",
+            "referenceImageAlt": "검은 먹으로 크게 쓴 한자 所願成就 참고 이미지",
+            "referenceImagePresent": true,
+            "referenceImageTransport": "data-url",
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "transparentRatio": 0.8218,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "foregroundRatio": 0.1756,
+              "inkBounds": {
+                "widthRatio": 0.7906,
+                "heightRatio": 0.6761
+              },
+              "trueAlpha": true
+            }
+          },
+          "acceptedCharacterCount": 4,
+          "generatedByAgent": true,
+          "imageTransport": "data-url",
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "transparentRatio": 0.8218,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "foregroundRatio": 0.1756,
+            "inkBounds": {
+              "widthRatio": 0.7906,
+              "heightRatio": 0.6761
+            },
+            "trueAlpha": true
+          },
+          "assetContract": {
+            "formats": [
+              "image/png",
+              "image/webp"
+            ],
+            "canvas": {
+              "aspectRatio": "3:2",
+              "recommendedWidth": 1536,
+              "recommendedHeight": 1024,
+              "minimumWidth": 1200,
+              "minimumHeight": 800
+            },
+            "background": "Real transparent alpha (RGBA alpha=0), never white paper or baked checkerboard pixels.",
+            "ink": "Black brush-calligraphy only; no seal, signature, decoration, translation, or extra text.",
+            "composition": {
+              "outerSafeMargin": "At least 8% on every edge.",
+              "inkHeight": "46-84% of canvas height.",
+              "minimumInkWidthByCharacterCount": {
+                "1": 0.24,
+                "2": 0.42,
+                "3": 0.58,
+                "4": 0.68
+              },
+              "maximumInkWidth": "88% of canvas width.",
+              "layout": "Keep the complete 1-4 character phrase on one horizontal canvas."
+            },
+            "transport": "PNG/WebP data URL, same-origin URL, or CORS-readable HTTPS URL available to the MASIL page."
+          },
+          "cameraPermissionRequested": false,
+          "cameraStartTool": "masil_start_calligraphy_camera",
+          "browserPermissionRemainsPersonControlled": true,
+          "humanStrokeLayer": "separate-and-preserved",
+          "visibleOutcome": "reference-ready",
+          "calligraphyInputMode": "idle",
+          "nextInputDecisionOwner": "person",
+          "drawingInputReady": false,
+          "recoveryCompleted": true,
+          "recoveredFrom": "REFERENCE_IMAGE_REQUIRES_3_BY_2",
+          "personFacingNextStep": "Tell the person the corrected reference is now visible, then ask what they would like to do next. Do not mention the technical image defect."
+        }
+      }
+    ],
+    "totalDurationMs": 13186.999999523163,
+    "timeToVisibleSuccessMs": 23656.727334000003
+  }
+}

@@ -7,8 +7,11 @@ export default defineConfig([
   ...nextTs,
   globalIgnores([
     ".next/**",
+    "evals/.raw/**",
     "out/**",
     "build/**",
+    "playwright-report/**",
+    "test-results/**",
     "next-env.d.ts",
     // Vendored ONNX Runtime browser loader; audited by its upstream package.
     "public/ort/**",

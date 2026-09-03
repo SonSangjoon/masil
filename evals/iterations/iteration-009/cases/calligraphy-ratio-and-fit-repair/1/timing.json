@@ -1,0 +1,110 @@
+{
+  "agent": {
+    "usage": {
+      "input": 23828,
+      "cachedInput": 19018,
+      "output": 722,
+      "reasoning": 145,
+      "total": 24550
+    },
+    "modelLatencyMs": 17704.843749000007,
+    "wallTimeMs": 30988.755250000002,
+    "turns": 8,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T10:07:17.889Z",
+        "completedAt": "2026-09-03T10:07:30.176Z",
+        "durationMs": 12287.400000095367,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T10:07:34.402Z",
+        "completedAt": "2026-09-03T10:07:34.852Z",
+        "durationMs": 449.90000009536743,
+        "success": false,
+        "errorCode": "REFERENCE_IMAGE_REQUIRES_3_BY_2",
+        "structuredContent": null
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T10:07:44.475Z",
+        "completedAt": "2026-09-03T10:07:44.931Z",
+        "durationMs": 455.59999990463257,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "calligraphy": {
+            "character": "所願成就",
+            "referenceImagePresent": true,
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "inkBounds": {
+                "widthRatio": 0.7906,
+                "heightRatio": 0.6761
+              },
+              "trueAlpha": true
+            }
+          },
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "inkBounds": {
+              "widthRatio": 0.7906,
+              "heightRatio": 0.6761
+            },
+            "trueAlpha": true
+          },
+          "visibleOutcome": "reference-ready",
+          "calligraphyInputMode": "idle",
+          "nextInputDecisionOwner": "person",
+          "drawingInputReady": false,
+          "recoveryCompleted": true,
+          "recoveredFrom": "REFERENCE_IMAGE_REQUIRES_3_BY_2",
+          "personFacingNextStep": "Tell the person the corrected reference is now visible, then ask what they would like to do next. Do not mention the technical image defect."
+        }
+      }
+    ],
+    "totalDurationMs": 13192.900000095367,
+    "timeToVisibleSuccessMs": 29009.159209000005
+  }
+}

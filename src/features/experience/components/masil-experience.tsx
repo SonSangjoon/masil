@@ -18,9 +18,19 @@ import {
   UserRoundCheck,
   Workflow,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject,
+} from "react";
 
-import { AirCalligraphyCanvas } from "@/features/calligraphy/components/air-calligraphy-canvas";
+import {
+  AirCalligraphyCanvas,
+  type AirCalligraphyCanvasHandle,
+} from "@/features/calligraphy/components/air-calligraphy-canvas";
 import {
   GlassOrbScene,
   type OrbReaction,
@@ -60,6 +70,11 @@ import {
   type PendingCameraRequest,
 } from "@/features/calligraphy/runtime/camera-source";
 import {
+  CALLIGRAPHY_REFERENCE_SPEC,
+  validateCalligraphyReferenceImage,
+  type CalligraphyReferenceValidation,
+} from "@/features/calligraphy/runtime/reference-image";
+import {
   applyJanggiMove,
   createInitialJanggiGame,
   describeJanggiPiece,
@@ -71,39 +86,49 @@ import {
   type JanggiMove,
   type JanggiMoveState,
 } from "@/features/janggi/model/game";
+import type { MasilWebMcpAdapter } from "@/features/webmcp/adapter";
+import {
+  getValidMasilActions,
+  MASIL_HUMAN_ONLY_ACTIONS,
+  MASIL_SINGLE_AGENT_BOUNDARY,
+  MASIL_TOOL_DESCRIPTORS,
+  MASIL_TOOL_LABELS,
+  MASIL_TOOL_LABELS_EN,
+  MASIL_TOOL_NAMES,
+  MASIL_WEBMCP_CONTRACT_HASH,
+  MASIL_WEBMCP_CONTRACT_VERSION,
+} from "@/features/webmcp/contract";
+import { createInstrumentedMasilExecutor } from "@/features/webmcp/provider";
+import type {
+  MasilActivity,
+  MasilCalligraphyInputMode,
+  MasilInspectorTab,
+  MasilInvocationSource,
+  MasilLanguage,
+  MasilPresence,
+  MasilStage,
+  MasilToolExecutor,
+  MasilToolName,
+  MasilWebMcpToolResult,
+  WebMcpProviderStatus,
+  WebMcpInvocationRecord,
+} from "@/features/webmcp/types";
+import { useMasilWebMcpProvider } from "@/features/webmcp/use-masil-webmcp-provider";
 
-type Language = "ko" | "en";
-type Activity = "calligraphy" | "janggi";
-type Stage = "home" | "activity" | "private" | "review" | "handoff";
-type Presence =
-  | "ready"
-  | "listening"
-  | "receiving"
-  | "creating"
-  | "speaking"
-  | "awaiting"
-  | "connected";
-type WebMcpStatus = "checking" | "connected" | "demo" | "error";
+type Language = MasilLanguage;
+type Activity = MasilActivity;
+type Stage = MasilStage;
+type Presence = MasilPresence;
 type WebMcpDrawerView = "overview" | "connection";
 type ProviderStatus = "waiting" | "needs-info" | "accepted";
-type InvocationSource = "webmcp" | "person";
+type InvocationSource = MasilInvocationSource;
+type InspectorTab = MasilInspectorTab;
+type CalligraphyInputMode = MasilCalligraphyInputMode;
+type WebMcpStatus = WebMcpProviderStatus;
 type JanggiActor = "person" | "agent";
 type JanggiAnimationResult = "completed" | "timeout" | "cancelled";
 
-type ToolName =
-  | "masil_get_capabilities"
-  | "masil_get_session_state"
-  | "masil_project_agent_presence"
-  | "masil_open_activity"
-  | "masil_set_calligraphy_reference"
-  | "masil_get_janggi_state"
-  | "masil_wait_for_person_janggi_move"
-  | "masil_move_janggi_piece"
-  | "masil_open_support_note"
-  | "masil_prepare_support_review"
-  | "masil_create_local_handoff"
-  | "masil_get_handoff_status"
-  | "masil_return_to_activity";
+type ToolName = MasilToolName;
 
 type SupportDraft = {
   summary: string;
@@ -132,6 +157,7 @@ type DemoSession = {
     meaning: string;
     referenceImageUrl: string | null;
     referenceImageAlt: string;
+    referenceValidation: CalligraphyReferenceValidation | null;
   };
   janggiMove: JanggiMoveState;
   janggiActiveMove: JanggiMove | null;
@@ -273,7 +299,6 @@ const CALLIGRAPHY_PROMPT_FRAGMENTS: Record<
     ],
   },
 };
-const WEBMCP_CONNECTION_TIMEOUT_MS = 7000;
 const CHROME_WEBMCP_FLAG_URL = "chrome://flags/#enable-webmcp-testing";
 const WEBMCP_GUIDE_URL: Record<Language, string> = {
   ko: "https://learn.chatgpt.com/ko-KR/docs/webmcp",
@@ -298,10 +323,6 @@ type PendingPersonJanggiMove = {
   resolve: (result: PersonJanggiMoveResolution | null) => void;
 };
 
-type ToolDescriptor = Omit<WebMcpTool, "execute" | "name"> & {
-  name: ToolName;
-};
-
 const INITIAL_SESSION: DemoSession = {
   stage: "home",
   activity: null,
@@ -313,6 +334,7 @@ const INITIAL_SESSION: DemoSession = {
     meaning: "",
     referenceImageUrl: null,
     referenceImageAlt: "",
+    referenceValidation: null,
   },
   janggiMove: "idle",
   janggiActiveMove: null,
@@ -328,48 +350,9 @@ const SUPPORT_EXAMPLE = {
     "주민센터에 직접 가지 않고 먼저 전화로 담당 창구와 다음 단계를 확인하고 싶어요.",
 };
 
-const TOOL_COPY: Record<ToolName, string> = {
-  masil_get_capabilities: "MASIL에서 함께 할 수 있는 일 확인",
-  masil_get_session_state: "현재 화면과 가능한 다음 단계 확인",
-  masil_project_agent_presence: "Agent의 대화 상태를 Orb와 화면에 투영",
-  masil_open_activity: "활동을 열고 사용자의 선택 기다리기",
-  masil_set_calligraphy_reference: "만든 서예 글자본을 화면에 놓기",
-  masil_get_janggi_state: "현재 장기판과 둘 수 있는 자리 확인",
-  masil_wait_for_person_janggi_move: "사용자가 직접 둘 한 수 기다리기",
-  masil_move_janggi_piece: "선택한 장기 수를 확인하고 실행",
-  masil_open_support_note: "요청받은 뒤 비공개 도움 메모 열기",
-  masil_prepare_support_review: "보낼 내용과 도움받을 곳 준비",
-  masil_create_local_handoff: "확인을 마친 로컬 데모 카드 만들기",
-  masil_get_handoff_status: "담당자와 다음 단계 확인",
-  masil_return_to_activity: "하던 활동으로 돌아가기",
-};
-
-const TOOL_COPY_EN: Record<ToolName, string> = {
-  masil_get_capabilities: "See what you can do together in MASIL",
-  masil_get_session_state: "Check the current screen and available next steps",
-  masil_project_agent_presence: "Project the Agent state into the Orb and page",
-  masil_open_activity: "Open an activity and wait for your choice",
-  masil_set_calligraphy_reference: "Place a prepared calligraphy reference",
-  masil_get_janggi_state: "Check the board and available moves",
-  masil_wait_for_person_janggi_move: "Wait for you to make one move",
-  masil_move_janggi_piece: "Confirm and make the selected Janggi move",
-  masil_open_support_note: "Open a private help note after your request",
-  masil_prepare_support_review: "Prepare what to share and where to get help",
-  masil_create_local_handoff: "Create a confirmed local demo card",
-  masil_get_handoff_status: "Check the owner and next step",
-  masil_return_to_activity: "Return to the activity you were doing",
-};
-
-const SINGLE_AGENT_BOUNDARY = {
-  agentCount: 1,
-  conversationOwner: "user-agent",
-  providerRole: "webmcp-provider-and-visual-projection",
-  embeddedAgent: false,
-  pageOwnsModel: false,
-  pageOwnsStt: false,
-  pageOwnsTts: false,
-  requiresOpenAiApiKey: false,
-} as const;
+const TOOL_COPY = MASIL_TOOL_LABELS;
+const TOOL_COPY_EN = MASIL_TOOL_LABELS_EN;
+const SINGLE_AGENT_BOUNDARY = MASIL_SINGLE_AGENT_BOUNDARY;
 
 function sleep(milliseconds: number) {
   return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
@@ -401,42 +384,45 @@ function stagePresence(stage: Stage): Presence {
   return "ready";
 }
 
-function validActions(session: DemoSession): ToolName[] {
-  const actions: ToolName[] = [
-    "masil_get_capabilities",
-    "masil_get_session_state",
-    "masil_project_agent_presence",
-  ];
-  if (session.stage === "home") actions.push("masil_open_activity");
-  if (session.stage === "activity") {
-    actions.push("masil_open_support_note");
-    if (session.activity === "calligraphy") {
-      actions.push("masil_set_calligraphy_reference");
-    }
-    if (session.activity === "janggi") {
-      actions.push("masil_get_janggi_state", "masil_move_janggi_piece");
-      if (session.janggiGame.turn === PERSON_JANGGI_SIDE) {
-        actions.push("masil_wait_for_person_janggi_move");
-      }
-    }
-  }
-  if (session.stage === "private") {
-    actions.push("masil_prepare_support_review", "masil_return_to_activity");
-  }
-  if (session.stage === "review") {
-    if (
-      session.support?.disclosureConfirmed &&
-      session.support.actionConfirmed
-    ) {
-      actions.push("masil_create_local_handoff");
-    }
-    actions.push("masil_return_to_activity");
-  }
-  if (session.stage === "handoff") {
-    actions.push("masil_get_handoff_status", "masil_return_to_activity");
-  }
-  return actions;
+function validActions(
+  session: DemoSession,
+  calligraphyInputMode: CalligraphyInputMode = "idle",
+): ToolName[] {
+  return getValidMasilActions({
+    stage: session.stage,
+    activity: session.activity,
+    hasCalligraphyReference: Boolean(session.calligraphy.character),
+    calligraphyInputMode,
+    janggiTurn: session.janggiGame.turn,
+    supportDisclosureConfirmed: Boolean(
+      session.support?.disclosureConfirmed,
+    ),
+    supportActionConfirmed: Boolean(session.support?.actionConfirmed),
+  });
 }
+
+function referenceTransport(referenceImageUrl: string | null) {
+  if (!referenceImageUrl) return "none";
+  if (referenceImageUrl.startsWith("data:")) return "data-url";
+  const parsed = new URL(referenceImageUrl, window.location.href);
+  return parsed.origin === window.location.origin
+    ? "same-origin-url"
+    : "https-url";
+}
+
+function publicCalligraphyState(calligraphy: DemoSession["calligraphy"]) {
+  return {
+    character: calligraphy.character,
+    reading: calligraphy.reading,
+    meaning: calligraphy.meaning,
+    referenceImageAlt: calligraphy.referenceImageAlt,
+    referenceImagePresent: Boolean(calligraphy.referenceImageUrl),
+    referenceImageTransport: referenceTransport(calligraphy.referenceImageUrl),
+    referenceValidation: calligraphy.referenceValidation,
+  };
+}
+
+const HUMAN_ONLY_ACTIONS = MASIL_HUMAN_ONLY_ACTIONS;
 
 function makeEventId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
@@ -493,15 +479,18 @@ export function MasilExperience() {
   const [language, setLanguage] = useState<Language>("ko");
   const [session, setSession] = useState<DemoSession>(INITIAL_SESSION);
   const [presence, setPresence] = useState<Presence>("ready");
-  const [webMcpStatus, setWebMcpStatus] = useState<WebMcpStatus>("checking");
   const [transitionProgress, setTransitionProgress] = useState(0);
   const [orbTransitionOrigin, setOrbTransitionOrigin] = useState<
     "home" | "activity" | null
   >(null);
   const [events, setEvents] = useState<DemoEvent[]>([]);
+  const [invocations, setInvocations] = useState<WebMcpInvocationRecord[]>([]);
   const [logsOpen, setLogsOpen] = useState(false);
   const [webMcpDrawerView, setWebMcpDrawerView] =
     useState<WebMcpDrawerView>("overview");
+  const [logsTab, setLogsTab] = useState<InspectorTab>("history");
+  const [calligraphyInputMode, setCalligraphyInputMode] =
+    useState<CalligraphyInputMode>("idle");
   const [characterRequest, setCharacterRequest] =
     useState<CharacterChoiceRequest | null>(null);
   const [cameraRequest, setCameraRequest] =
@@ -509,7 +498,15 @@ export function MasilExperience() {
   const [calligraphyWritingActive, setCalligraphyWritingActive] =
     useState(false);
   const sessionRef = useRef(session);
+  const languageRef = useRef(language);
+  const presenceRef = useRef(presence);
+  const eventsRef = useRef(events);
+  const invocationsRef = useRef(invocations);
+  const logsOpenRef = useRef(logsOpen);
+  const logsTabRef = useRef(logsTab);
+  const calligraphyInputModeRef = useRef(calligraphyInputMode);
   const worldTransitionRef = useRef<MasilWorldTransitionHandle | null>(null);
+  const calligraphyCanvasRef = useRef<AirCalligraphyCanvasHandle | null>(null);
   const cameraRequestRef = useRef<PendingCameraRequest | null>(null);
   const cameraEventRef = useRef<string | null>(null);
   const pendingCharacterChoiceRef = useRef<{
@@ -536,17 +533,38 @@ export function MasilExperience() {
   }, [session]);
 
   useEffect(() => {
+    languageRef.current = language;
     document.documentElement.lang = language;
   }, [language]);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setWebMcpStatus((current) =>
-        current === "checking" ? "demo" : current,
-      );
-    }, WEBMCP_CONNECTION_TIMEOUT_MS);
+    presenceRef.current = presence;
+  }, [presence]);
 
-    return () => window.clearTimeout(timeout);
+  useEffect(() => {
+    logsOpenRef.current = logsOpen;
+  }, [logsOpen]);
+
+  useEffect(() => {
+    logsTabRef.current = logsTab;
+  }, [logsTab]);
+
+  useEffect(() => {
+    calligraphyInputModeRef.current = calligraphyInputMode;
+  }, [calligraphyInputMode]);
+
+  const recordInvocation = useCallback((record: WebMcpInvocationRecord) => {
+    const existingIndex = invocationsRef.current.findIndex(
+      (candidate) => candidate.id === record.id,
+    );
+    const next =
+      existingIndex === -1
+        ? [record, ...invocationsRef.current].slice(0, 100)
+        : invocationsRef.current.map((candidate) =>
+            candidate.id === record.id ? record : candidate,
+          );
+    invocationsRef.current = next;
+    setInvocations(next);
   }, []);
 
   const addEvent = useCallback(
@@ -556,9 +574,12 @@ export function MasilExperience() {
       source: InvocationSource = "person",
     ) => {
       const id = makeEventId();
-      setEvents((current) =>
-        [{ id, label, status, source }, ...current].slice(0, 6),
-      );
+      const next = [
+        { id, label, status, source },
+        ...eventsRef.current,
+      ].slice(0, 20);
+      eventsRef.current = next;
+      setEvents(next);
       return id;
     },
     [],
@@ -566,13 +587,13 @@ export function MasilExperience() {
 
   const finishEvent = useCallback(
     (id: string, status: "done" | "failed", label?: string) => {
-      setEvents((current) =>
-        current.map((event) =>
+      const next = eventsRef.current.map((event) =>
           event.id === id
             ? { ...event, status, label: label ?? event.label }
             : event,
-        ),
       );
+      eventsRef.current = next;
+      setEvents(next);
     },
     [],
   );
@@ -676,15 +697,19 @@ export function MasilExperience() {
     [],
   );
 
+  const beginCalligraphyCameraRequest = useCallback(() => {
+    cameraRequestRef.current?.abort();
+    const nextCameraRequest = createPendingCameraRequest();
+    cameraRequestRef.current = nextCameraRequest;
+    calligraphyInputModeRef.current = "requesting";
+    setCalligraphyInputMode("requesting");
+    setCameraRequest(nextCameraRequest);
+    return nextCameraRequest;
+  }, []);
+
   const chooseCharacter = useCallback(
     (choice: CharacterChoice) => {
       const pending = pendingCharacterChoiceRef.current;
-
-      // getUserMedia begins synchronously inside this exact person gesture.
-      cameraRequestRef.current?.abort();
-      const nextCameraRequest = createPendingCameraRequest();
-      cameraRequestRef.current = nextCameraRequest;
-      setCameraRequest(nextCameraRequest);
 
       pendingCharacterChoiceRef.current = null;
       setCharacterRequest(null);
@@ -695,13 +720,14 @@ export function MasilExperience() {
         updateSession((state) => ({
           ...state,
           revision: state.revision + 1,
-          caption: `${choice.label} 글자를 골랐어요. 손을 찾으면 바로 시작할게요.`,
+          caption: `${choice.label} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`,
           calligraphy: {
             character: choice.character,
             reading: choice.reading,
             meaning: choice.meaning,
             referenceImageUrl: null,
             referenceImageAlt: `${choice.character} 서예 글자본`,
+            referenceValidation: null,
           },
         }));
       }
@@ -709,16 +735,10 @@ export function MasilExperience() {
     [addEvent, updateSession],
   );
 
-  const requestCameraFromCanvas = useCallback(() => {
-    cameraRequestRef.current?.abort();
-    const nextCameraRequest = createPendingCameraRequest();
-    cameraRequestRef.current = nextCameraRequest;
-    setCameraRequest(nextCameraRequest);
-    addEvent("사람이 공중 쓰기 시작을 선택", "human");
-  }, [addEvent]);
-
   const handleCameraStateChange = useCallback(
     (state: "requesting" | "hand" | "fallback", reason?: string) => {
+      calligraphyInputModeRef.current = state;
+      setCalligraphyInputMode(state);
       if (state === "requesting") {
         cameraEventRef.current = addEvent(
           "사람의 선택으로 카메라 권한 요청",
@@ -760,6 +780,26 @@ export function MasilExperience() {
     [addEvent, finishEvent, updateSession],
   );
 
+  const resetToHome = useCallback(() => {
+    worldTransitionRef.current?.cancel();
+    cancelPendingJanggiAnimation();
+    cancelPendingPersonJanggiMove();
+    cameraRequestRef.current?.abort();
+    cameraRequestRef.current = null;
+    setCameraRequest(null);
+    calligraphyInputModeRef.current = "idle";
+    setCalligraphyInputMode("idle");
+    calligraphyCanvasRef.current = null;
+    pendingCharacterChoiceRef.current?.reject(
+      new Error("CHARACTER_CHOICE_CANCELLED"),
+    );
+    pendingCharacterChoiceRef.current = null;
+    setCharacterRequest(null);
+    sessionRef.current = INITIAL_SESSION;
+    setSession(INITIAL_SESSION);
+    setPresence("ready");
+  }, [cancelPendingJanggiAnimation, cancelPendingPersonJanggiMove]);
+
   useEffect(
     () => () => {
       cameraRequestRef.current?.abort();
@@ -772,16 +812,17 @@ export function MasilExperience() {
     [cancelPendingJanggiAnimation, cancelPendingPersonJanggiMove],
   );
 
-  const executeTool = useCallback(
+  const executeSemanticTool = useCallback(
     async (
       name: ToolName,
       input: Record<string, unknown>,
       source: InvocationSource = "person",
-    ): Promise<WebMcpToolResult> => {
+    ): Promise<MasilWebMcpToolResult> => {
       const eventId = addEvent(TOOL_COPY[name], "running", source);
       const readOnly =
         name === "masil_get_capabilities" ||
         name === "masil_get_session_state" ||
+        name === "masil_get_execution_log" ||
         name === "masil_get_janggi_state" ||
         name === "masil_get_handoff_status";
 
@@ -806,26 +847,36 @@ export function MasilExperience() {
             purpose:
               "Turn ordinary speech into person-controlled visual activities and explicit, reviewable help workflows.",
             ...SINGLE_AGENT_BOUNDARY,
-            tools: Object.entries(TOOL_COPY).map(([toolName, label]) => ({
+            contractVersion: MASIL_WEBMCP_CONTRACT_VERSION,
+            contractHash: MASIL_WEBMCP_CONTRACT_HASH,
+            toolCount: MASIL_TOOL_NAMES.length,
+            tools: MASIL_TOOL_NAMES.map((toolName) => ({
               name: toolName,
-              label,
+              label: TOOL_COPY[toolName],
             })),
+            interface: {
+              setLanguage: "masil_set_language",
+              inspectWebMcp: "masil_set_webmcp_panel",
+              readExecutionLog: "masil_get_execution_log",
+              returnHome: "masil_go_home",
+            },
             scenarios: {
               calligraphy: {
                 discoverAndAsk: "masil_open_activity",
                 generateAndPlaceReference: "masil_set_calligraphy_reference",
-                referenceAssetContract: {
-                  textLength: "1-4 characters",
-                  format: "PNG, JPEG, or WebP URL readable by the page",
-                  preferredFormat: "PNG with real transparent alpha",
-                  foreground: "solid black brush-calligraphy only",
-                  background:
-                    "fully transparent; no paper, checkerboard, seal, or decoration",
-                  composition:
-                    "the complete phrase in one image with safe margins; MASIL fits it on one screen with contain",
-                },
+                startAirWriting: "masil_start_calligraphy_camera",
+                stopAirWriting: "masil_stop_calligraphy_camera",
+                clearHumanStrokes: "masil_clear_calligraphy",
+                referenceAssetContract: CALLIGRAPHY_REFERENCE_SPEC,
                 cameraBoundary:
-                  "A fresh person click on the visible page is required before camera access.",
+                  "The Agent may request air writing only after the person explicitly asks. The browser permission prompt remains person-controlled; denial falls back to direct drawing.",
+                requiredSequence: [
+                  "Open calligraphy only after the person asks.",
+                  "If the person names a phrase, generate or post-process one 1536x1024 PNG/WebP with real alpha and black ink only.",
+                  "Call masil_set_calligraphy_reference and wait for its pixel gate. Never claim placement before success.",
+                  "On a validation error, fix the named alpha, ratio, size, ink, or margin defect and retry.",
+                  "Call masil_start_calligraphy_camera only after an explicit request to begin air writing.",
+                ],
               },
               janggi: {
                 open: "masil_open_activity",
@@ -849,6 +900,11 @@ export function MasilExperience() {
                 createConfirmedDemoHandoff: "masil_create_local_handoff",
               },
             },
+            humanOnlyActions: HUMAN_ONLY_ACTIONS,
+            validNextActions: validActions(
+              current,
+              calligraphyInputModeRef.current,
+            ),
           });
         }
 
@@ -856,7 +912,21 @@ export function MasilExperience() {
           const janggiGame = current.janggiGame ?? createInitialJanggiGame();
           finishEvent(eventId, "done");
           return toolResult("Read the exact shared MASIL page state.", {
-            ...current,
+            stage: current.stage,
+            activity: current.activity,
+            revision: current.revision,
+            caption: current.caption,
+            language: languageRef.current,
+            inspector: {
+              open: logsOpenRef.current,
+              tab: logsTabRef.current,
+            },
+            presence: presenceRef.current,
+            calligraphy: publicCalligraphyState(current.calligraphy),
+            calligraphyInputMode: calligraphyInputModeRef.current,
+            janggiMove: current.janggiMove,
+            support: current.support,
+            handoff: current.handoff,
             awaitingCharacterChoice:
               current.stage === "activity" &&
               current.activity === "calligraphy" &&
@@ -873,8 +943,79 @@ export function MasilExperience() {
                         : "agent",
                   }
                 : null,
-            validNextActions: validActions(current),
+            validNextActions: validActions(
+              current,
+              calligraphyInputModeRef.current,
+            ),
+            humanOnlyActions: HUMAN_ONLY_ACTIONS,
             localDemoOnly: true,
+          });
+        }
+
+        if (name === "masil_get_execution_log") {
+          finishEvent(eventId, "done");
+          return toolResult("Read MASIL's visible WebMCP execution history.", {
+            invocations: invocationsRef.current,
+            newestFirst: true,
+            visibleInInspector: true,
+            sensitiveInputsRecorded: false,
+          });
+        }
+
+        if (name === "masil_set_language") {
+          const nextLanguage = textInput(input, "language") as Language;
+          if (nextLanguage !== "ko" && nextLanguage !== "en") {
+            throw new Error("INVALID_LANGUAGE");
+          }
+          languageRef.current = nextLanguage;
+          document.documentElement.lang = nextLanguage;
+          setLanguage(nextLanguage);
+          finishEvent(
+            eventId,
+            "done",
+            nextLanguage === "ko" ? "한국어로 전환" : "Switched to English",
+          );
+          return toolResult("Changed the visible MASIL language.", {
+            language: nextLanguage,
+            pageLanguage: nextLanguage,
+          });
+        }
+
+        if (name === "masil_set_webmcp_panel") {
+          const open = input.open;
+          if (typeof open !== "boolean") {
+            throw new Error("INVALID_PANEL_OPEN_STATE");
+          }
+          const requestedTab = textInput(input, "tab", logsTabRef.current);
+          if (requestedTab !== "history" && requestedTab !== "tools") {
+            throw new Error("INVALID_PANEL_TAB");
+          }
+          logsOpenRef.current = open;
+          logsTabRef.current = requestedTab;
+          setLogsOpen(open);
+          setLogsTab(requestedTab);
+          finishEvent(
+            eventId,
+            "done",
+            `${open ? "WebMCP 패널 열기" : "WebMCP 패널 닫기"} · ${requestedTab}`,
+          );
+          return toolResult("Updated the visible WebMCP inspector.", {
+            open,
+            tab: requestedTab,
+          });
+        }
+
+        if (name === "masil_go_home") {
+          if (input.personConfirmed !== true) {
+            throw new Error("PERSON_CONFIRMATION_REQUIRED");
+          }
+          resetToHome();
+          finishEvent(eventId, "done", "처음 화면으로 이동");
+          return toolResult("Returned to the MASIL home scene.", {
+            stage: "home",
+            activity: null,
+            discardedCurrentActivityState: current.stage !== "home",
+            personConfirmed: true,
           });
         }
 
@@ -943,6 +1084,7 @@ export function MasilExperience() {
                       meaning: "",
                       referenceImageUrl: null,
                       referenceImageAlt: "",
+                      referenceValidation: null,
                     }
                   : state.calligraphy,
             }));
@@ -981,7 +1123,10 @@ export function MasilExperience() {
                   interactionPending: true,
                   choicesRemainVisible: true,
                   cameraPermissionRequested: false,
-                  validNextActions: validActions(opened),
+                  validNextActions: validActions(
+                    opened,
+                    calligraphyInputModeRef.current,
+                  ),
                 },
               );
             }
@@ -1004,21 +1149,26 @@ export function MasilExperience() {
                   selectionSource: source,
                   userGestureReceived: false,
                   cameraPermissionRequestedFromGesture: false,
-                  cameraStartRequiresFreshPersonGesture: true,
-                  validNextActions: validActions(selected),
+                  cameraStartTool: "masil_start_calligraphy_camera",
+                  browserPermissionRemainsPersonControlled: true,
+                  validNextActions: validActions(
+                    selected,
+                    calligraphyInputModeRef.current,
+                  ),
                 },
               );
             }
             const selected = updateSession((state) => ({
               ...state,
               revision: state.revision + 1,
-              caption: `${choice.label} 글자를 골랐어요. 손을 찾으면 바로 시작할게요.`,
+              caption: `${choice.label} 좋네요. 준비되면 공중 쓰기를 시작해보세요.`,
               calligraphy: {
                 character: choice.character,
                 reading: choice.reading,
                 meaning: choice.meaning,
                 referenceImageUrl: null,
                 referenceImageAlt: `${choice.character} 서예 글자본`,
+                referenceValidation: null,
               },
             }));
             setPresence("creating");
@@ -1037,8 +1187,13 @@ export function MasilExperience() {
                 revision: selected.revision,
                 selectedCharacter: choice,
                 userGestureReceived: true,
-                cameraPermissionRequestedFromGesture: true,
-                validNextActions: validActions(selected),
+                cameraPermissionRequestedFromGesture: false,
+                cameraStartTool: "masil_start_calligraphy_camera",
+                browserPermissionRemainsPersonControlled: true,
+                validNextActions: validActions(
+                  selected,
+                  calligraphyInputModeRef.current,
+                ),
               },
             );
           }
@@ -1051,7 +1206,10 @@ export function MasilExperience() {
             stage: opened.stage,
             activity,
             revision: opened.revision,
-            validNextActions: validActions(opened),
+            validNextActions: validActions(
+              opened,
+              calligraphyInputModeRef.current,
+            ),
           });
         }
 
@@ -1074,13 +1232,22 @@ export function MasilExperience() {
           if (!suppliedUrl) {
             throw new Error("AGENT_REFERENCE_IMAGE_REQUIRED");
           }
-          const parsed = new URL(suppliedUrl, window.location.href);
-          const safeDataUrl = /^data:image\/(png|jpeg|webp);base64,/i.test(
+          const characterCount = Array.from(
+            character.replace(/\s/gu, ""),
+          ).length;
+          if (characterCount < 1 || characterCount > MAX_CALLIGRAPHY_CHARACTERS) {
+            throw new Error("CALLIGRAPHY_REQUIRES_ONE_TO_FOUR_CHARACTERS");
+          }
+          const referenceValidation = await validateCalligraphyReferenceImage(
             suppliedUrl,
+            characterCount,
           );
-          const sameOrigin = parsed.origin === window.location.origin;
-          if (!safeDataUrl && !sameOrigin && parsed.protocol !== "https:") {
-            throw new Error("REFERENCE_IMAGE_MUST_BE_SAFE_URL");
+          const latest = sessionRef.current;
+          if (
+            latest.stage !== "activity" ||
+            latest.activity !== "calligraphy"
+          ) {
+            throw new Error("CALLIGRAPHY_CHANGED_DURING_IMAGE_VALIDATION");
           }
           const next = updateSession((state) => ({
             ...state,
@@ -1100,6 +1267,7 @@ export function MasilExperience() {
                 "referenceImageAlt",
                 `${character} 서예 글자본`,
               ),
+              referenceValidation,
             },
           }));
           const pending = pendingCharacterChoiceRef.current;
@@ -1108,6 +1276,8 @@ export function MasilExperience() {
           cameraRequestRef.current?.abort();
           cameraRequestRef.current = null;
           setCameraRequest(null);
+          calligraphyInputModeRef.current = "idle";
+          setCalligraphyInputMode("idle");
           pending?.resolve({
             choice: {
               character,
@@ -1121,13 +1291,110 @@ export function MasilExperience() {
           finishEvent(eventId, "done", `${character} 글자본을 배치했어요`);
           return toolResult("Updated the Agent-created reference layer.", {
             revision: next.revision,
-            calligraphy: next.calligraphy,
-            acceptedCharacterCount: character.length,
+            calligraphy: publicCalligraphyState(next.calligraphy),
+            acceptedCharacterCount: characterCount,
             generatedByAgent: true,
-            imageTransport: suppliedUrl ? "referenceImageUrl" : "text-fallback",
+            imageTransport: referenceTransport(suppliedUrl),
+            assetValidation: referenceValidation,
+            assetContract: CALLIGRAPHY_REFERENCE_SPEC,
             cameraPermissionRequested: false,
-            cameraStartRequiresFreshPersonGesture: true,
+            cameraStartTool: "masil_start_calligraphy_camera",
+            browserPermissionRemainsPersonControlled: true,
             humanStrokeLayer: "separate-and-preserved",
+          });
+        }
+
+        if (name === "masil_start_calligraphy_camera") {
+          if (
+            current.stage !== "activity" ||
+            current.activity !== "calligraphy" ||
+            !current.calligraphy.character
+          ) {
+            throw new Error("CALLIGRAPHY_REFERENCE_NOT_READY");
+          }
+          if (input.personExplicitlyAsked !== true) {
+            throw new Error("EXPLICIT_REQUEST_REQUIRED");
+          }
+          if (
+            calligraphyInputModeRef.current !== "requesting" &&
+            calligraphyInputModeRef.current !== "hand"
+          ) {
+            beginCalligraphyCameraRequest();
+          }
+          const next = updateSession((state) => ({
+            ...state,
+            revision: state.revision + 1,
+            caption: "카메라 권한을 확인하고 있어요.",
+          }));
+          finishEvent(eventId, "done", "공중 쓰기 카메라 요청 시작");
+          return toolResult("Started the browser-controlled camera request.", {
+            revision: next.revision,
+            calligraphyInputMode: calligraphyInputModeRef.current,
+            explicitPersonRequestReceived: true,
+            browserPermissionMayPrompt: true,
+            browserPermissionRemainsPersonControlled: true,
+            denialFallsBackToDirectDrawing: true,
+          });
+        }
+
+        if (name === "masil_stop_calligraphy_camera") {
+          if (current.stage !== "activity" || current.activity !== "calligraphy") {
+            throw new Error("CALLIGRAPHY_NOT_OPEN");
+          }
+          if (input.personExplicitlyAsked !== true) {
+            throw new Error("EXPLICIT_REQUEST_REQUIRED");
+          }
+          if (
+            calligraphyInputModeRef.current !== "requesting" &&
+            calligraphyInputModeRef.current !== "hand"
+          ) {
+            throw new Error("CALLIGRAPHY_CAMERA_NOT_ACTIVE");
+          }
+          calligraphyCanvasRef.current?.stopCamera();
+          cameraRequestRef.current?.abort();
+          cameraRequestRef.current = null;
+          setCameraRequest(null);
+          calligraphyInputModeRef.current = "fallback";
+          setCalligraphyInputMode("fallback");
+          const next = updateSession((state) => ({
+            ...state,
+            revision: state.revision + 1,
+            caption: "카메라를 껐어요. 화면에 직접 이어서 써보세요.",
+          }));
+          finishEvent(eventId, "done", "카메라 끄기 · 직접 쓰기로 전환");
+          return toolResult("Stopped camera input and enabled direct drawing.", {
+            revision: next.revision,
+            calligraphyInputMode: "fallback",
+            cameraStopped: true,
+          });
+        }
+
+        if (name === "masil_clear_calligraphy") {
+          if (
+            current.stage !== "activity" ||
+            current.activity !== "calligraphy" ||
+            !current.calligraphy.character
+          ) {
+            throw new Error("CALLIGRAPHY_NOT_OPEN");
+          }
+          if (input.personConfirmed !== true) {
+            throw new Error("PERSON_CONFIRMATION_REQUIRED");
+          }
+          if (!calligraphyCanvasRef.current) {
+            throw new Error("CALLIGRAPHY_CANVAS_NOT_READY");
+          }
+          calligraphyCanvasRef.current.clear();
+          const next = updateSession((state) => ({
+            ...state,
+            revision: state.revision + 1,
+            caption: "붓 자국만 지웠어요. 글자본은 그대로 두었어요.",
+          }));
+          finishEvent(eventId, "done", "사람의 확인 뒤 붓 자국 지우기");
+          return toolResult("Cleared only the human-authored stroke layer.", {
+            revision: next.revision,
+            personConfirmed: true,
+            referenceLayerPreserved: true,
+            humanStrokeLayerCleared: true,
           });
         }
 
@@ -1207,6 +1474,9 @@ export function MasilExperience() {
             throw new Error("INVALID_JANGGI_ACTION");
           }
           if (action === "reset") {
+            if (actor !== "person" || input.personConfirmed !== true) {
+              throw new Error("PERSON_CONFIRMATION_REQUIRED");
+            }
             const next = updateSession((state) => ({
               ...state,
               revision: state.revision + 1,
@@ -1219,6 +1489,8 @@ export function MasilExperience() {
             finishEvent(eventId, "done", "장기판을 처음 상태로 복원했어요");
             return toolResult("Reset the Janggi board.", {
               revision: next.revision,
+              action,
+              actor,
               personSide: PERSON_JANGGI_SIDE,
               agentSide: AGENT_JANGGI_SIDE,
               turnOwner: "person",
@@ -1320,6 +1592,19 @@ export function MasilExperience() {
           const animation = animationPromise
             ? await animationPromise
             : ("completed" as const);
+          if (action === "move" && animation !== "completed") {
+            updateSession((state) => ({
+              ...state,
+              revision: state.revision + 1,
+              janggiMove: "idle",
+              janggiActiveMove: null,
+              janggiGame,
+              caption:
+                "화면 움직임을 확인하지 못해 수를 두기 전 상태로 되돌렸어요.",
+            }));
+            setPresence("ready");
+            throw new Error(`JANGGI_ANIMATION_NOT_CONFIRMED:${animation}`);
+          }
           if (
             source === "person" &&
             actor === "person" &&
@@ -1531,7 +1816,9 @@ export function MasilExperience() {
     },
     [
       addEvent,
+      beginCalligraphyCameraRequest,
       finishEvent,
+      resetToHome,
       updateSession,
       resolvePendingPersonJanggiMove,
       waitForCharacterChoice,
@@ -1540,276 +1827,22 @@ export function MasilExperience() {
     ],
   );
 
-  const toolDescriptors = useMemo<ToolDescriptor[]>(() => {
-    const tool = (
-      name: ToolName,
-      description: string,
-      inputSchema: Record<string, unknown>,
-      readOnly = false,
-      untrustedContent = false,
-    ): ToolDescriptor => ({
-      name,
-      description,
-      inputSchema,
-      annotations: {
-        readOnlyHint: readOnly,
-        untrustedContentHint: untrustedContent,
-      },
-    });
+  const toolDescriptors = MASIL_TOOL_DESCRIPTORS;
 
-    return [
-      tool(
-        "masil_get_capabilities",
-        "Read MASIL's exact activities, state, permissions, and person-control boundaries. MASIL is only a WebMCP provider and visual projection: the one calling user Agent owns conversation, voice, reasoning, and private context; this page contains no embedded Agent, model, STT, or TTS.",
-        { type: "object", properties: {}, additionalProperties: false },
-        true,
-      ),
-      tool(
-        "masil_get_session_state",
-        "Read the exact visible scene and valid next actions before acting.",
-        { type: "object", properties: {}, additionalProperties: false },
-        true,
-      ),
-      tool(
-        "masil_project_agent_presence",
-        "Project coarse phase changes from the same single user Agent into MASIL's Orb and short caption. Use only at real turn boundaries such as listening, creating, or speaking; do not send raw audio, transcripts, token deltas, or private memory. MASIL never captures speech, synthesizes speech, calls a model, or creates another Agent.",
-        {
-          type: "object",
-          properties: {
-            phase: {
-              type: "string",
-              enum: [
-                "ready",
-                "listening",
-                "receiving",
-                "creating",
-                "speaking",
-                "awaiting",
-                "connected",
-              ],
-            },
-            caption: { type: "string", maxLength: 180 },
-          },
-          required: ["phase"],
-          additionalProperties: false,
-        },
-        false,
-        true,
-      ),
-      tool(
-        "masil_open_activity",
-        "Open calligraphy or janggi after the person expresses that intent. For calligraphy, project a visible question and up to three Agent-supplied choices of one to four characters, then wait during one bounded active-turn window. A visible selection requests the camera from that fresh person gesture. If the person instead names another phrase to the Agent, call masil_set_calligraphy_reference with its generated image URL.",
-        {
-          type: "object",
-          properties: {
-            activity: {
-              type: "string",
-              enum: ["calligraphy", "janggi"],
-            },
-            caption: { type: "string", maxLength: 180 },
-            question: { type: "string", maxLength: 180 },
-            suggestions: {
-              type: "array",
-              minItems: 1,
-              maxItems: 3,
-              items: {
-                type: "object",
-                properties: {
-                  character: { type: "string", minLength: 1, maxLength: 4 },
-                  label: { type: "string", maxLength: 18 },
-                  reading: { type: "string", maxLength: 40 },
-                  meaning: { type: "string", maxLength: 80 },
-                },
-                required: ["character", "label"],
-                additionalProperties: false,
-              },
-            },
-          },
-          required: ["activity"],
-          additionalProperties: false,
-        },
-      ),
-      tool(
-        "masil_set_calligraphy_reference",
-        "Accept a one-to-four-character phrase and an Agent-generated raster image URL, close any pending character prompt, and place the complete reference in the calligraphy space without changing the person's strokes. Camera access still requires a fresh person gesture on the page.",
-        {
-          type: "object",
-          properties: {
-            character: { type: "string", minLength: 1, maxLength: 4 },
-            reading: { type: "string" },
-            meaning: { type: "string" },
-            caption: { type: "string", maxLength: 180 },
-            referenceImageUrl: {
-              type: "string",
-              description:
-                "Required Agent-generated image transport. Supply a PNG, JPEG, or WebP data URL, same-origin URL, or HTTPS URL readable by this page. Generate the complete 1-4 character phrase as solid black Korean or Hanja brush-calligraphy cut out on real transparent alpha, centered in one image with generous margins. Do not include paper, a baked checkerboard, seal, signature, decoration, translation, or any extra text; MASIL displays the whole image with object-fit contain.",
-            },
-            referenceImageAlt: { type: "string", maxLength: 240 },
-          },
-          required: ["character", "referenceImageUrl"],
-          additionalProperties: false,
-        },
-        false,
-        true,
-      ),
-      tool(
-        "masil_get_janggi_state",
-        "Read the exact live Janggi position, whose turn it is, the coordinate convention, and every legal destination for each piece on move. Always read this before resolving a natural-language move. The page is the rules authority; do not guess blocked paths or cannon screens.",
-        { type: "object", properties: {}, additionalProperties: false },
-        true,
-      ),
-      tool(
-        "masil_wait_for_person_janggi_move",
-        "During one active Agent turn, wait up to 45 seconds for the person to make exactly one Cho move directly on the shared board by clicking or touching a piece and destination, or by dragging it onto a displayed legal destination. The page exposes only legal destinations, validates the chosen move with the same Janggi rules engine, and resolves this async call only after the same vGPU move and camera animation finishes. The result returns shouldAgentReply=true so the calling user Agent can play Han with masil_move_janggi_piece. This bounded gesture wait cannot wake an idle Agent and must not be used to wait for future speech.",
-        { type: "object", properties: {}, additionalProperties: false },
-      ),
-      tool(
-        "masil_move_janggi_piece",
-        "Validate and visibly animate one semantic Janggi action in the shared turn loop. The person always plays Cho and the calling user Agent plays Han. Read masil_get_janggi_state first, convert words into a pieceId and destination, then call actor=person for the explicitly requested Cho move with personConfirmed=true. This async tool resolves only after that move's vGPU animation completes and returns shouldAgentReply=true. In the same Agent turn, choose a legal Han response and call again with actor=agent; when its animation completes the result returns awaitingPersonSpeech=true. Do not leave a site-tool call open waiting for the person's future voice—the next utterance starts a new Agent turn. Use action=preview to show a legal move without changing the game. Use action=pass for 한수쉼; the provider rejects it while in check. The provider enforces turns, horse and elephant blocks, palace movement and diagonals, cannon screens and cannon restrictions, captures, check, mate, and the non-chess bikjang rule. For '초 왕 오른쪽 대각선' from the initial position use cho-king to row 7, col 5.",
-        {
-          type: "object",
-          properties: {
-            action: {
-              type: "string",
-              enum: ["preview", "move", "pass", "reset"],
-            },
-            actor: {
-              type: "string",
-              enum: ["person", "agent"],
-              description:
-                "Use person for Cho moves spoken by the person, and agent for Han replies selected by the same calling user Agent.",
-            },
-            pieceId: {
-              type: "string",
-              description:
-                "Stable piece id returned by masil_get_janggi_state, such as cho-king or cho-po-left.",
-            },
-            toRow: { type: "integer", minimum: 0, maximum: 9 },
-            toCol: { type: "integer", minimum: 0, maximum: 8 },
-            spokenMove: {
-              type: "string",
-              description:
-                "For actor=person, the person's short original phrase. For actor=agent, a short natural-language description of the Agent reply for the visible log.",
-            },
-            personConfirmed: {
-              type: "boolean",
-              description:
-                "Required true only for actor=person with action=move or pass. It means the person explicitly told the Agent to make this exact Cho action.",
-            },
-          },
-          required: ["action", "actor"],
-          additionalProperties: false,
-        },
-      ),
-      tool(
-        "masil_open_support_note",
-        "Open a private no-action support note only after an explicit request. Activity, mood, silence, or conversation alone is never consent.",
-        {
-          type: "object",
-          properties: {
-            personExplicitlyAsked: { type: "boolean" },
-            summary: { type: "string" },
-            desiredOutcome: { type: "string" },
-          },
-          required: ["personExplicitlyAsked", "summary", "desiredOutcome"],
-          additionalProperties: false,
-        },
-      ),
-      tool(
-        "masil_prepare_support_review",
-        "Prepare the smallest exact sentence and current local support capacity for the person to review. This creates no request.",
-        {
-          type: "object",
-          properties: {
-            minimumDisclosure: { type: "string", minLength: 1 },
-          },
-          required: ["minimumDisclosure"],
-          additionalProperties: false,
-        },
-      ),
-      tool(
-        "masil_create_local_handoff",
-        "Create only an in-memory demo handoff after separate disclosure and action confirmations at the exact visible revision.",
-        {
-          type: "object",
-          properties: { seenRevision: { type: "number" } },
-          required: ["seenRevision"],
-          additionalProperties: false,
-        },
-      ),
-      tool(
-        "masil_get_handoff_status",
-        "Read the local owner, status, callback time, and next step.",
-        { type: "object", properties: {}, additionalProperties: false },
-        true,
-      ),
-      tool(
-        "masil_return_to_activity",
-        "Return to the exact preserved activity without deleting the handoff result.",
-        { type: "object", properties: {}, additionalProperties: false },
-      ),
-    ];
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-    let retryTimer = 0;
-    let registeredContext: NonNullable<Document["modelContext"]> | null = null;
-    const registered: ToolName[] = [];
-
-    const start = async (attempt = 0) => {
-      await Promise.resolve();
-      if (!active) return;
-
-      const modelContext = document.modelContext;
-      if (!modelContext?.registerTool) {
-        if (attempt < 24) {
-          retryTimer = window.setTimeout(() => {
-            void start(attempt + 1);
-          }, 250);
-          return;
-        }
-        setWebMcpStatus("demo");
-        return;
-      }
-
-      registeredContext = modelContext;
-      try {
-        for (const descriptor of toolDescriptors) {
-          if (modelContext.unregisterTool) {
-            try {
-              await Promise.resolve(
-                modelContext.unregisterTool(descriptor.name),
-              );
-            } catch {
-              // A fresh page has nothing to unregister.
-            }
-          }
-          const webMcpTool: WebMcpTool = {
-            ...descriptor,
-            execute: (input) => executeTool(descriptor.name, input, "webmcp"),
-          };
-          await Promise.resolve(modelContext.registerTool(webMcpTool));
-          registered.push(descriptor.name);
-          if (!active) break;
-        }
-        if (active) setWebMcpStatus("connected");
-      } catch {
-        if (active) setWebMcpStatus("error");
-      }
-    };
-
-    void start();
-    return () => {
-      active = false;
-      window.clearTimeout(retryTimer);
-      for (const name of registered) {
-        if (registeredContext?.unregisterTool) {
-          void Promise.resolve(registeredContext.unregisterTool(name));
-        }
-      }
-    };
-  }, [executeTool, toolDescriptors]);
+  const webMcpAdapter = useMemo<MasilWebMcpAdapter>(
+    () => ({
+      getRevision: () => sessionRef.current.revision,
+      execute: executeSemanticTool as MasilWebMcpAdapter["execute"],
+      onInvocation: recordInvocation,
+    }),
+    [executeSemanticTool, recordInvocation],
+  );
+  const executeTool = useCallback<MasilToolExecutor>(
+    (name, input, source) =>
+      createInstrumentedMasilExecutor(webMcpAdapter)(name, input, source),
+    [webMcpAdapter],
+  );
+  const webMcpStatus = useMasilWebMcpProvider(executeTool);
 
   const prepareReview = () =>
     executeTool("masil_prepare_support_review", {
@@ -1888,26 +1921,26 @@ export function MasilExperience() {
 
   const returnToActivity = () => executeTool("masil_return_to_activity", {});
 
-  const reset = () => {
-    worldTransitionRef.current?.cancel();
-    setOrbTransitionOrigin(null);
-    setTransitionProgress(0);
-    cancelPendingJanggiAnimation();
-    cancelPendingPersonJanggiMove();
-    cameraRequestRef.current?.abort();
-    cameraRequestRef.current = null;
-    setCameraRequest(null);
-    setCalligraphyWritingActive(false);
-    pendingCharacterChoiceRef.current?.reject(
-      new Error("CHARACTER_CHOICE_CANCELLED"),
+  const requestCameraFromCanvas = () =>
+    executeTool(
+      "masil_start_calligraphy_camera",
+      { personExplicitlyAsked: true },
+      "person",
     );
-    pendingCharacterChoiceRef.current = null;
-    setCharacterRequest(null);
-    sessionRef.current = INITIAL_SESSION;
-    setSession(INITIAL_SESSION);
-    setPresence("ready");
-    setEvents([]);
-  };
+
+  const stopCameraFromCanvas = () =>
+    executeTool(
+      "masil_stop_calligraphy_camera",
+      { personExplicitlyAsked: true },
+      "person",
+    );
+
+  const clearCalligraphyFromCanvas = () =>
+    executeTool(
+      "masil_clear_calligraphy",
+      { personConfirmed: true },
+      "person",
+    );
 
   const moveJanggiByPersonGesture = useCallback(
     async (
@@ -2021,6 +2054,7 @@ export function MasilExperience() {
         >
           <ActivityWorld
             activity={session.activity ?? "calligraphy"}
+            calligraphyCanvasRef={calligraphyCanvasRef}
             cameraRequest={cameraRequest}
             characterRequest={characterRequest}
             language={language}
@@ -2028,9 +2062,11 @@ export function MasilExperience() {
             onCharacterChoice={chooseCharacter}
             onCalligraphyWritingStateChange={setCalligraphyWritingActive}
             onCameraStateChange={handleCameraStateChange}
+            onClearCalligraphy={() => void clearCalligraphyFromCanvas()}
             onJanggiMoveAnimationComplete={completeJanggiAnimation}
             onJanggiPersonMove={moveJanggiByPersonGesture}
             onRequestCamera={requestCameraFromCanvas}
+            onStopCamera={() => void stopCameraFromCanvas()}
           />
 
           {session.stage === "activity" &&
@@ -2065,20 +2101,29 @@ export function MasilExperience() {
       )}
 
       <EventLogDrawer
-        events={events}
+        invocations={invocations}
         language={language}
-        onClose={() => setLogsOpen(false)}
+        onClose={() =>
+          void executeTool(
+            "masil_set_webmcp_panel",
+            { open: false, tab: logsTab },
+            "person",
+          )
+        }
         onBackToOverview={() => setWebMcpDrawerView("overview")}
         onOpenConnectionGuide={() => setWebMcpDrawerView("connection")}
         onOpenActivity={(activity) => {
-          setLogsOpen(false);
+          void executeTool(
+            "masil_set_webmcp_panel",
+            { open: false, tab: logsTab },
+            "person",
+          );
           void executeTool(
             "masil_open_activity",
             activity === "calligraphy"
               ? {
                   activity,
                   question: "어떤 글자를 써볼까요?",
-                  choices: [],
                 }
               : {
                   activity,
@@ -2088,6 +2133,14 @@ export function MasilExperience() {
           );
         }}
         open={logsOpen}
+        tab={logsTab}
+        onTabChange={(tab) =>
+          void executeTool(
+            "masil_set_webmcp_panel",
+            { open: true, tab },
+            "person",
+          )
+        }
         status={webMcpStatus}
         toolCount={toolDescriptors.length}
         view={webMcpDrawerView}
@@ -2101,7 +2154,13 @@ export function MasilExperience() {
         <button
           type="button"
           className="group pointer-events-auto -ml-2 flex h-11 items-center gap-3 rounded-xl px-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b65f49]/25 focus-visible:ring-offset-2"
-          onClick={reset}
+          onClick={() =>
+            void executeTool(
+              "masil_go_home",
+              { personConfirmed: true },
+              "person",
+            )
+          }
           aria-label={language === "ko" ? "MASIL 처음 화면" : "MASIL home"}
         >
           <span className="text-[0.92rem] font-semibold tracking-[0.32em] text-[#ad5541] transition-colors group-hover:text-[#914431]">
@@ -2117,10 +2176,20 @@ export function MasilExperience() {
 
         <MasilHeaderControls
           language={language}
-          onLanguageChange={setLanguage}
+          onLanguageChange={(nextLanguage) =>
+            void executeTool(
+              "masil_set_language",
+              { language: nextLanguage },
+              "person",
+            )
+          }
           onOpenPanel={() => {
             setWebMcpDrawerView("overview");
-            setLogsOpen(true);
+            void executeTool(
+              "masil_set_webmcp_panel",
+              { open: true, tab: logsTab },
+              "person",
+            );
           }}
           open={logsOpen}
           status={webMcpStatus}
@@ -2628,6 +2697,7 @@ function HomeScreen({
 
 function ActivityWorld({
   activity,
+  calligraphyCanvasRef,
   cameraRequest,
   characterRequest,
   language,
@@ -2635,11 +2705,14 @@ function ActivityWorld({
   onCalligraphyWritingStateChange,
   onCameraStateChange,
   onCharacterChoice,
+  onClearCalligraphy,
   onJanggiMoveAnimationComplete,
   onJanggiPersonMove,
   onRequestCamera,
+  onStopCamera,
 }: {
   activity: Activity;
+  calligraphyCanvasRef: RefObject<AirCalligraphyCanvasHandle | null>;
   cameraRequest: PendingCameraRequest | null;
   characterRequest: CharacterChoiceRequest | null;
   language: Language;
@@ -2650,6 +2723,7 @@ function ActivityWorld({
     reason?: string,
   ) => void;
   onCharacterChoice: (choice: CharacterChoice) => void;
+  onClearCalligraphy: () => void;
   onJanggiMoveAnimationComplete: (moveId: string) => void;
   onJanggiPersonMove: (
     pieceId: string,
@@ -2657,6 +2731,7 @@ function ActivityWorld({
     spokenMove: string,
   ) => Promise<void>;
   onRequestCamera: () => void;
+  onStopCamera: () => void;
 }) {
   if (activity === "janggi") {
     return (
@@ -2691,12 +2766,15 @@ function ActivityWorld({
 
   return (
     <AirCalligraphyCanvas
+      ref={calligraphyCanvasRef}
       cameraRequest={cameraRequest}
       character={session.calligraphy.character}
       language={language}
       onWritingStateChange={onCalligraphyWritingStateChange}
       onCameraStateChange={onCameraStateChange}
+      onClear={onClearCalligraphy}
       onRequestCamera={onRequestCamera}
+      onStopCamera={onStopCamera}
       referenceImageAlt={session.calligraphy.referenceImageAlt}
       referenceImageUrl={session.calligraphy.referenceImageUrl ?? undefined}
     />
@@ -2957,24 +3035,28 @@ function AgentSceneCaption({
 }
 
 function EventLogDrawer({
-  events,
+  invocations,
   language,
   onBackToOverview,
   onClose,
   onOpenConnectionGuide,
   onOpenActivity,
   open,
+  tab,
+  onTabChange,
   status,
   toolCount,
   view,
 }: {
-  events: DemoEvent[];
+  invocations: WebMcpInvocationRecord[];
   language: Language;
   onBackToOverview: () => void;
   onClose: () => void;
   onOpenConnectionGuide: () => void;
   onOpenActivity: (activity: Activity) => void;
   open: boolean;
+  tab: InspectorTab;
+  onTabChange: (tab: InspectorTab) => void;
   status: WebMcpStatus;
   toolCount: number;
   view: WebMcpDrawerView;
@@ -3022,9 +3104,17 @@ function EventLogDrawer({
           </SheetDescription>
             </SheetHeader>
 
-            <Tabs defaultValue="history" className="min-h-0 flex-1 px-4 pb-4">
+            <Tabs
+              value={tab}
+              onValueChange={(value) => {
+                if (value === "history" || value === "tools") {
+                  onTabChange(value);
+                }
+              }}
+              className="min-h-0 flex-1 px-4 pb-4"
+            >
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="history">
+            <TabsTrigger value="history" data-testid="webmcp-tab-history">
               {status === "connected"
                 ? language === "ko"
                   ? "함께한 기록"
@@ -3033,7 +3123,7 @@ function EventLogDrawer({
                   ? "화면 둘러보기"
                   : "Explore"}
             </TabsTrigger>
-            <TabsTrigger value="tools">
+            <TabsTrigger value="tools" data-testid="webmcp-tab-tools">
               {language === "ko" ? "사이트 도구" : "Site tools"} {toolCount}
             </TabsTrigger>
           </TabsList>
@@ -3096,28 +3186,43 @@ function EventLogDrawer({
                     </ItemActions>
                   </Item>
                 </ItemGroup>
-              ) : events.length ? (
+              ) : invocations.length ? (
                 <ItemGroup className="gap-1 py-2">
-                  {events.map((event) => (
-                    <Item key={event.id} data-event-source={event.source}>
+                  {invocations.map((invocation) => (
+                    <Item
+                      key={invocation.id}
+                      data-event-source={invocation.source}
+                    >
                       <ItemMedia variant="icon">
                         <ActivityIcon
                           className={
-                            event.status === "failed"
+                            invocation.status === "failed"
                               ? "text-destructive"
-                              : event.status === "done"
+                              : invocation.status === "succeeded"
                                 ? "text-emerald-600"
-                                : event.status === "human"
-                                  ? "text-primary"
-                                  : "animate-pulse text-primary"
+                                : "animate-pulse text-primary"
                           }
                         />
                       </ItemMedia>
                       <ItemContent>
-                        <ItemTitle>{event.label}</ItemTitle>
+                        <ItemTitle>
+                          {language === "ko"
+                            ? TOOL_COPY[invocation.tool]
+                            : TOOL_COPY_EN[invocation.tool]}
+                        </ItemTitle>
                         <ItemDescription className="text-xs uppercase">
-                          {event.source === "webmcp" ? "WEBMCP" : "PERSON"} ·{" "}
-                          {event.status}
+                          {invocation.source === "webmcp" ? "WEBMCP" : "PERSON"}
+                          {" · "}
+                          {invocation.status}
+                          {invocation.durationMs === null
+                            ? ""
+                            : ` · ${Math.round(invocation.durationMs)}ms`}
+                          {invocation.revisionAfter === null
+                            ? ""
+                            : ` · r${invocation.revisionBefore}→r${invocation.revisionAfter}`}
+                          {invocation.errorCode
+                            ? ` · ${invocation.errorCode}`
+                            : ""}
                         </ItemDescription>
                       </ItemContent>
                     </Item>

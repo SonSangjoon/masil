@@ -1,0 +1,204 @@
+import { MASIL_TOOL_DESCRIPTORS } from "@/features/webmcp/contract";
+import type { MasilWebMcpAdapter } from "@/features/webmcp/adapter";
+import type {
+  BrowserWebMcpTool,
+  MasilInvocationSource,
+  MasilToolDescriptor,
+  MasilToolExecutor,
+  MasilToolInputMap,
+  MasilToolName,
+  MasilWebMcpToolResult,
+  WebMcpInvocationRecord,
+} from "@/features/webmcp/types";
+
+type BrowserModelContext = NonNullable<Document["modelContext"]>;
+
+let invocationSequence = 0;
+
+function nowMilliseconds() {
+  return globalThis.performance?.now() ?? Date.now();
+}
+
+function makeInvocationId() {
+  invocationSequence += 1;
+  return `webmcp-${Date.now()}-${invocationSequence}`;
+}
+
+function compactJanggiPieces(value: unknown) {
+  if (!Array.isArray(value)) return value;
+  return value.map((entry) => {
+    if (!entry || typeof entry !== "object") return entry;
+    const piece = entry as Record<string, unknown>;
+    return {
+      id: piece.id,
+      row: piece.row,
+      col: piece.col,
+      legalMoves: piece.legalMoves,
+    };
+  });
+}
+
+/** Keep the complete position while removing labels derivable from stable piece ids. */
+export function projectMasilWebMcpResult(
+  name: MasilToolName,
+  result: MasilWebMcpToolResult,
+): MasilWebMcpToolResult {
+  const structured = result.structuredContent;
+  if (!structured || typeof structured !== "object") return result;
+  if (name === "masil_get_janggi_state") {
+    return {
+      ...result,
+      structuredContent: {
+        ...structured,
+        pieces: compactJanggiPieces(structured.pieces),
+      },
+    };
+  }
+  if (name === "masil_set_calligraphy_reference") {
+    return {
+      ...result,
+      structuredContent: {
+        ...structured,
+        visibleOutcome: "reference-ready",
+        calligraphyInputMode: "idle",
+        nextInputDecisionOwner: "person",
+        drawingInputReady: false,
+      },
+    };
+  }
+  if (
+    name === "masil_move_janggi_piece" ||
+    name === "masil_wait_for_person_janggi_move"
+  ) {
+    const game = structured.game;
+    if (!game || typeof game !== "object") return result;
+    return {
+      ...result,
+      structuredContent: {
+        ...structured,
+        game: {
+          ...(game as Record<string, unknown>),
+          pieces: compactJanggiPieces(
+            (game as Record<string, unknown>).pieces,
+          ),
+        },
+      },
+    };
+  }
+  return result;
+}
+
+export function errorCodeFrom(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const code = message.split(":", 1)[0]?.trim();
+  return code || "UNKNOWN_PROVIDER_ERROR";
+}
+
+export function createInstrumentedMasilExecutor(
+  adapter: MasilWebMcpAdapter,
+): MasilToolExecutor {
+  return async <TName extends MasilToolName>(
+    name: TName,
+    input: MasilToolInputMap[TName],
+    source: MasilInvocationSource = "person",
+  ) => {
+    const startedAt = new Date();
+    const startedMonotonic = nowMilliseconds();
+    const record: WebMcpInvocationRecord = {
+      id: makeInvocationId(),
+      tool: name,
+      source,
+      status: "running",
+      startedAt: startedAt.toISOString(),
+      completedAt: null,
+      durationMs: null,
+      revisionBefore: adapter.getRevision(),
+      revisionAfter: null,
+      errorCode: null,
+    };
+
+    adapter.onInvocation(record);
+
+    try {
+      const result = await adapter.execute(name, input, source);
+      const completedAt = new Date();
+      adapter.onInvocation({
+        ...record,
+        status: "succeeded",
+        completedAt: completedAt.toISOString(),
+        durationMs: Math.max(0, nowMilliseconds() - startedMonotonic),
+        revisionAfter: adapter.getRevision(),
+      });
+      return result;
+    } catch (error) {
+      const completedAt = new Date();
+      adapter.onInvocation({
+        ...record,
+        status: "failed",
+        completedAt: completedAt.toISOString(),
+        durationMs: Math.max(0, nowMilliseconds() - startedMonotonic),
+        revisionAfter: adapter.getRevision(),
+        errorCode: errorCodeFrom(error),
+      });
+      throw error;
+    }
+  };
+}
+
+export async function registerMasilWebMcpProvider(options: {
+  modelContext: BrowserModelContext;
+  execute: MasilToolExecutor;
+  descriptors?: readonly MasilToolDescriptor[];
+  isActive?: () => boolean;
+}) {
+  const {
+    modelContext,
+    execute,
+    descriptors = MASIL_TOOL_DESCRIPTORS,
+    isActive = () => true,
+  } = options;
+  const registered: MasilToolName[] = [];
+
+  try {
+    for (const descriptor of descriptors) {
+      if (!isActive()) break;
+      if (modelContext.unregisterTool) {
+        try {
+          await Promise.resolve(modelContext.unregisterTool(descriptor.name));
+        } catch {
+          // A new page or host has nothing to unregister.
+        }
+      }
+
+      const webMcpTool: BrowserWebMcpTool = {
+        ...descriptor,
+        execute: async (input) =>
+          projectMasilWebMcpResult(
+            descriptor.name,
+            await execute(
+              descriptor.name,
+              input as MasilToolInputMap[typeof descriptor.name],
+              "webmcp",
+            ),
+          ),
+      };
+      await Promise.resolve(modelContext.registerTool(webMcpTool));
+      registered.push(descriptor.name);
+    }
+  } catch (error) {
+    await unregisterMasilWebMcpTools(modelContext, registered);
+    throw error;
+  }
+
+  return () => unregisterMasilWebMcpTools(modelContext, registered);
+}
+
+async function unregisterMasilWebMcpTools(
+  modelContext: BrowserModelContext,
+  names: readonly MasilToolName[],
+) {
+  if (!modelContext.unregisterTool) return;
+  await Promise.allSettled(
+    names.map((name) => Promise.resolve(modelContext.unregisterTool?.(name))),
+  );
+}

@@ -1,0 +1,1192 @@
+{
+  "agent": {
+    "usage": {
+      "input": 26573,
+      "cachedInput": 22580,
+      "output": 423,
+      "reasoning": 147,
+      "total": 26996
+    },
+    "modelLatencyMs": 12683.275958999991,
+    "wallTimeMs": 17769.772499999992,
+    "turns": 7,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:53:23.887Z",
+        "completedAt": "2026-09-03T09:53:26.446Z",
+        "durationMs": 2558.0999999046326,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "janggi",
+          "revision": 1,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_get_janggi_state",
+            "masil_move_janggi_piece",
+            "masil_wait_for_person_janggi_move"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_get_janggi_state",
+        "startedAt": "2026-09-03T09:53:27.743Z",
+        "completedAt": "2026-09-03T09:53:27.745Z",
+        "durationMs": 1.8999996185302734,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 1,
+          "personSide": "cho",
+          "agentSide": "han",
+          "turnOwner": "person",
+          "coordinateSystem": {
+            "rows": "0 (한 진영) to 9 (초 진영)",
+            "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+            "choForward": "row - 1",
+            "hanForward": "row + 1"
+          },
+          "ruleProfile": {
+            "name": "common-janggi",
+            "choMovesFirst": true,
+            "passAllowedWhenNotInCheck": true,
+            "bikjangIsNotCheck": true,
+            "noChessStyleStalemate": true
+          },
+          "canPass": true,
+          "turn": "cho",
+          "moveNumber": 1,
+          "status": "playing",
+          "lastMove": null,
+          "pieces": [
+            {
+              "id": "han-cha-left",
+              "row": 0,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-left",
+              "row": 0,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-left",
+              "row": 0,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-left",
+              "row": 0,
+              "col": 3,
+              "legalMoves": []
+            },
+            {
+              "id": "han-king",
+              "row": 1,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-right",
+              "row": 0,
+              "col": 5,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-right",
+              "row": 0,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-right",
+              "row": 0,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-cha-right",
+              "row": 0,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-left",
+              "row": 2,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-right",
+              "row": 2,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-1",
+              "row": 3,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-2",
+              "row": 3,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-3",
+              "row": 3,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-4",
+              "row": 3,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-5",
+              "row": 3,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-byeong-1",
+              "row": 6,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 0
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-2",
+              "row": 6,
+              "col": 2,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 2
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-3",
+              "row": 6,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 4
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-4",
+              "row": 6,
+              "col": 6,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 6
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-5",
+              "row": 6,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 8
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-po-left",
+              "row": 7,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-po-right",
+              "row": 7,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-cha-left",
+              "row": 9,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 8,
+                  "col": 0
+                }
+              ]
+            },
+            {
+              "id": "cho-ma-left",
+              "row": 9,
+              "col": 1,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 7,
+                  "col": 2
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-left",
+              "row": 9,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-sa-left",
+              "row": 9,
+              "col": 3,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-king",
+              "row": 8,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 3
+                },
+                {
+                  "row": 7,
+                  "col": 4
+                },
+                {
+                  "row": 7,
+                  "col": 5
+                },
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sa-right",
+              "row": 9,
+              "col": 5,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-right",
+              "row": 9,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-ma-right",
+              "row": 9,
+              "col": 7,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 6
+                },
+                {
+                  "row": 7,
+                  "col": 8
+                }
+              ]
+            },
+            {
+              "id": "cho-cha-right",
+              "row": 9,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 8
+                },
+                {
+                  "row": 8,
+                  "col": 8
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_move_janggi_piece",
+        "startedAt": "2026-09-03T09:53:30.470Z",
+        "completedAt": "2026-09-03T09:53:30.914Z",
+        "durationMs": 444.19999980926514,
+        "success": false,
+        "errorCode": "JANGGI_ILLEGAL_MOVE",
+        "structuredContent": null
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_get_janggi_state",
+        "startedAt": "2026-09-03T09:53:34.144Z",
+        "completedAt": "2026-09-03T09:53:34.147Z",
+        "durationMs": 2.5,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 1,
+          "personSide": "cho",
+          "agentSide": "han",
+          "turnOwner": "person",
+          "coordinateSystem": {
+            "rows": "0 (한 진영) to 9 (초 진영)",
+            "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+            "choForward": "row - 1",
+            "hanForward": "row + 1"
+          },
+          "ruleProfile": {
+            "name": "common-janggi",
+            "choMovesFirst": true,
+            "passAllowedWhenNotInCheck": true,
+            "bikjangIsNotCheck": true,
+            "noChessStyleStalemate": true
+          },
+          "canPass": true,
+          "turn": "cho",
+          "moveNumber": 1,
+          "status": "playing",
+          "lastMove": null,
+          "pieces": [
+            {
+              "id": "han-cha-left",
+              "row": 0,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-left",
+              "row": 0,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-left",
+              "row": 0,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-left",
+              "row": 0,
+              "col": 3,
+              "legalMoves": []
+            },
+            {
+              "id": "han-king",
+              "row": 1,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sa-right",
+              "row": 0,
+              "col": 5,
+              "legalMoves": []
+            },
+            {
+              "id": "han-sang-right",
+              "row": 0,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-ma-right",
+              "row": 0,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-cha-right",
+              "row": 0,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-left",
+              "row": 2,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "han-po-right",
+              "row": 2,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-1",
+              "row": 3,
+              "col": 0,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-2",
+              "row": 3,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-3",
+              "row": 3,
+              "col": 4,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-4",
+              "row": 3,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "han-jol-5",
+              "row": 3,
+              "col": 8,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-byeong-1",
+              "row": 6,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 0
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-2",
+              "row": 6,
+              "col": 2,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 2
+                },
+                {
+                  "row": 6,
+                  "col": 1
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-3",
+              "row": 6,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 4
+                },
+                {
+                  "row": 6,
+                  "col": 3
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-4",
+              "row": 6,
+              "col": 6,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 6
+                },
+                {
+                  "row": 6,
+                  "col": 5
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-byeong-5",
+              "row": 6,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 5,
+                  "col": 8
+                },
+                {
+                  "row": 6,
+                  "col": 7
+                }
+              ]
+            },
+            {
+              "id": "cho-po-left",
+              "row": 7,
+              "col": 1,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-po-right",
+              "row": 7,
+              "col": 7,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-cha-left",
+              "row": 9,
+              "col": 0,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 8,
+                  "col": 0
+                }
+              ]
+            },
+            {
+              "id": "cho-ma-left",
+              "row": 9,
+              "col": 1,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 0
+                },
+                {
+                  "row": 7,
+                  "col": 2
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-left",
+              "row": 9,
+              "col": 2,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-sa-left",
+              "row": 9,
+              "col": 3,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-king",
+              "row": 8,
+              "col": 4,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 3
+                },
+                {
+                  "row": 7,
+                  "col": 4
+                },
+                {
+                  "row": 7,
+                  "col": 5
+                },
+                {
+                  "row": 8,
+                  "col": 3
+                },
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sa-right",
+              "row": 9,
+              "col": 5,
+              "legalMoves": [
+                {
+                  "row": 8,
+                  "col": 5
+                },
+                {
+                  "row": 9,
+                  "col": 4
+                }
+              ]
+            },
+            {
+              "id": "cho-sang-right",
+              "row": 9,
+              "col": 6,
+              "legalMoves": []
+            },
+            {
+              "id": "cho-ma-right",
+              "row": 9,
+              "col": 7,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 6
+                },
+                {
+                  "row": 7,
+                  "col": 8
+                }
+              ]
+            },
+            {
+              "id": "cho-cha-right",
+              "row": 9,
+              "col": 8,
+              "legalMoves": [
+                {
+                  "row": 7,
+                  "col": 8
+                },
+                {
+                  "row": 8,
+                  "col": 8
+                }
+              ]
+            }
+          ]
+        }
+      },
+      {
+        "sequence": 5,
+        "tool": "masil_move_janggi_piece",
+        "startedAt": "2026-09-03T09:53:36.004Z",
+        "completedAt": "2026-09-03T09:53:38.036Z",
+        "durationMs": 2031.7999997138977,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "action": "move",
+          "actor": "person",
+          "move": {
+            "id": "move-1-cho-cha-left-8-0",
+            "pieceId": "cho-cha-left",
+            "pieceIndex": 23,
+            "pieceLabel": "車",
+            "side": "cho",
+            "from": {
+              "row": 9,
+              "col": 0
+            },
+            "to": {
+              "row": 8,
+              "col": 0
+            },
+            "capturedPieceId": null,
+            "spokenMove": "왼쪽 차를 바로 위로 한 칸 이동",
+            "moveNumber": 1
+          },
+          "game": {
+            "coordinateSystem": {
+              "rows": "0 (한 진영) to 9 (초 진영)",
+              "columns": "0 (화면 왼쪽) to 8 (화면 오른쪽)",
+              "choForward": "row - 1",
+              "hanForward": "row + 1"
+            },
+            "ruleProfile": {
+              "name": "common-janggi",
+              "choMovesFirst": true,
+              "passAllowedWhenNotInCheck": true,
+              "bikjangIsNotCheck": true,
+              "noChessStyleStalemate": true
+            },
+            "canPass": true,
+            "turn": "han",
+            "moveNumber": 2,
+            "status": "playing",
+            "lastMove": {
+              "id": "move-1-cho-cha-left-8-0",
+              "pieceId": "cho-cha-left",
+              "pieceIndex": 23,
+              "pieceLabel": "車",
+              "side": "cho",
+              "from": {
+                "row": 9,
+                "col": 0
+              },
+              "to": {
+                "row": 8,
+                "col": 0
+              },
+              "capturedPieceId": null,
+              "spokenMove": "왼쪽 차를 바로 위로 한 칸 이동",
+              "moveNumber": 1
+            },
+            "pieces": [
+              {
+                "id": "han-cha-left",
+                "row": 0,
+                "col": 0,
+                "legalMoves": [
+                  {
+                    "row": 1,
+                    "col": 0
+                  },
+                  {
+                    "row": 2,
+                    "col": 0
+                  }
+                ]
+              },
+              {
+                "id": "han-ma-left",
+                "row": 0,
+                "col": 1,
+                "legalMoves": [
+                  {
+                    "row": 2,
+                    "col": 0
+                  },
+                  {
+                    "row": 2,
+                    "col": 2
+                  }
+                ]
+              },
+              {
+                "id": "han-sang-left",
+                "row": 0,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "han-sa-left",
+                "row": 0,
+                "col": 3,
+                "legalMoves": [
+                  {
+                    "row": 0,
+                    "col": 4
+                  },
+                  {
+                    "row": 1,
+                    "col": 3
+                  }
+                ]
+              },
+              {
+                "id": "han-king",
+                "row": 1,
+                "col": 4,
+                "legalMoves": [
+                  {
+                    "row": 0,
+                    "col": 4
+                  },
+                  {
+                    "row": 1,
+                    "col": 3
+                  },
+                  {
+                    "row": 1,
+                    "col": 5
+                  },
+                  {
+                    "row": 2,
+                    "col": 3
+                  },
+                  {
+                    "row": 2,
+                    "col": 4
+                  },
+                  {
+                    "row": 2,
+                    "col": 5
+                  }
+                ]
+              },
+              {
+                "id": "han-sa-right",
+                "row": 0,
+                "col": 5,
+                "legalMoves": [
+                  {
+                    "row": 0,
+                    "col": 4
+                  },
+                  {
+                    "row": 1,
+                    "col": 5
+                  }
+                ]
+              },
+              {
+                "id": "han-sang-right",
+                "row": 0,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "han-ma-right",
+                "row": 0,
+                "col": 7,
+                "legalMoves": [
+                  {
+                    "row": 2,
+                    "col": 6
+                  },
+                  {
+                    "row": 2,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "han-cha-right",
+                "row": 0,
+                "col": 8,
+                "legalMoves": [
+                  {
+                    "row": 1,
+                    "col": 8
+                  },
+                  {
+                    "row": 2,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "han-po-left",
+                "row": 2,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "han-po-right",
+                "row": 2,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "han-jol-1",
+                "row": 3,
+                "col": 0,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 1
+                  },
+                  {
+                    "row": 4,
+                    "col": 0
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-2",
+                "row": 3,
+                "col": 2,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 1
+                  },
+                  {
+                    "row": 3,
+                    "col": 3
+                  },
+                  {
+                    "row": 4,
+                    "col": 2
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-3",
+                "row": 3,
+                "col": 4,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 3
+                  },
+                  {
+                    "row": 3,
+                    "col": 5
+                  },
+                  {
+                    "row": 4,
+                    "col": 4
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-4",
+                "row": 3,
+                "col": 6,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 5
+                  },
+                  {
+                    "row": 3,
+                    "col": 7
+                  },
+                  {
+                    "row": 4,
+                    "col": 6
+                  }
+                ]
+              },
+              {
+                "id": "han-jol-5",
+                "row": 3,
+                "col": 8,
+                "legalMoves": [
+                  {
+                    "row": 3,
+                    "col": 7
+                  },
+                  {
+                    "row": 4,
+                    "col": 8
+                  }
+                ]
+              },
+              {
+                "id": "cho-byeong-1",
+                "row": 6,
+                "col": 0,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-2",
+                "row": 6,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-3",
+                "row": 6,
+                "col": 4,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-4",
+                "row": 6,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-byeong-5",
+                "row": 6,
+                "col": 8,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-po-left",
+                "row": 7,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-po-right",
+                "row": 7,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-cha-left",
+                "row": 8,
+                "col": 0,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-ma-left",
+                "row": 9,
+                "col": 1,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sang-left",
+                "row": 9,
+                "col": 2,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sa-left",
+                "row": 9,
+                "col": 3,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-king",
+                "row": 8,
+                "col": 4,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sa-right",
+                "row": 9,
+                "col": 5,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-sang-right",
+                "row": 9,
+                "col": 6,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-ma-right",
+                "row": 9,
+                "col": 7,
+                "legalMoves": []
+              },
+              {
+                "id": "cho-cha-right",
+                "row": 9,
+                "col": 8,
+                "legalMoves": []
+              }
+            ]
+          },
+          "rulesValidated": true,
+          "animation": "completed",
+          "toolResolvedAfterVisibleAnimation": true,
+          "shouldAgentReply": true,
+          "awaitingPersonSpeech": false,
+          "nextTurnOwner": "agent",
+          "futureSpeechStartsNewAgentTurn": true
+        }
+      }
+    ],
+    "totalDurationMs": 5038.499999046326,
+    "timeToVisibleSuccessMs": 16241.395625000005
+  }
+}

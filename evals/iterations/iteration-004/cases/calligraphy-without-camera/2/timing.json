@@ -1,0 +1,217 @@
+{
+  "agent": {
+    "usage": {
+      "input": 23479,
+      "cachedInput": 18796,
+      "output": 413,
+      "reasoning": 160,
+      "total": 23892
+    },
+    "modelLatencyMs": 14370.225790999997,
+    "wallTimeMs": 27618.958167000004,
+    "turns": 7,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:29:30.725Z",
+        "completedAt": "2026-09-03T09:29:43.017Z",
+        "durationMs": 12291,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      },
+      {
+        "sequence": 2,
+        "tool": "masil_set_calligraphy_reference",
+        "startedAt": "2026-09-03T09:29:47.737Z",
+        "completedAt": "2026-09-03T09:29:48.193Z",
+        "durationMs": 456.30000019073486,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "revision": 2,
+          "calligraphy": {
+            "character": "복",
+            "reading": "복",
+            "meaning": "복",
+            "referenceImageAlt": "검은 먹빛으로 쓴 한글 ‘복’",
+            "referenceImagePresent": true,
+            "referenceImageTransport": "data-url",
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "transparentRatio": 0.926,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "foregroundRatio": 0.0737,
+              "inkBounds": {
+                "widthRatio": 0.3781,
+                "heightRatio": 0.6714
+              },
+              "trueAlpha": true
+            }
+          },
+          "acceptedCharacterCount": 1,
+          "generatedByAgent": true,
+          "imageTransport": "data-url",
+          "assetValidation": {
+            "mimeType": "image/png",
+            "width": 1536,
+            "height": 1024,
+            "aspectRatio": 1.5,
+            "transparentRatio": 0.926,
+            "edgeTransparentRatio": 1,
+            "darkVisibleRatio": 1,
+            "foregroundRatio": 0.0737,
+            "inkBounds": {
+              "widthRatio": 0.3781,
+              "heightRatio": 0.6714
+            },
+            "trueAlpha": true
+          },
+          "assetContract": {
+            "formats": [
+              "image/png",
+              "image/webp"
+            ],
+            "canvas": {
+              "aspectRatio": "3:2",
+              "recommendedWidth": 1536,
+              "recommendedHeight": 1024,
+              "minimumWidth": 1200,
+              "minimumHeight": 800
+            },
+            "background": "Real transparent alpha (RGBA alpha=0), never white paper or baked checkerboard pixels.",
+            "ink": "Black brush-calligraphy only; no seal, signature, decoration, translation, or extra text.",
+            "composition": {
+              "outerSafeMargin": "At least 8% on every edge.",
+              "inkHeight": "46-84% of canvas height.",
+              "minimumInkWidthByCharacterCount": {
+                "1": 0.24,
+                "2": 0.42,
+                "3": 0.58,
+                "4": 0.68
+              },
+              "maximumInkWidth": "88% of canvas width.",
+              "layout": "Keep the complete 1-4 character phrase on one horizontal canvas."
+            },
+            "transport": "PNG/WebP data URL, same-origin URL, or CORS-readable HTTPS URL available to the MASIL page."
+          },
+          "cameraPermissionRequested": false,
+          "cameraStartTool": "masil_start_calligraphy_camera",
+          "browserPermissionRemainsPersonControlled": true,
+          "humanStrokeLayer": "separate-and-preserved"
+        }
+      },
+      {
+        "sequence": 3,
+        "tool": "masil_stop_calligraphy_camera",
+        "startedAt": "2026-09-03T09:29:49.366Z",
+        "completedAt": "2026-09-03T09:29:49.809Z",
+        "durationMs": 443,
+        "success": false,
+        "errorCode": "CALLIGRAPHY_CAMERA_NOT_ACTIVE",
+        "structuredContent": null
+      },
+      {
+        "sequence": 4,
+        "tool": "masil_get_session_state",
+        "startedAt": "2026-09-03T09:29:53.239Z",
+        "completedAt": "2026-09-03T09:29:53.239Z",
+        "durationMs": 0.19999980926513672,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 2,
+          "caption": "‘복’을 손가락으로 화면에 따라 써 보세요.",
+          "language": "ko",
+          "inspector": {
+            "open": false,
+            "tab": "history"
+          },
+          "presence": "ready",
+          "calligraphy": {
+            "character": "복",
+            "reading": "복",
+            "meaning": "복",
+            "referenceImageAlt": "검은 먹빛으로 쓴 한글 ‘복’",
+            "referenceImagePresent": true,
+            "referenceImageTransport": "data-url",
+            "referenceValidation": {
+              "mimeType": "image/png",
+              "width": 1536,
+              "height": 1024,
+              "aspectRatio": 1.5,
+              "transparentRatio": 0.926,
+              "edgeTransparentRatio": 1,
+              "darkVisibleRatio": 1,
+              "foregroundRatio": 0.0737,
+              "inkBounds": {
+                "widthRatio": 0.3781,
+                "heightRatio": 0.6714
+              },
+              "trueAlpha": true
+            }
+          },
+          "calligraphyInputMode": "idle",
+          "janggiMove": "idle",
+          "support": null,
+          "handoff": null,
+          "awaitingCharacterChoice": false,
+          "janggi": null,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference",
+            "masil_start_calligraphy_camera",
+            "masil_clear_calligraphy"
+          ],
+          "humanOnlyActions": [
+            "accept-or-deny-the-browser-camera-permission",
+            "author-live-calligraphy-strokes-by-hand-or-pointer",
+            "confirm-the-exact-support-disclosure",
+            "confirm-the-consequential-support-action"
+          ],
+          "localDemoOnly": true
+        }
+      }
+    ],
+    "totalDurationMs": 13190.5,
+    "timeToVisibleSuccessMs": null
+  }
+}

@@ -93,13 +93,17 @@ expanding through the Agent.
 
 ## Verification status
 
-The creative journeys are being evaluated against a frozen task set. The evaluation measures
-whether the requested activity succeeds—not merely whether a tool was called.
-No final success rate, accessibility outcome, institutional adoption, or reduction in social
-isolation is claimed before the corresponding evidence is frozen.
+MASIL was evaluated across 25 ordered official iterations using 15 frozen scenarios and two
+independent repetitions per scenario. The no-WebMCP control completed 6 of 30 sessions (20.0%);
+the retained `iteration-008` WebMCP candidate completed 28 of 30 (93.3%). The evaluation measures
+the requested visible activity—not merely whether a tool was called. These results support the
+recorded task-completion claim, not accessibility outcomes, adoption, institutional value, or a
+reduction in social isolation.
 
-See [Evaluation](docs/EVALUATION.md) for the method and publication gate and [WebMCP design](docs/WEBMCP.md)
-for the technical contract.
+![MASIL WebMCP task success, Agent token, and wall-time trajectory across 25 official iterations](evals/optimization/trajectory.svg)
+
+See [Evaluation](docs/EVALUATION.md) for the complete 001–025 record and evidence, and
+[WebMCP design](docs/WEBMCP.md) for the technical contract.
 
 ## Built for one continuing experience
 

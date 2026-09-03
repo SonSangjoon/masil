@@ -1,0 +1,51 @@
+{
+  "agent": {
+    "usage": {
+      "input": 10787,
+      "cachedInput": 9995,
+      "output": 437,
+      "reasoning": 265,
+      "total": 11224
+    },
+    "modelLatencyMs": 9600.637832999986,
+    "wallTimeMs": 21920.208541999993,
+    "turns": 4,
+    "timedOut": false,
+    "executionError": null
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T09:52:48.898Z",
+        "completedAt": "2026-09-03T09:53:01.197Z",
+        "durationMs": 12299,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      }
+    ],
+    "totalDurationMs": 12299,
+    "timeToVisibleSuccessMs": null
+  }
+}

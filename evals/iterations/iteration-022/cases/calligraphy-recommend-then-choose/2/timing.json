@@ -1,0 +1,62 @@
+{
+  "agent": {
+    "usage": {
+      "input": 11001,
+      "cachedInput": 10364,
+      "output": 290,
+      "reasoning": 38,
+      "total": 11291
+    },
+    "modelLatencyMs": 8419.404125,
+    "wallTimeMs": 29798.720667,
+    "turns": 5,
+    "timedOut": false,
+    "executionError": {
+      "stage": "agent",
+      "caseId": "calligraphy-recommend-then-choose",
+      "repetition": 2,
+      "turn": 5,
+      "name": "Error",
+      "status": 400,
+      "code": "invalid_prompt",
+      "type": "invalid_request_error",
+      "param": null,
+      "message": "400 Invalid prompt: your prompt was flagged as potentially violating our usage policy. Please try again with a different prompt: https://platform.openai.com/docs/guides/reasoning#advice-on-prompting"
+    }
+  },
+  "provider": {
+    "executions": [
+      {
+        "sequence": 1,
+        "tool": "masil_open_activity",
+        "startedAt": "2026-09-03T11:20:55.429Z",
+        "completedAt": "2026-09-03T11:21:07.722Z",
+        "durationMs": 12292.900000095367,
+        "success": true,
+        "errorCode": null,
+        "structuredContent": {
+          "stage": "activity",
+          "activity": "calligraphy",
+          "revision": 1,
+          "interactionPending": true,
+          "choicesRemainVisible": true,
+          "cameraPermissionRequested": false,
+          "validNextActions": [
+            "masil_get_capabilities",
+            "masil_get_session_state",
+            "masil_get_execution_log",
+            "masil_set_language",
+            "masil_set_webmcp_panel",
+            "masil_project_agent_presence",
+            "masil_go_home",
+            "masil_open_activity",
+            "masil_open_support_note",
+            "masil_set_calligraphy_reference"
+          ]
+        }
+      }
+    ],
+    "totalDurationMs": 12292.900000095367,
+    "timeToVisibleSuccessMs": null
+  }
+}
