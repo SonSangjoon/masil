@@ -1,278 +1,206 @@
-# WebMCP design contract
+# WebMCP design
 
-## The accessibility role
+This document owns MASIL's WebMCP architecture, creative tool contract, provider state, validation,
+and bidirectional execution boundaries. Product meaning is defined in [Product definition](PRODUCT.md);
+performance claims are governed by [Evaluation](EVALUATION.md).
 
-> **A person should be able to use the web before they know how to operate its
-> interface.**
+## Why WebMCP is necessary
 
-MASIL uses WebMCP as an agent-mediated accessibility layer. The person states
-an intention in ordinary language. Their own Agent understands that intention.
-MASIL then exposes the page's exact capabilities, live state, rules,
-permissions, confirmation boundaries, and recovery paths to that Agent.
+The person speaks or types to their existing Agent. The Agent can interpret language and generate
+new material, but it does not own MASIL's live canvas, Janggi position, rules, permissions, or
+current turn.
 
-The result remains in the real page where the person can see it, change it,
-confirm it, or stop it. WebMCP therefore does more than help an Agent click a
-website: it makes a rich web experience usable without making interface
-literacy the price of entry.
+MASIL exposes those provider-owned capabilities and states through WebMCP. The resulting action
+appears in the real page, where the elder can inspect it, change it, or act directly. A human action
+can then return as structured state to the waiting Agent.
 
-This does not replace conventional web accessibility. Perceivable, operable,
-understandable human interfaces remain essential. MASIL adds a second test:
-
-> **Can the person achieve and control a meaningful outcome without first
-> learning that interface?**
-
-The external community center or government service is not assumed to expose
-WebMCP. MASIL is the WebMCP provider in the challenge build.
-
-```mermaid
-flowchart LR
-    U[Older adult] <-->|ordinary speech| A[One user-owned Agent]
-    U <-->|touch, gesture, confirmation| V[Visible MASIL page]
-    A <-->|discover semantic tools| W[MASIL WebMCP surface]
-    W <-->|read and change exact state| V
-    W <-->|validated operation| P[MASIL provider state]
-    P -. explicit choice only .-> L[Local support-handoff simulation]
+```text
+elder's words
+→ Agent interpretation or generation
+→ WebMCP tool
+→ MASIL validation
+→ visible activity state
+→ elder's direct action
+→ waiting Agent continues
 ```
+
+MASIL itself is the WebMCP provider. No external community center or public institution is assumed
+to expose WebMCP.
 
 ## One Agent and one visible surface
 
-The user-owned Agent owns conversation, microphone input, spoken output,
-turn-taking, interruption, reasoning, generation, and private context. MASIL
-does not embed a second Agent, model, Realtime client, API key, browser STT, or
-browser TTS.
+The elder's existing Agent owns conversation, microphone input, spoken output, interruption,
+reasoning, generation, and private context. MASIL does not embed a second Agent, model, Realtime
+client, API key, browser STT, or browser TTS.
 
-The host may call `masil_project_agent_presence` with `ready`, `listening`,
-`receiving`, `creating`, `speaking`, `awaiting`, or `connected`, plus an
-optional short person-visible caption. MASIL projects that coarse phase into
-the Orb and current scene. It never receives raw audio, full transcripts,
-token deltas, private Agent memory, or inferred emotion or risk.
+MASIL owns:
 
-The runtime loop is fixed:
+- the visible activity and current scene;
+- calligraphy reference and human-stroke layers;
+- the Janggi position, turn, history, and legal moves;
+- provider validation and state revision;
+- the set of currently valid operations; and
+- the visible execution history.
 
-1. the person speaks or types to their existing Agent;
-2. that same Agent discovers and invokes MASIL's WebMCP tools;
-3. MASIL validates provider state and visibly applies the operation;
-4. MASIL returns a structured result; and
-5. the same Agent continues the conversation.
+The host may project a coarse Agent phase such as `ready`, `creating`, `speaking`, or `awaiting`
+into the page. MASIL must not receive raw audio, full transcripts, token streams, private Agent
+memory, or inferred emotion.
 
-If the host cannot publish a real listening or speaking phase, MASIL shows only
-the operation phases it can verify. It does not fabricate a live voice state.
+## Tool registration
 
-## Challenge demo tool catalog
+The current page registers 13 imperative tools with
+`document.modelContext.registerTool()`. Registration makes a tool discoverable; it does not make
+every call valid. Handlers still enforce scene, turn, input, revision, and human-gesture boundaries.
 
-MASIL registers one stable catalog with
-`document.modelContext.registerTool()`. Read results expose the current scene
-revision and state-valid next actions; write handlers enforce their page-owned
-preconditions.
+### Current creative contract — 8 tools
 
-| Tool | Role in the shared experience |
+These tools form the product experience described in the README and Devpost story.
+
+| Tool | Responsibility |
 | --- | --- |
-| `masil_get_capabilities` | Explains the available activities, asset contract, interaction boundaries, and single-Agent architecture |
-| `masil_get_session_state` | Returns the exact visible scene, revision, preserved state, and `validNextActions` |
-| `masil_project_agent_presence` | Projects a coarse, non-audio Agent phase into the Orb and caption |
-| `masil_open_activity` | Opens calligraphy or Janggi after the person expresses that intent |
-| `masil_set_calligraphy_reference` | Places an Agent-generated one-to-four-character reference image without changing human strokes |
-| `masil_get_janggi_state` | Returns the complete live position, turn owner, coordinate convention, and legal destinations |
-| `masil_wait_for_person_janggi_move` | Waits up to 45 seconds inside one active Agent turn for one direct human board move |
-| `masil_move_janggi_piece` | Previews, validates, and visibly animates one semantic person or Agent move |
-| `masil_open_support_note` | Opens a private, no-action note only after an explicit request for help |
-| `masil_prepare_support_review` | Prepares the minimum disclosure and local-demo recipient for visible review |
-| `masil_create_local_handoff` | Creates an in-memory demo card after two confirmations at the visible revision |
-| `masil_get_handoff_status` | Reads the local demo owner, status, callback time, and next step |
-| `masil_return_to_activity` | Restores the preserved calligraphy or Janggi scene without deleting the handoff result |
+| `masil_get_capabilities` | Describes available creative activities, asset requirements, and interaction boundaries |
+| `masil_get_session_state` | Returns the visible scene, revision, preserved creative state, and valid next actions |
+| `masil_project_agent_presence` | Projects a coarse, non-audio Agent phase into the Orb and current activity |
+| `masil_open_activity` | Opens calligraphy or Janggi after the elder expresses that intention |
+| `masil_set_calligraphy_reference` | Places an Agent-generated reference without changing human strokes |
+| `masil_get_janggi_state` | Returns the exact board, turn, coordinate convention, history, and legal moves |
+| `masil_move_janggi_piece` | Validates and visibly animates one semantic elder or Agent move |
+| `masil_wait_for_person_janggi_move` | Waits inside an active Agent turn for one direct human board move |
 
-Tool discovery is not authorization. A discoverable tool still fails if its
-required scene, turn, explicit intent, confirmation, or revision is absent.
-The catalog stays stable to avoid registration races; `validNextActions`
-describes what is currently usable.
+### Local experimental surface — 5 tools
+
+The working tree also registers five local-only tools:
+
+- `masil_open_support_note`
+- `masil_prepare_support_review`
+- `masil_create_local_handoff`
+- `masil_get_handoff_status`
+- `masil_return_to_activity`
+
+They transmit nothing externally and do not establish an institutional service. They are excluded
+from MASIL's current product and creative service journey. Their possible purpose belongs only in
+[Long-term vision](VISION.md). Before release, the code, Devpost tool count, and public documentation
+must make this experimental status equally clear.
+
+## State-valid actions
+
+The creative product has three relevant visible states:
+
+| Scene | Additional valid tools | Provider-owned boundary |
+| --- | --- | --- |
+| `home` | `masil_open_activity` | Open only the activity the elder requested |
+| `activity / calligraphy` | `masil_set_calligraphy_reference` | The Agent may change only the reference layer; camera access still requires a fresh human gesture |
+| `activity / janggi` | `masil_get_janggi_state`, `masil_move_janggi_piece`, and `masil_wait_for_person_janggi_move` on the elder's turn | MASIL, not the model, owns rules, turn order, legal moves, and animation completion |
 
 `masil_get_capabilities`, `masil_get_session_state`, and
-`masil_project_agent_presence` are available in every scene. The remaining
-state-valid surface is:
+`masil_project_agent_presence` remain available across these scenes.
 
-| Scene | Additional valid tools | Page-owned boundary |
-| --- | --- | --- |
-| `home` | `masil_open_activity` | The Agent opens only the activity the person requested |
-| `activity / calligraphy` | `masil_set_calligraphy_reference`, `masil_open_support_note` | An Agent may replace only the reference layer; camera access still needs a fresh person gesture |
-| `activity / janggi` | `masil_get_janggi_state`, `masil_move_janggi_piece`, `masil_wait_for_person_janggi_move` on the person's turn, `masil_open_support_note` | The provider—not the model—owns turn order, legal moves, rules, and animation completion |
-| `private` | `masil_prepare_support_review`, `masil_return_to_activity` | The note is private and creates no request |
-| `review` | `masil_return_to_activity`; `masil_create_local_handoff` only after both confirmations | Disclosure and action are confirmed separately at one visible revision |
-| `handoff` | `masil_get_handoff_status`, `masil_return_to_activity` | The result is local and in-memory; no institution or government system is contacted |
+The catalog may remain stably registered to avoid registration races. The page returns
+`validNextActions` so the Agent can distinguish discoverability from current usability.
 
-## Agent-generated calligraphy contract
+## Calligraphy contract
 
-The personal Agent—not MASIL—generates a requested raster reference. A person
-may choose a visible suggestion or name any other one-to-four-character Korean
-or Hanja phrase in conversation. For an arbitrary request, the Agent creates
-one complete image and calls `masil_set_calligraphy_reference` with the exact
-text, a page-readable `referenceImageUrl`, and accessible alt text.
+### Why Agent generation is necessary
 
-The image contract travels in the WebMCP tool description and parameter
-schema:
+A fixed library cannot contain every phrase and brush style an elder may want. The Agent therefore
+creates the requested raster reference rather than selecting the nearest predefined template.
 
-- render the complete one-to-four-character phrase in one image;
-- use solid black Korean or Hanja brush-calligraphy strokes;
-- use a real transparent alpha channel, preferably PNG;
-- include safe outer margins so the entire phrase fits on one screen; and
-- include no paper, checkerboard, seal, signature, decoration, translation, or
-  extra text.
+### Why WebMCP is necessary
 
-The URL may be an image data URL, a same-origin MASIL URL, or an HTTPS URL
-readable by the page. Local filesystem paths and Agent-context `blob:` URLs are
-rejected because the page cannot resolve them. MASIL fits the full image with
-`object-fit: contain` and keeps it in an Agent-authored reference layer. The
-WebGPU human-stroke layer remains separate and preserved.
+The result must enter the correct live canvas, preserve its meaning and accessible description, and
+remain separate from the elder's own strokes. A generated asset left in chat does not create that
+experience.
 
-Receiving an image is not camera consent. Camera access begins only after a
-fresh click on MASIL's visible air-writing control. Denial or camera failure
-falls back to direct on-screen drawing.
+### Reference asset requirements
 
-## Human–Agent Janggi turn contract
+The tool description and schema require the Agent to:
 
-Speech and direct manipulation reach the same position and rules engine:
+- render the complete one-to-four-character Korean or Hanja phrase in one image;
+- use solid black brush-calligraphy strokes;
+- provide a real transparent alpha channel, preferably PNG;
+- include safe margins so the full work fits on one screen;
+- omit paper, checkerboard, seals, signatures, decoration, translation, and extra text; and
+- supply accessible alt text.
 
-1. The Agent reads `masil_get_janggi_state`; it does not infer the board from
-   pixels.
-2. For a spoken Cho move, the Agent resolves the person's phrase to a stable
-   piece ID and legal destination, then calls `masil_move_janggi_piece` with
-   `actor: person` and `personConfirmed: true`.
-3. For a direct move, the person taps or drags a piece to one of the displayed
-   legal destinations while `masil_wait_for_person_janggi_move` is pending.
-4. The provider validates the move and completes the same vGPU move and camera
-   animation before either call resolves.
-5. A completed person move returns `shouldAgentReply: true`. The same user
-   Agent chooses a legal Han response and calls `masil_move_janggi_piece` with
-   `actor: agent`.
-6. The Agent move resolves after its animation with
-   `awaitingPersonSpeech: true`. The next utterance starts a new Agent turn.
+The page accepts a readable image data URL, same-origin URL, or HTTPS URL. It rejects local
+filesystem paths and Agent-context `blob:` URLs that the page cannot resolve.
 
-The 45-second gesture wait is bounded to one active Agent turn. It cannot wake
-an idle Agent and must never remain open while waiting for future speech.
+MASIL fits the complete image with `object-fit: contain`. The Agent reference layer and WebGPU
+human-stroke layer remain independent.
 
-MASIL is the rules authority. It validates turn ownership, horse and elephant
-blocks, palace lines, cannon screens and restrictions, captures, check,
-checkmate, bikjang, and pass eligibility before changing the shared board.
+Receiving a reference is not camera consent. Camera access begins only after a fresh human gesture
+on the visible air-writing control. Denial or failure leaves direct on-screen drawing available.
 
-## Shared provider objects
+## Janggi contract
+
+Spoken and directly manipulated moves must reach the same position and rules engine:
+
+1. The Agent reads `masil_get_janggi_state`; it does not infer the board from pixels.
+2. For a spoken move, the Agent resolves familiar Korean against stable piece IDs and legal
+   destinations returned by the provider.
+3. The Agent calls `masil_move_janggi_piece` with the resolved semantic move.
+4. MASIL validates the move and completes the visible vGPU animation before returning success.
+5. For a direct move, the elder selects or drags a piece to a displayed legal destination while
+   `masil_wait_for_person_janggi_move` is pending.
+6. The completed human move returns the updated state and signals that the Agent should reply.
+7. The same Agent re-reads the changed board and takes the opposing turn.
+
+This division is essential:
+
+- the Agent understands expressions such as `포 사용해서 위쪽 차 먹어줘`;
+- MASIL supplies the exact pieces, screen pieces, turn, and legal destinations;
+- WebMCP binds interpretation to provider truth; and
+- the elder sees and can directly change the same match.
+
+An illegal, ambiguous, stale, or out-of-turn request must return a recoverable result rather than an
+invented move.
+
+## Shared provider state
 
 ### `activity_work`
 
-Contains the activity, scene revision, Agent reference layer, human-created
-stroke layer, preserved board or canvas state, and resume point. The Agent
-cannot modify human strokes unless the person explicitly targets them.
-
-### `support_handoff_work`
-
-Contains only the current revision, tentative meaning, desired result, minimum
-disclosure, person corrections, two confirmations, local-demo recipient, and
-local-demo result.
-
-It must not contain raw audio, full transcripts, camera frames, private Agent
-memory, unapproved addresses or financial details, or inferred health,
-emotion, loneliness, or risk scores.
+Contains only the active creative mode, calligraphy reference, human drawing state, Janggi position,
+turn, history, animation boundary, current revision, and valid next actions.
 
 ### `agent_projection`
 
-Contains only the current visual phase and an optional short caption. It is
-transient projection state, not a conversation record.
+Contains only the current visible phase and an optional short caption. It is transient presentation
+state, not a conversation record.
 
-## Support, confirmation, and recovery
+Private Agent memory, raw audio, full transcripts, camera frames, and inferred personal states do
+not belong in either object.
 
-A mention of pain, loneliness, missed delivery, silence, error, or unusual
-activity is not a support request. `masil_open_support_note` requires
-`personExplicitlyAsked: true`. Opening the note creates no provider payload and
-transmits nothing.
+## Why existing alternatives stop short
 
-Two different visible human decisions are required before the local handoff:
-
-1. **Disclosure confirmation:** this exact information may be shown to this
-   recipient.
-2. **Action confirmation:** create this exact handoff now.
-
-Changing the disclosure invalidates the prior confirmation.
-`masil_create_local_handoff` also requires the exact revision the person saw; a
-mismatch returns `STALE_REVISION`.
-
-The completed handoff is deliberately recoverable and explicit: it returns
-`localDemoOnly: true`, `externalTransmissionOccurred: false`, and
-`governmentRequestCreated: false`. The person can return to the preserved
-creative activity at any point.
-
-## Completed challenge demo boundary
-
-The completed local challenge build includes:
-
-- imperative WebMCP site-tool registration and a stable 13-tool catalog;
-- state-valid action readback and typed guard failures;
-- an inspectable execution log tying invocation to visible state change;
-- arbitrary one-to-four-character Agent-generated calligraphy references;
-- separate Agent reference and human stroke layers;
-- camera-first air writing with a fresh human-gesture boundary;
-- a complete Janggi rules state exposed semantically;
-- spoken, tapped, and dragged moves using the same provider rules and
-  animation;
-- a bounded direct-human-move wait and same-turn Agent response contract;
-- a private support note, separate disclosure and action confirmations, stale
-  revision rejection, local-only handoff, status readback, and return to the
-  preserved activity; and
-- no page-owned model, speech API, hidden Agent, or external transmission.
-
-The local handoff is the intentional, completed endpoint of the challenge
-experience. Its no-transmission result is visible in both provider state and
-the execution log. Identity, persistence, a staffed queue, partner integration,
-and measured outcomes are separate expansion horizons in
-[Long-term vision](VISION.md).
-
-## Why alternatives do not close the loop
-
-| Alternative | First missing edge |
+| Alternative | Missing relationship |
 | --- | --- |
-| Generic voice conversation | It can understand speech but does not own MASIL's live canvas, board, legal actions, authorship, or provider result |
-| Strong fixed accessible UI | It still makes each person learn the activity's controls and translate ordinary intent into predefined interaction grammar |
-| Computer Use | It must infer state, pieces, permissions, and confirmations from pixels and a human-facing UI that may change |
-| Backend MCP | It can perform structured operations while bypassing the person-visible page where authorship, corrections, consent, and recovery are shared |
-| Human-only intake | It preserves judgment but requires synchronous staff effort for every first explanation, reformulation, routing, and status check |
-| **MASIL with WebMCP** | The person's Agent receives exact provider truth while the person retains a visible, correctable, interruptible result |
+| Agent conversation alone | It can understand or generate, but it does not own the live activity the elder must be able to continue |
+| Strong fixed accessible UI | It still requires the elder to learn controls and limits the activity to content the interface anticipated |
+| Computer Use | It infers meaning and state from pixels and human-facing controls rather than receiving provider-owned truth |
+| Backend MCP | It can perform structured operations while bypassing the person-visible page where authorship and direct action continue |
+| **MASIL with WebMCP** | The Agent receives exact provider state while the elder retains a visible, shapeable, interruptible activity |
 
-If “just ask the Agent” or a predetermined accessible interface can produce the
-same starting intent, visible co-creation, provider-valid result, human control,
-and recovery, MASIL should not claim WebMCP necessity.
+The WebMCP claim fails if an Agent answer, a predetermined interface, or pixel clicking can deliver
+the same creative starting point, live authorship, legal continuity, and human-to-Agent return path.
 
-## Completed-demo invariants
+## Creative-product invariants
 
-The completed challenge experience is defined by these deterministic
-invariants:
+- `validNextActions` and handler guards agree.
+- Invalid, stale, malformed, blocked, or out-of-turn operations leave authoritative state intact.
+- Replacing a calligraphy reference never overwrites human strokes.
+- Camera access always retains a fresh human-gesture boundary.
+- Agent-led and direct Janggi moves reach the same provider state.
+- A waiting human-move call resolves only after the visible move completes, times out, or is
+  cancelled.
+- Tool results, page revision, visible activity, and execution history agree.
+- The page receives no raw audio, full transcript, camera frame, or private Agent memory.
 
-- `validNextActions` and handler guards agree in every scene;
-- invalid, stale, out-of-turn, blocked, or malformed calls return recoverable
-  errors;
-- calligraphy URL validation preserves human strokes and the camera boundary;
-- direct and Agent-led Janggi moves reach identical provider states;
-- the bounded human wait resolves only after the visible move animation or a
-  timeout/cancellation;
-- disclosure edits invalidate prior confirmation;
-- local handoff cannot execute without both confirmations and the seen
-  revision;
-- tool results and the visible execution log agree; and
-- no raw audio, transcript, camera frame, or private Agent memory enters a
-  provider payload.
+## Evaluation boundary
 
-The corresponding Agent behavior expectations are:
+[Evaluation](EVALUATION.md) defines scenario success, the without-WebMCP control, iteration policy,
+and publication gate. This document defines what the provider must keep true; it does not claim that
+the current contract has already passed the frozen suite or connected judge journey.
 
-- direct creative requests select the correct tool and arguments;
-- arbitrary calligraphy text produces one correctly isolated, fitted reference;
-- natural-language Janggi requests are grounded in the current legal-move
-  result rather than guessed;
-- ambiguous inconvenience or distress does not open or submit help;
-- the Agent distinguishes disclosure confirmation from action confirmation;
-- the Agent does not automatically retry a stale consequential write; and
-- the Agent returns to the preserved activity after completion or cancellation.
-
-### Submission evidence
-
-The final recording should show the registered tool list, exact arguments,
-revision change, visible side effect, structured result, and recovery path in
-one coherent WebMCP-capable session. It should include an arbitrary calligraphy
-reference, a person move and Agent reply on the same Janggi board, and the
-local-only support result. A narrated mock or static UI does not satisfy this
-contract.
+A registered-tool badge, static animation, narrated mock, or Computer Use recreation does not
+satisfy the product contract. The requested activity must be correct, visible, continuing, and
+supported by matching state and execution evidence.
